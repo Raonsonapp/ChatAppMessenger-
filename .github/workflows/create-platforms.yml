@@ -1,0 +1,38 @@
+name: Create Flutter Platforms
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  create-platforms:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Гирифтани репозиторий
+        uses: actions/checkout@v7
+
+      - name: Насби Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: flutter doctor
+        run: flutter doctor -v
+
+      - name: Сохтани платформаи Android
+        run: flutter create --platforms=android --project-name chatapp .
+
+      - name: Сабт ва фиристодани файлҳои нав
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add android
+          if git diff --cached --quiet; then
+            echo "Ҳеҷ тағйирот нест — платформа аллакай мавҷуд аст."
+          else
+            git commit -m "chore: generate Android platform files"
+            git push
+          fi
