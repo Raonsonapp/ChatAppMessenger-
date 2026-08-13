@@ -1,0 +1,46 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Гирифтани репозиторий
+        uses: actions/checkout@v7
+
+      - name: Насби Java (барои Gradle)
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Насби Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Санҷиши мавҷудияти платформаи Android
+        run: |
+          if [ ! -d "android" ]; then
+            echo "Папкаи android ёфт нашуд — сохта истодаам..."
+            flutter create --platforms=android --project-name chatapp .
+          fi
+
+      - name: Насби вобастагиҳо
+        run: flutter pub get
+
+      - name: Сохтани APK (release)
+        run: flutter build apk --release
+
+      - name: Боркунии APK ҳамчун artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: chatapp-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
