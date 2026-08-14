@@ -44,8 +44,11 @@ jobs:
       - name: Насби вобастагиҳо
         run: flutter pub get
 
-      - name: Сохтани APK (release)
-        run: flutter build apk --release
+      - name: Тафтиши коди Dart (барои хатогиҳои возеҳ пеш аз сохтан)
+        run: flutter analyze --no-fatal-warnings || true
+
+      - name: Сохтани APK (release, бе icon tree-shaking)
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Боркунии APK ҳамчун artifact
         uses: actions/upload-artifact@v7
