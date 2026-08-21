@@ -1,16 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
+/// ЭЗОҲ: Ҳозир ҳамаи платформаҳо (Android, iOS, Web) як танзими ягонаро
+/// истифода мебаранд — калидҳои проекти Firebase (chatapp-57fb2). Ин кор
+/// мекунад, чунки Firebase бо нобаёт калидро ба платформа қулф намекунад
+/// (агар шумо худ дар Google Cloud Console маҳдудият нагузошта бошед).
+/// Дар оянда, агар хоҳед хусусиятҳои махсуси Android (push notifications,
+/// Crashlytics ва ғ.) илова кунед, метавонед апп-и алоҳидаи Android дар
+/// Firebase Console сабт карда, ин файлро бо калидҳои он иваз кунед.
 class DefaultFirebaseOptions {
-  static FirebaseOptions get currentPlatform {
-    if (kIsWeb) {
-      return web;
-    }
-    throw UnsupportedError(
-      'DefaultFirebaseOptions барои ин платформа ҳоло танзим нашудааст. '
-      'Лутфан аввал дар FlutLab/Web озмоиш кунед.',
-    );
-  }
+  static FirebaseOptions get currentPlatform => web;
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyDO8rw1NvSAosX7Z0Nj4_eV1hkBAB6OW1A',
