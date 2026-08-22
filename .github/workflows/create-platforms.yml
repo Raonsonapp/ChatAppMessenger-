@@ -33,23 +33,32 @@ jobs:
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/' android/app/build.gradle
           fi
 
-      - name: Санҷиши мавҷудияти платформаҳо
+      - name: Санҷиши мавҷудияти платформаҳо (дар диск)
         run: |
-          test -d android && echo "ANDROID OK" || echo "ANDROID MISSING"
-          test -d ios && echo "IOS OK" || echo "IOS MISSING"
-          test -d web && echo "WEB OK" || echo "WEB MISSING"
-          test -d linux && echo "LINUX OK" || echo "LINUX MISSING"
-          test -d macos && echo "MACOS OK" || echo "MACOS MISSING"
-          test -d windows && echo "WINDOWS OK" || echo "WINDOWS MISSING"
+          test -d android && echo "ANDROID OK (created on disk)" || echo "ANDROID MISSING"
+          test -d ios && echo "IOS OK (created on disk)" || echo "IOS MISSING"
+          test -d web && echo "WEB OK (created on disk)" || echo "WEB MISSING"
+          test -d linux && echo "LINUX OK (created on disk)" || echo "LINUX MISSING"
+          test -d macos && echo "MACOS OK (created on disk)" || echo "MACOS MISSING"
+          test -d windows && echo "WINDOWS OK (created on disk)" || echo "WINDOWS MISSING"
 
-      - name: Сабт ва фиристодан (танҳо платформаҳо, бе lib/ ва pubspec.yaml)
+      - name: Санҷиши .gitignore (ташхис)
+        run: |
+          echo "--- Мундариҷаи .gitignore ---"
+          cat .gitignore || echo "(файл нест)"
+          echo "--- git status пеш аз add ---"
+          git status --short
+
+      - name: Сабт ва фиристодан (force-add, бе lib/ ва pubspec.yaml)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add android ios web linux macos windows
+          git add -f android ios web linux macos windows
+          echo "--- Файлҳои stage-шуда ---"
+          git diff --cached --stat
           if git diff --cached --quiet; then
-            echo "Ҳеҷ тағйирот нест — платформаҳо аллакай мавҷуданд."
+            echo "Ҳеҷ тағйирот нест — платформаҳо аллакай мавҷуданд ё Flutter натавонист онҳоро созад."
           else
-            git commit -m "chore: generate all Flutter platform folders (no app code touched)"
+            git commit -m "chore: generate all Flutter platform folders (force-added, ignoring .gitignore)"
             git push
           fi
