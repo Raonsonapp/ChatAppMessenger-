@@ -1,4 +1,4 @@
-name: Create Flutter Project
+name: Create Flutter Platforms
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  flutter-create:
+  create-flutter:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,6 +15,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: true
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -27,28 +28,56 @@ jobs:
           flutter --version
           dart --version
 
-      - name: Create Flutter project
+      - name: Create all Flutter platforms
         run: |
-          flutter create .
+          flutter create \
+            --platforms=android,ios,web,linux,macos,windows \
+            .
+
+      - name: Show created platforms
+        run: |
+          echo "=== Project folders ==="
+          ls -la
+          echo "=== Android ==="
+          ls -la android || true
+          echo "=== iOS ==="
+          ls -la ios || true
+          echo "=== Web ==="
+          ls -la web || true
+          echo "=== Linux ==="
+          ls -la linux || true
+          echo "=== macOS ==="
+          ls -la macos || true
+          echo "=== Windows ==="
+          ls -la windows || true
 
       - name: Get dependencies
         run: |
           flutter pub get
 
-      - name: Analyze project
+      - name: Analyze
         run: |
           flutter analyze
+
+      - name: Check Git changes
+        run: |
+          git status
+          git diff --stat
 
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Commit Flutter project
+      - name: Commit changes
         run: |
-          git add .
-          git diff --cached --quiet || git commit -m "Create Flutter project"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Create Flutter platform folders"
+          fi
 
-      - name: Push to repository
+      - name: Push changes
         run: |
           git push origin HEAD:${{ github.ref_name }}
