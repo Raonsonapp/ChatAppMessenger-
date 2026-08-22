@@ -22,10 +22,10 @@ jobs:
       - name: flutter doctor
         run: flutter doctor -v
 
-      - name: Сохтани платформаи Android
-        run: flutter create --platforms=android --project-name chatapp .
+      - name: Сохтани ҳамаи платформаҳо
+        run: flutter create --platforms=android,ios,web,linux,macos,windows --project-name chatapp .
 
-      - name: Танзими minSdk=23 (лозим барои Firebase)
+      - name: Танзими minSdk=23 барои Android (лозим барои Firebase)
         run: |
           if [ -f android/app/build.gradle.kts ]; then
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/' android/app/build.gradle.kts
@@ -33,14 +33,23 @@ jobs:
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/' android/app/build.gradle
           fi
 
-      - name: Сабт ва фиристодани файлҳои нав
+      - name: Санҷиши мавҷудияти платформаҳо
+        run: |
+          test -d android && echo "ANDROID OK" || echo "ANDROID MISSING"
+          test -d ios && echo "IOS OK" || echo "IOS MISSING"
+          test -d web && echo "WEB OK" || echo "WEB MISSING"
+          test -d linux && echo "LINUX OK" || echo "LINUX MISSING"
+          test -d macos && echo "MACOS OK" || echo "MACOS MISSING"
+          test -d windows && echo "WINDOWS OK" || echo "WINDOWS MISSING"
+
+      - name: Сабт ва фиристодан (танҳо платформаҳо, бе lib/ ва pubspec.yaml)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add android
+          git add android ios web linux macos windows
           if git diff --cached --quiet; then
-            echo "Ҳеҷ тағйирот нест — платформа аллакай мавҷуд аст."
+            echo "Ҳеҷ тағйирот нест — платформаҳо аллакай мавҷуданд."
           else
-            git commit -m "chore: generate Android platform files (minSdk=23)"
+            git commit -m "chore: generate all Flutter platform folders (no app code touched)"
             git push
           fi
