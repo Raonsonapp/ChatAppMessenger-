@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Суҳбатҳои дастрас — метавонанд AI Ассистент ё чати оддии Firestore бошанд
+/// Суҳбатҳои дастрас — метавонанд ChatAI ё чати оддии Firestore бошанд
 class ChatConversation {
   final String id;
   final String name;
@@ -19,7 +19,7 @@ class ChatConversation {
 class AppChats {
   static const aiAssistant = ChatConversation(
     id: 'ai_assistant',
-    name: 'AI Ассистент',
+    name: 'ChatAI',
     avatarIcon: Icons.auto_awesome_rounded,
     isAIChat: true,
   );
