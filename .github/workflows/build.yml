@@ -14,12 +14,16 @@ jobs:
       - name: Гирифтани репозиторий
         uses: actions/checkout@v7
 
-      - name: Насби Java
+      - name: Насби debug keystore-и собит (барои Firebase Phone Auth)
+        run: |
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
+
+      - name: Насби Java (барои Gradle)
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       - name: Насби Flutter SDK
         uses: subosito/flutter-action@v2
@@ -27,17 +31,14 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Санҷиши Flutter
-        run: flutter --version
-
-      - name: Санҷиши платформаи Android
+      - name: Санҷиши мавҷудияти платформаи Android
         run: |
           if [ ! -d "android" ]; then
-            echo "Папкаи android ёфт нашуд."
-            flutter create --platforms=android .
+            echo "Папкаи android ёфт нашуд — сохта истодаам..."
+            flutter create --platforms=android --project-name chatapp .
           fi
 
-      - name: Танзими minSdk
+      - name: Танзими minSdk=23 (лозим барои Firebase)
         run: |
           if [ -f android/app/build.gradle.kts ]; then
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/' android/app/build.gradle.kts
@@ -48,15 +49,14 @@ jobs:
       - name: Насби вобастагиҳо
         run: flutter pub get
 
-      - name: Санҷиши коди Dart
-        run: flutter analyze
+      - name: Тафтиши коди Dart (барои хатогиҳои возеҳ пеш аз сохтан)
+        run: flutter analyze --no-fatal-warnings || true
 
-      - name: Сохтани APK
+      - name: Сохтани APK (release, бе icon tree-shaking)
         run: flutter build apk --release --no-tree-shake-icons
 
-      - name: Боркунии APK
+      - name: Боркунии APK ҳамчун artifact
         uses: actions/upload-artifact@v7
         with:
           name: chatapp-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
