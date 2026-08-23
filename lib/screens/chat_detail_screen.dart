@@ -25,6 +25,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isAITyping = false;
+  int _lastReplyIndex = -1;
 
   CollectionReference<Map<String, dynamic>> get _messagesRef => FirebaseFirestore.instance
       .collection('chats')
@@ -59,6 +60,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     });
   }
 
+  void _fillPrompt(String prompt) {
+    _controller.text = prompt;
+    _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
+  }
+
   Future<void> _handleSend() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
@@ -78,12 +84,21 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
   }
 
+  // ЭЗОҲ: ин ҷавоб ҳанӯз шабеҳсозишуда аст (на AI-и воқеӣ). Барои пайвасти
+  // воқеӣ ба Gemini API, дар ин ҷо ба ҷои интихоб аз рӯйхат, дархости HTTP
+  // фиристода, посухи гирифташударо истифода баред. Барои бехатарӣ, калиди
+  // API набояд дар коди Flutter бошад — тавассути Cloud Function гузаронед.
   void _simulateAIReply() {
     setState(() => _isAITyping = true);
     _scrollToBottom();
     Future.delayed(const Duration(milliseconds: 1400), () async {
       if (!mounted) return;
-      final reply = MockAIReplies.replies[DateTime.now().millisecond % MockAIReplies.replies.length];
+      int index = DateTime.now().millisecond % MockAIReplies.replies.length;
+      if (index == _lastReplyIndex) {
+        index = (index + 1) % MockAIReplies.replies.length;
+      }
+      _lastReplyIndex = index;
+      final reply = MockAIReplies.replies[index];
       await _messagesRef.add({
         'text': reply,
         'senderId': 'ai_bot',
@@ -129,6 +144,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
                     }
                     final docs = snapshot.data!.docs;
+
+                    // Ҳолати холии ChatAI: пешниҳоди Расм/Мусиқӣ/Видео дар ДОХИЛИ чат
+                    if (docs.isEmpty && convo.isAIChat) {
+                      return _buildEmptyAiState();
+                    }
+
                     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
                     return ListView.builder(
                       controller: _scrollController,
@@ -146,6 +167,77 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 ),
               ),
               _buildInputBar(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyAiState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+              child: const Icon(Icons.auto_awesome_rounded, color: AppColors.background, size: 30),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Аз ChatAI бипурсед',
+              style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Савол диҳед, ё яке аз инҳоро озмоед',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 12.5),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _suggestionChip(Icons.image_rounded, 'Расм', 'Лутфан барои ман расме эҷод кун: '),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _suggestionChip(Icons.music_note_rounded, 'Мусиқӣ', 'Лутфан барои ман мусиқие эҷод кун: '),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _suggestionChip(Icons.videocam_rounded, 'Видео', 'Лутфан барои ман видеое эҷод кун: '),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _suggestionChip(IconData icon, String label, String prompt) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _fillPrompt(prompt),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.glassFill,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: AppColors.neonCyan, size: 20),
+              const SizedBox(height: 4),
+              Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 11.5, fontWeight: FontWeight.w600)),
             ],
           ),
         ),
