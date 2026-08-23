@@ -1,57 +1,36 @@
-name: Build APK
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+import '../theme/app_theme.dart';
+import '../widgets/neon_backdrop.dart';
+import 'chat_list_screen.dart';
+import 'welcome_screen.dart';
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+/// Гардиши воридшавӣ: агар корбар аллакай бо телефон ворид шуда бошад,
+/// мустақим ChatListScreen; акс ҳолат, WelcomeScreen (телефон → OTP).
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
 
-    steps:
-      - name: Гирифтани репозиторий
-        uses: actions/checkout@v7
-
-      - name: Насби Java (барои Gradle)
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Насби Flutter SDK
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Санҷиши мавҷудияти платформаи Android
-        run: |
-          if [ ! -d "android" ]; then
-            echo "Папкаи android ёфт нашуд — сохта истодаам..."
-            flutter create --platforms=android --project-name chatapp .
-          fi
-
-      - name: Танзими minSdk=23 (лозим барои Firebase)
-        run: |
-          if [ -f android/app/build.gradle.kts ]; then
-            sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/' android/app/build.gradle.kts
-          elif [ -f android/app/build.gradle ]; then
-            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/' android/app/build.gradle
-          fi
-
-      - name: Насби вобастагиҳо
-        run: flutter pub get
-
-      - name: Тафтиши коди Dart (барои хатогиҳои возеҳ пеш аз сохтан)
-        run: flutter analyze --no-fatal-warnings || true
-
-      - name: Сохтани APK (release, бе icon tree-shaking)
-        run: flutter build apk --release --no-tree-shake-icons
-
-      - name: Боркунии APK ҳамчун artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: chatapp-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: NeonBackdrop(
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.neonEmerald),
+              ),
+            ),
+          );
+        }
+        if (snapshot.hasData) {
+          return const ChatListScreen();
+        }
+        return const WelcomeScreen();
+      },
+    );
+  }
+}
