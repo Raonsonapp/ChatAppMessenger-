@@ -28,7 +28,7 @@ class MessageBubble extends StatelessWidget {
                   children: [
                     Icon(Icons.auto_awesome_rounded, size: 12, color: AppColors.neonCyan),
                     const SizedBox(width: 4),
-                    Text('AI Assistant', style: TextStyle(fontSize: 10, color: AppColors.neonCyan.withOpacity(0.9))),
+                    Text('ChatAI', style: TextStyle(fontSize: 10, color: AppColors.neonCyan.withOpacity(0.9))),
                   ],
                 ),
               ),
