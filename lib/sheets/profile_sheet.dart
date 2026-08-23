@@ -3,8 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/neon_backdrop.dart';
-import 'chat_list_screen.dart';
-import 'welcome_screen.dart';
+import '../screens/chat_list_screen.dart';
+import '../screens/welcome_screen.dart';
 
 /// Гардиши воридшавӣ: агар корбар аллакай бо телефон ворид шуда бошад,
 /// мустақим ChatListScreen; акс ҳолат, WelcomeScreen (телефон → OTP).
