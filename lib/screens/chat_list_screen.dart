@@ -36,7 +36,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => const ProfileSheet(),
+      builder: (_) => ProfileSheet(),
     );
   }
 
