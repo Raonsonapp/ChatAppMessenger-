@@ -26,6 +26,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isAITyping = false;
   int _lastReplyIndex = -1;
+  ChatMessage? _replyingTo;
 
   CollectionReference<Map<String, dynamic>> get _messagesRef => FirebaseFirestore.instance
       .collection('chats')
@@ -69,13 +70,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+    final replying = _replyingTo;
     _controller.clear();
+    setState(() => _replyingTo = null);
 
     await _messagesRef.add({
       'text': text,
       'senderId': uid,
       'isAI': false,
       'createdAt': FieldValue.serverTimestamp(),
+      if (replying != null) 'replyToText': replying.text,
+      if (replying != null) 'replyToSenderId': replying.senderId,
     });
     _scrollToBottom();
 
@@ -84,10 +89,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
   }
 
+  Future<void> _deleteMessage(ChatMessage message) async {
+    await _messagesRef.doc(message.id).update({'deleted': true});
+  }
+
   // ЭЗОҲ: ин ҷавоб ҳанӯз шабеҳсозишуда аст (на AI-и воқеӣ). Барои пайвасти
   // воқеӣ ба Gemini API, дар ин ҷо ба ҷои интихоб аз рӯйхат, дархости HTTP
-  // фиристода, посухи гирифташударо истифода баред. Барои бехатарӣ, калиди
-  // API набояд дар коди Flutter бошад — тавассути Cloud Function гузаронед.
+  // фиристода, посухи гирифташударо истифода баред.
   void _simulateAIReply() {
     setState(() => _isAITyping = true);
     _scrollToBottom();
@@ -145,7 +153,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     }
                     final docs = snapshot.data!.docs;
 
-                    // Ҳолати холии ChatAI: пешниҳоди Расм/Мусиқӣ/Видео дар ДОХИЛИ чат
                     if (docs.isEmpty && convo.isAIChat) {
                       return _buildEmptyAiState();
                     }
@@ -160,15 +167,49 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                           return const TypingBubble();
                         }
                         final message = ChatMessage.fromDoc(docs[index]);
-                        return MessageBubble(message: message, isMe: message.senderId == currentUid);
+                        return MessageBubble(
+                          message: message,
+                          isMe: message.senderId == currentUid,
+                          onReply: (m) => setState(() => _replyingTo = m),
+                          onDelete: _deleteMessage,
+                        );
                       },
                     );
                   },
                 ),
               ),
+              if (_replyingTo != null) _buildReplyPreview(),
               _buildInputBar(),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReplyPreview() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
+      child: GlassContainer(
+        borderRadius: 12,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Container(width: 3, height: 30, color: AppColors.neonCyan.withOpacity(0.7)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _replyingTo!.text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+              ),
+            ),
+            IconButton(
+              onPressed: () => setState(() => _replyingTo = null),
+              icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 18),
+            ),
+          ],
         ),
       ),
     );
