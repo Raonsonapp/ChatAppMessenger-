@@ -8,8 +8,6 @@ import '../../widgets/chat_tile.dart';
 import '../../widgets/user_conversation_tile.dart';
 import '../../theme/app_theme.dart';
 
-/// Бахши "Чатҳо" — ChatAI дар боло + рӯйхати сӯҳбатҳои воқеӣ.
-/// Барои пешгирии composite-index error, conversation-ҳо дар client sort мешаванд.
 class ChatsTab extends StatelessWidget {
   const ChatsTab({super.key});
 
@@ -20,23 +18,22 @@ class ChatsTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 100),
       children: [
-        const ChatTile(conversation: AppChats.aiAssistant, highlighted: true),
-        const SizedBox(height: 10),
+        const ChatTile(conversation: AppChats.aiAssistant, pinned: true),
+        const SizedBox(height: 4),
         if (currentUid != null)
           StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            // Танҳо arrayContains: composite index бо orderBy дигар талаб намешавад.
             stream: FirebaseFirestore.instance
                 .collection('conversations')
                 .where('participants', arrayContains: currentUid)
+                .orderBy('lastMessageTime', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
+                return Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Чатҳоро бор кардан нашуд. Баъдтар аз нав кӯшиш кунед.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    'Хатои Firestore (эҳтимол index лозим аст): ${snapshot.error}',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
                   ),
                 );
               }
@@ -46,25 +43,17 @@ class ChatsTab extends StatelessWidget {
                   child: Center(child: CircularProgressIndicator(color: AppColors.neonEmerald)),
                 );
               }
-
-              final docs = [...snapshot.data!.docs];
-              docs.sort((a, b) {
-                final at = (a.data()['lastMessageTime'] as Timestamp?)?.millisecondsSinceEpoch ?? 0;
-                final bt = (b.data()['lastMessageTime'] as Timestamp?)?.millisecondsSinceEpoch ?? 0;
-                return bt.compareTo(at);
-              });
-
+              final docs = snapshot.data!.docs;
               if (docs.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Text(
-                    'Ҳанӯз чат надоред — тугмаи "+" -ро пахш карда contact интихоб кунед',
+                    'Ҳанӯз чат надоред — тугмаи "+" -ро пахш карда корбарро ёбед',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 12.5),
                   ),
                 );
               }
-
               return Column(
                 children: docs.map((doc) {
                   final convo = AppConversation.fromDoc(doc);
