@@ -1,15 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Ҳар ҳуҷҷат дар `chats/{chatId}/messages` ба ин сохтор мувофиқат мекунад:
-/// { text: string, senderId: string, isAI: bool, createdAt: Timestamp }
-/// "isMe" дар Firestore захира намешавад — он вобаста ба корбари ҷорӣ аст,
-/// бинобар ин дар вақти рендер (senderId == currentUid) ҳисоб карда мешавад.
+/// Ҳар ҳуҷҷат дар `.../messages` ба ин сохтор мувофиқат мекунад:
+/// { text, senderId, isAI, createdAt, replyToText?, replyToSenderId?,
+///   deleted?, read? }
 class ChatMessage {
   final String id;
   final String text;
   final String senderId;
   final bool isAI;
   final DateTime? timestamp;
+  final String? replyToText;
+  final String? replyToSenderId;
+  final bool deleted;
+  final bool read;
 
   ChatMessage({
     required this.id,
@@ -17,6 +20,10 @@ class ChatMessage {
     required this.senderId,
     required this.isAI,
     this.timestamp,
+    this.replyToText,
+    this.replyToSenderId,
+    this.deleted = false,
+    this.read = false,
   });
 
   factory ChatMessage.fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -27,6 +34,10 @@ class ChatMessage {
       senderId: (data['senderId'] ?? '') as String,
       isAI: (data['isAI'] ?? false) as bool,
       timestamp: (data['createdAt'] as Timestamp?)?.toDate(),
+      replyToText: data['replyToText'] as String?,
+      replyToSenderId: data['replyToSenderId'] as String?,
+      deleted: (data['deleted'] ?? false) as bool,
+      read: (data['read'] ?? false) as bool,
     );
   }
 }
