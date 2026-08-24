@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
+import '../screens/edit_profile_screen.dart';
+import '../screens/settings/settings_home_screen.dart';
 
 class ProfileSheet extends StatelessWidget {
   const ProfileSheet({super.key});
@@ -55,6 +57,24 @@ class ProfileSheet extends StatelessWidget {
             const SizedBox(height: 2),
             Text(phone, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
             const SizedBox(height: 18),
+            _menuRow(
+              icon: Icons.person_outline_rounded,
+              label: 'Профили ман',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen()));
+              },
+            ),
+            const SizedBox(height: 8),
+            _menuRow(
+              icon: Icons.settings_outlined,
+              label: 'Танзимот',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsHomeScreen()));
+              },
+            ),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -69,6 +89,29 @@ class ProfileSheet extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _menuRow({required IconData icon, required String label, required VoidCallback onTap}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.neonCyan, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+              ),
+              Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary.withOpacity(0.6), size: 18),
+            ],
+          ),
         ),
       ),
     );
