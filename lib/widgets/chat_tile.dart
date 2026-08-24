@@ -5,12 +5,12 @@ import '../theme/app_theme.dart';
 import '../models/chat_conversation.dart';
 import '../screens/chat_detail_screen.dart';
 
-/// Сатри чат — сохтори дуқабатаи WhatsApp: аватар дар чап, ном+вақт дар боло,
-/// паёми охирин дар поён.
+/// Сатри чат — WhatsApp-тарз: ҳамаи қаторҳо якхела ба назар мерасанд.
+/// ChatAI танҳо бо нишони сӯзан (pin) фарқ мекунад — на бо банер/glow.
 class ChatTile extends StatelessWidget {
   final ChatConversation conversation;
-  final bool highlighted;
-  const ChatTile({super.key, required this.conversation, this.highlighted = false});
+  final bool pinned;
+  const ChatTile({super.key, required this.conversation, this.pinned = false});
 
   Stream<QuerySnapshot<Map<String, dynamic>>> get _lastMessageStream => FirebaseFirestore
       .instance
@@ -35,22 +35,16 @@ class ChatTile extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(highlighted ? 18 : 10),
+        borderRadius: BorderRadius.circular(10),
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => ChatDetailScreen(conversation: conversation)),
         ),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-          decoration: highlighted
-              ? BoxDecoration(
-                  color: AppColors.neonEmerald.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: AppColors.neonEmerald.withOpacity(0.3)),
-                )
-              : const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: AppColors.glassBorder, width: 0.6)),
-                ),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.glassBorder, width: 0.6)),
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -118,10 +112,13 @@ class ChatTile extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            Text(
-                              time,
-                              style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 11.5),
-                            ),
+                            if (pinned)
+                              Icon(Icons.push_pin_rounded, size: 14, color: AppColors.textSecondary.withOpacity(0.6))
+                            else
+                              Text(
+                                time,
+                                style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 11.5),
+                              ),
                           ],
                         ),
                         const SizedBox(height: 3),
