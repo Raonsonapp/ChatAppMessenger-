@@ -10,6 +10,7 @@ import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
+/// Дастгирии Reply, Delete ва тикҳои "хонда шуд" (read receipts).
 class UserChatScreen extends StatefulWidget {
   final String conversationId;
   final String otherUserName;
@@ -28,6 +29,7 @@ class UserChatScreen extends StatefulWidget {
 class _UserChatScreenState extends State<UserChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  ChatMessage? _replyingTo;
 
   DocumentReference<Map<String, dynamic>> get _conversationRef =>
       FirebaseFirestore.instance.collection('conversations').doc(widget.conversationId);
@@ -58,13 +60,18 @@ class _UserChatScreenState extends State<UserChatScreen> {
     if (text.isEmpty) return;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
+    final replying = _replyingTo;
     _controller.clear();
+    setState(() => _replyingTo = null);
 
     await _messagesRef.add({
       'text': text,
       'senderId': uid,
       'isAI': false,
       'createdAt': FieldValue.serverTimestamp(),
+      'read': false,
+      if (replying != null) 'replyToText': replying.text,
+      if (replying != null) 'replyToSenderId': replying.senderId,
     });
 
     // САБТ: навсозии ҳуҷҷати волидайн барои феҳристи чат
@@ -75,6 +82,23 @@ class _UserChatScreenState extends State<UserChatScreen> {
     }, SetOptions(merge: true));
 
     _scrollToBottom();
+  }
+
+  Future<void> _deleteMessage(ChatMessage message) async {
+    await _messagesRef.doc(message.id).update({'deleted': true});
+  }
+
+  void _markIncomingAsRead(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, String currentUid) {
+    final unread = docs.where((d) {
+      final data = d.data();
+      return data['senderId'] != currentUid && (data['read'] != true);
+    }).toList();
+    if (unread.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final d in unread) {
+        d.reference.update({'read': true});
+      }
+    });
   }
 
   @override
@@ -117,6 +141,9 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         ),
                       );
                     }
+                    if (currentUid != null) {
+                      _markIncomingAsRead(docs, currentUid);
+                    }
                     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
                     return ListView.builder(
                       controller: _scrollController,
@@ -124,15 +151,49 @@ class _UserChatScreenState extends State<UserChatScreen> {
                       itemCount: docs.length,
                       itemBuilder: (context, index) {
                         final message = ChatMessage.fromDoc(docs[index]);
-                        return MessageBubble(message: message, isMe: message.senderId == currentUid);
+                        return MessageBubble(
+                          message: message,
+                          isMe: message.senderId == currentUid,
+                          onReply: (m) => setState(() => _replyingTo = m),
+                          onDelete: _deleteMessage,
+                        );
                       },
                     );
                   },
                 ),
               ),
+              if (_replyingTo != null) _buildReplyPreview(),
               _buildInputBar(),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReplyPreview() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
+      child: GlassContainer(
+        borderRadius: 12,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Container(width: 3, height: 30, color: AppColors.neonCyan.withOpacity(0.7)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _replyingTo!.text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+              ),
+            ),
+            IconButton(
+              onPressed: () => setState(() => _replyingTo = null),
+              icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 18),
+            ),
+          ],
         ),
       ),
     );
