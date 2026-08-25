@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
 import '../utils/snackbar_utils.dart';
 import '../models/chat_message.dart';
 import '../models/chat_conversation.dart';
 import '../models/mock_ai_replies.dart';
+import '../services/media_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/typing_bubble.dart';
+import '../widgets/attachment_sheet.dart';
+import '../widgets/emoji_picker_sheet.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final ChatConversation conversation;
@@ -25,6 +29,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isAITyping = false;
+  bool _isUploading = false;
   int _lastReplyIndex = -1;
   ChatMessage? _replyingTo;
 
@@ -64,6 +69,65 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   void _fillPrompt(String prompt) {
     _controller.text = prompt;
     _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
+  }
+
+  void _openEmojiPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => EmojiPickerSheet(
+        onEmojiSelected: (emoji) {
+          final text = _controller.text;
+          final selection = _controller.selection;
+          final newText = text.replaceRange(
+            selection.start >= 0 ? selection.start : text.length,
+            selection.end >= 0 ? selection.end : text.length,
+            emoji,
+          );
+          _controller.text = newText;
+          _controller.selection = TextSelection.collapsed(offset: (selection.start >= 0 ? selection.start : text.length) + emoji.length);
+        },
+      ),
+    );
+  }
+
+  void _openAttachmentSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AttachmentSheet(
+        onImagePicked: _sendImageMessage,
+        onContactTap: () => showComingSoonSnack(context, 'Мубодилаи контакт дар ChatAI'),
+      ),
+    );
+  }
+
+  Future<void> _sendImageMessage(XFile file) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+    setState(() => _isUploading = true);
+    try {
+      final url = await MediaService.uploadImage(file, 'chats/${widget.conversation.id}');
+      await _messagesRef.add({
+        'text': '',
+        'senderId': uid,
+        'isAI': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'mediaUrl': url,
+        'mediaType': 'image',
+      });
+      _scrollToBottom();
+      if (widget.conversation.isAIChat) {
+        _simulateAIReply();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Хатои боркунии расм: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
   }
 
   Future<void> _handleSend() async {
@@ -346,40 +410,71 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
+  /// Композитори тарзи WhatsApp: emoji (берун) — матн+замима+камера (дохили pill) — SEND (берун)
   Widget _buildInputBar() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 14),
-      child: GlassContainer(
-        borderRadius: 24,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                style: const TextStyle(color: AppColors.textPrimary),
-                maxLines: 4,
-                minLines: 1,
-                decoration: const InputDecoration(
-                  hintText: 'Паём нависед...',
-                  hintStyle: TextStyle(color: AppColors.textSecondary),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
-                onSubmitted: (_) => _handleSend(),
+      padding: const EdgeInsets.fromLTRB(10, 6, 10, 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: GlassContainer(
+              borderRadius: 24,
+              padding: const EdgeInsets.only(left: 6),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: _openEmojiPicker,
+                    icon: const Icon(Icons.emoji_emotions_outlined, color: AppColors.textSecondary, size: 22),
+                  ),
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      maxLines: 4,
+                      minLines: 1,
+                      decoration: const InputDecoration(
+                        hintText: 'Паём',
+                        hintStyle: TextStyle(color: AppColors.textSecondary),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      onSubmitted: (_) => _handleSend(),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _isUploading ? null : _openAttachmentSheet,
+                    icon: const Icon(Icons.attach_file_rounded, color: AppColors.textSecondary, size: 21),
+                  ),
+                  IconButton(
+                    onPressed: _isUploading
+                        ? null
+                        : () async {
+                            final file = await MediaService.pickFromCamera();
+                            if (file != null) _sendImageMessage(file);
+                          },
+                    icon: const Icon(Icons.camera_alt_rounded, color: AppColors.textSecondary, size: 21),
+                  ),
+                ],
               ),
             ),
-            GestureDetector(
-              onTap: _handleSend,
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                child: const Icon(Icons.arrow_upward_rounded, color: AppColors.background, size: 20),
-              ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: _isUploading ? null : _handleSend,
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+              child: _isUploading
+                  ? const Padding(
+                      padding: EdgeInsets.all(11),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
+                    )
+                  : const Icon(Icons.arrow_upward_rounded, color: AppColors.background, size: 20),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
