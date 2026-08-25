@@ -43,15 +43,16 @@ class MessageBubble extends StatelessWidget {
                   onReply?.call(message);
                 },
               ),
-              _actionTile(
-                context,
-                icon: Icons.copy_rounded,
-                label: 'Нусхабардорӣ',
-                onTap: () {
-                  Navigator.pop(context);
-                  Clipboard.setData(ClipboardData(text: message.text));
-                },
-              ),
+              if (message.mediaUrl == null)
+                _actionTile(
+                  context,
+                  icon: Icons.copy_rounded,
+                  label: 'Нусхабардорӣ',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Clipboard.setData(ClipboardData(text: message.text));
+                  },
+                ),
               if (isMe)
                 _actionTile(
                   context,
@@ -87,13 +88,14 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAI = message.isAI;
+    final hasImage = !message.deleted && message.mediaUrl != null && message.mediaType == 'image';
 
     return GestureDetector(
       onLongPress: () => _showActions(context),
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
           margin: const EdgeInsets.symmetric(vertical: 5),
           child: Column(
             crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -111,10 +113,12 @@ class MessageBubble extends StatelessWidget {
                   ),
                 ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                padding: hasImage
+                    ? const EdgeInsets.all(4)
+                    : const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
                 decoration: BoxDecoration(
-                  gradient: (isMe && !message.deleted) ? AppColors.neonGradient : null,
-                  color: (isMe && !message.deleted) ? null : AppColors.glassFill,
+                  gradient: (isMe && !message.deleted && !hasImage) ? AppColors.neonGradient : null,
+                  color: (isMe && !message.deleted && !hasImage) ? null : AppColors.glassFill,
                   border: isMe
                       ? null
                       : Border.all(color: isAI ? AppColors.neonCyan.withOpacity(0.4) : AppColors.glassBorder),
@@ -132,7 +136,7 @@ class MessageBubble extends StatelessWidget {
                   children: [
                     if (!message.deleted && message.replyToText != null && message.replyToText!.isNotEmpty)
                       Container(
-                        margin: const EdgeInsets.only(bottom: 6),
+                        margin: EdgeInsets.only(bottom: 6, left: hasImage ? 4 : 0, right: hasImage ? 4 : 0, top: hasImage ? 4 : 0),
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.15),
@@ -144,22 +148,50 @@ class MessageBubble extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: (isMe ? AppColors.background : AppColors.textPrimary).withOpacity(0.75),
+                            color: (isMe && !hasImage ? AppColors.background : AppColors.textPrimary).withOpacity(0.75),
                             fontSize: 12,
                             fontStyle: FontStyle.italic,
                           ),
                         ),
                       ),
-                    Text(
-                      message.deleted ? 'Паём нест карда шуд' : message.text,
-                      style: TextStyle(
-                        color: isMe ? AppColors.background : AppColors.textPrimary,
-                        fontSize: 14.5,
-                        height: 1.3,
-                        fontStyle: message.deleted ? FontStyle.italic : FontStyle.normal,
-                        fontWeight: isMe ? FontWeight.w600 : FontWeight.w400,
+                    if (hasImage)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.network(
+                          message.mediaUrl!,
+                          width: 220,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return Container(
+                              width: 220,
+                              height: 220,
+                              alignment: Alignment.center,
+                              child: const CircularProgressIndicator(color: AppColors.neonEmerald, strokeWidth: 2),
+                            );
+                          },
+                          errorBuilder: (context, error, stack) => Container(
+                            width: 220,
+                            height: 120,
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.broken_image_rounded, color: AppColors.textSecondary),
+                          ),
+                        ),
                       ),
-                    ),
+                    if (message.text.isNotEmpty || message.deleted)
+                      Padding(
+                        padding: hasImage ? const EdgeInsets.fromLTRB(8, 6, 8, 4) : EdgeInsets.zero,
+                        child: Text(
+                          message.deleted ? 'Паём нест карда шуд' : message.text,
+                          style: TextStyle(
+                            color: (isMe && !hasImage) ? AppColors.background : AppColors.textPrimary,
+                            fontSize: 14.5,
+                            height: 1.3,
+                            fontStyle: message.deleted ? FontStyle.italic : FontStyle.normal,
+                            fontWeight: (isMe && !hasImage) ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
