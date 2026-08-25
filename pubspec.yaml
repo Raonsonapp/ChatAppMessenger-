@@ -13,10 +13,14 @@ dependencies:
   # Иконкаҳои услуби iOS (стандартан бо flutter create меояд)
   cupertino_icons: ^1.0.8
 
-  # Firebase — асоси backend (Auth + Cloud Firestore)
+  # Firebase — асоси backend (Auth + Firestore + Storage)
   firebase_core: ^4.9.0
   firebase_auth: ^6.5.3
   cloud_firestore: ^6.6.0
+  firebase_storage: ^13.5.0
+
+  # Интихоби расм аз галерея/камера (барои паёмҳои расмӣ)
+  image_picker: ^1.2.3
 
 dev_dependencies:
   flutter_test:
