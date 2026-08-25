@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Ҳар ҳуҷҷат дар `.../messages` ба ин сохтор мувофиқат мекунад:
 /// { text, senderId, isAI, createdAt, replyToText?, replyToSenderId?,
-///   deleted?, read? }
+///   deleted?, read?, mediaUrl?, mediaType? }
 class ChatMessage {
   final String id;
   final String text;
@@ -13,6 +13,8 @@ class ChatMessage {
   final String? replyToSenderId;
   final bool deleted;
   final bool read;
+  final String? mediaUrl;
+  final String? mediaType;
 
   ChatMessage({
     required this.id,
@@ -24,6 +26,8 @@ class ChatMessage {
     this.replyToSenderId,
     this.deleted = false,
     this.read = false,
+    this.mediaUrl,
+    this.mediaType,
   });
 
   factory ChatMessage.fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -38,6 +42,8 @@ class ChatMessage {
       replyToSenderId: data['replyToSenderId'] as String?,
       deleted: (data['deleted'] ?? false) as bool,
       read: (data['read'] ?? false) as bool,
+      mediaUrl: data['mediaUrl'] as String?,
+      mediaType: data['mediaType'] as String?,
     );
   }
 }
