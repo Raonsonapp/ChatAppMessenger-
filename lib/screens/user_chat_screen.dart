@@ -13,9 +13,11 @@ import '../widgets/message_bubble.dart';
 import '../widgets/attachment_sheet.dart';
 import '../widgets/emoji_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
+import 'contact_info_screen.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
-/// Композитори WhatsApp: emoji + расм (галерея/камера) + контакт + reply/delete.
+/// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
+/// карда шуда бошад, майдони фиристодан хомӯш мешавад.
 class UserChatScreen extends StatefulWidget {
   final String conversationId;
   final String otherUserName;
@@ -182,6 +184,12 @@ class _UserChatScreenState extends State<UserChatScreen> {
     await _messagesRef.doc(message.id).update({'deleted': true});
   }
 
+  Future<void> _reactToMessage(ChatMessage message, String emoji) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await _messagesRef.doc(message.id).update({'reactions.$uid': emoji});
+  }
+
   void _markIncomingAsRead(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, String currentUid) {
     final unread = docs.where((d) {
       final data = d.data();
@@ -195,71 +203,116 @@ class _UserChatScreenState extends State<UserChatScreen> {
     });
   }
 
+  void _openContactInfo() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ContactInfoScreen(
+          conversationId: widget.conversationId,
+          otherUserId: widget.otherUserId,
+          otherUserName: widget.otherUserName,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
       body: NeonBackdrop(
         child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Text(
-                            'Хатои Firestore: ${snapshot.error}',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                          ),
-                        ),
-                      );
-                    }
-                    if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
-                    }
-                    final docs = snapshot.data!.docs;
-                    if (docs.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'Оғози сӯҳбат бо ${widget.otherUserName} кунед',
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                        ),
-                      );
-                    }
-                    if (currentUid != null) {
-                      _markIncomingAsRead(docs, currentUid);
-                    }
-                    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-                    return ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      itemCount: docs.length,
-                      itemBuilder: (context, index) {
-                        final message = ChatMessage.fromDoc(docs[index]);
-                        return MessageBubble(
-                          message: message,
-                          isMe: message.senderId == currentUid,
-                          onReply: (m) => setState(() => _replyingTo = m),
-                          onDelete: _deleteMessage,
+          child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance.collection('users').doc(currentUid).snapshots(),
+            builder: (context, userSnapshot) {
+              final blockedList = List<String>.from(userSnapshot.data?.data()?['blockedUsers'] as List? ?? []);
+              final iBlockedThem = blockedList.contains(widget.otherUserId);
+
+              return Column(
+                children: [
+                  _buildHeader(),
+                  Expanded(
+                    child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Text(
+                                'Хатои Firestore: ${snapshot.error}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                              ),
+                            ),
+                          );
+                        }
+                        if (!snapshot.hasData) {
+                          return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
+                        }
+                        final docs = snapshot.data!.docs;
+                        if (docs.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'Оғози сӯҳбат бо ${widget.otherUserName} кунед',
+                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                            ),
+                          );
+                        }
+                        if (currentUid.isNotEmpty) {
+                          _markIncomingAsRead(docs, currentUid);
+                        }
+                        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                        return ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          itemCount: docs.length,
+                          itemBuilder: (context, index) {
+                            final message = ChatMessage.fromDoc(docs[index]);
+                            return MessageBubble(
+                              message: message,
+                              isMe: message.senderId == currentUid,
+                              currentUid: currentUid,
+                              onReply: (m) => setState(() => _replyingTo = m),
+                              onDelete: _deleteMessage,
+                              onReact: _reactToMessage,
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                ),
-              ),
-              if (_replyingTo != null) _buildReplyPreview(),
-              _buildInputBar(),
-            ],
+                    ),
+                  ),
+                  if (_replyingTo != null && !iBlockedThem) _buildReplyPreview(),
+                  if (iBlockedThem) _buildBlockedBanner() else _buildInputBar(),
+                ],
+              );
+            },
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBlockedBanner() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 6, 14, 14),
+      child: GlassContainer(
+        borderRadius: 16,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            const Icon(Icons.block_rounded, color: Colors.redAccent, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Шумо ${widget.otherUserName}-ро манъ кардаед — паём фиристода наметавонед',
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -305,27 +358,37 @@ class _UserChatScreenState extends State<UserChatScreen> {
               onPressed: () => Navigator.pop(context),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 18),
             ),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.surface,
-                border: Border.all(color: AppColors.glassBorder),
-              ),
-              child: Center(
-                child: Text(
-                  widget.otherUserName.isNotEmpty ? widget.otherUserName[0].toUpperCase() : '?',
-                  style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 16),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                widget.otherUserName,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: _openContactInfo,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.surface,
+                        border: Border.all(color: AppColors.glassBorder),
+                      ),
+                      child: Center(
+                        child: Text(
+                          widget.otherUserName.isNotEmpty ? widget.otherUserName[0].toUpperCase() : '?',
+                          style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        widget.otherUserName,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             IconButton(
