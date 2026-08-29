@@ -4,8 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../models/chat_conversation.dart';
 import '../../models/app_conversation.dart';
+import '../../models/app_group.dart';
 import '../../widgets/chat_tile.dart';
 import '../../widgets/user_conversation_tile.dart';
+import '../../widgets/group_tile.dart';
 import '../../theme/app_theme.dart';
 
 class ChatsTab extends StatelessWidget {
@@ -20,7 +22,38 @@ class ChatsTab extends StatelessWidget {
       children: [
         const ChatTile(conversation: AppChats.aiAssistant, pinned: true),
         const SizedBox(height: 4),
-        if (currentUid != null)
+        if (currentUid != null) ...[
+          // Гурӯҳҳо
+          StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection('groups')
+                .where('members', arrayContains: currentUid)
+                .orderBy('lastMessageTime', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    'Хатои гурӯҳҳо (эҳтимол index лозим аст): ${snapshot.error}',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                  ),
+                );
+              }
+              if (!snapshot.hasData) return const SizedBox.shrink();
+              final docs = snapshot.data!.docs;
+              if (docs.isEmpty) return const SizedBox.shrink();
+              return Column(
+                children: docs.map((doc) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: GroupTile(group: AppGroup.fromDoc(doc)),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+          // Сӯҳбатҳои шахсӣ
           StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: FirebaseFirestore.instance
                 .collection('conversations')
@@ -65,6 +98,7 @@ class ChatsTab extends StatelessWidget {
               );
             },
           ),
+        ],
       ],
     );
   }
