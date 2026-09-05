@@ -15,10 +15,10 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
-subprojects {
-    project.evaluationDependsOn(":app")
-}
 
+// Ин бояд пеш аз `evaluationDependsOn(":app")` рӯй диҳад: он метавонад
+// баҳодиҳии ":app"-ро дарҳол маҷбур кунад, ва пас аз баҳодиҳӣ дигар
+// `afterEvaluate` рӯи он даъват кардан мумкин нест ("already evaluated").
 // Баъзе плагинҳои сеюмшахс (масалан agora_rtc_engine) ҳанӯз бо compileSdk-и
 // кӯҳна (31) меоянд, ки бо androidx-и навтарин (34+ талаб мекунад) мухолифат
 // мекунад ва checkReleaseAarMetadata-ро вайрон мекунад. Ҳамаи субпроектҳоро
@@ -29,6 +29,10 @@ subprojects {
             setProperty("compileSdk", 36)
         }
     }
+}
+
+subprojects {
+    project.evaluationDependsOn(":app")
 }
 
 tasks.register<Delete>("clean") {
