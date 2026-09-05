@@ -281,7 +281,7 @@ class _CallScreenState extends State<CallScreen> {
                             ? _formatDuration(_seconds)
                             : (widget.isCaller ? (isVideo ? 'Занги видеоӣ...' : 'Занг мезанад...') : 'Пайваст шудан...')),
                     style: TextStyle(
-                      color: (isVideo && connected) ? Colors.white70 : AppColors.textSecondary.withOpacity(0.85),
+                      color: (isVideo && connected) ? Colors.white70 : AppColors.textSecondary.withValues(alpha: 0.85),
                       fontSize: 14.5,
                     ),
                   ),
@@ -375,7 +375,7 @@ class _CallScreenState extends State<CallScreen> {
         height: 56,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: active ? AppColors.neonEmerald : Colors.white.withOpacity(0.15),
+          color: active ? AppColors.neonEmerald : Colors.white.withValues(alpha: 0.15),
           border: Border.all(color: Colors.white24),
         ),
         child: Icon(icon, color: active ? AppColors.background : Colors.white, size: 22),

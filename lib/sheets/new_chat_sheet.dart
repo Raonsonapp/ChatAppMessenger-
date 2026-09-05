@@ -194,7 +194,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Text(
                   'Ҳеҷ корбаре бо ин рақам/ном ёфт нашуд',
-                  style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 12.5),
+                  style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
                 ),
               )
             else

@@ -284,7 +284,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
       dense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       leading: CircleAvatar(
-        backgroundColor: AppColors.neonEmerald.withOpacity(0.14),
+        backgroundColor: AppColors.neonEmerald.withValues(alpha: 0.14),
         child: Icon(icon, color: AppColors.neonEmerald),
       ),
       title: Text(title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),

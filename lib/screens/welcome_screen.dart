@@ -35,7 +35,7 @@ class WelcomeScreen extends StatelessWidget {
                   'Барои идома додан, рақами телефони худро тасдиқ кунед',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColors.textSecondary.withOpacity(0.85),
+                    color: AppColors.textSecondary.withValues(alpha: 0.85),
                     fontSize: 14,
                   ),
                 ),

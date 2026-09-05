@@ -65,7 +65,7 @@ class DiscoverChannelsScreen extends StatelessWidget {
                           child: Text(
                             'Ягон канал ҳанӯз сохта нашудааст. Аввалин канали худро созед!',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 13),
+                            style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 13),
                           ),
                         ),
                       );

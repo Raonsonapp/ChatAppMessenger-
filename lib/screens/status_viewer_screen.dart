@@ -115,7 +115,7 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
                   right: 0,
                   bottom: 40,
                   child: Container(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     child: Text(status.text!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 15)),
                   ),
@@ -131,7 +131,7 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
                         height: 3,
                         margin: const EdgeInsets.symmetric(horizontal: 2),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(2),
                         ),
                         child: FractionallySizedBox(

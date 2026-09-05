@@ -64,7 +64,7 @@ class IncomingCallScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   isVideo ? 'Занги видеоии воридотӣ...' : 'Занги воридотӣ...',
-                  style: TextStyle(color: AppColors.textSecondary.withOpacity(0.85), fontSize: 14.5),
+                  style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.85), fontSize: 14.5),
                 ),
                 const Spacer(),
                 Padding(

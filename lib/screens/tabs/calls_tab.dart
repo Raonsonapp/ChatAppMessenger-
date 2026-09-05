@@ -46,14 +46,14 @@ class CallsTab extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(LucideIcons.phone, color: AppColors.textSecondary.withOpacity(0.5), size: 48),
+                  Icon(LucideIcons.phone, color: AppColors.textSecondary.withValues(alpha: 0.5), size: 48),
                   const SizedBox(height: 16),
                   const Text('Ягон занг нест', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 8),
                   Text(
                     'Зангҳои шумо дар ин ҷо намоён мешаванд',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 13),
+                    style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 13),
                   ),
                 ],
               ),

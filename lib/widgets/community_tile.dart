@@ -67,7 +67,7 @@ class CommunityTile extends StatelessWidget {
                         ),
                         Text(
                           _formatTime(community.lastMessageTime),
-                          style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 11.5),
+                          style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 11.5),
                         ),
                       ],
                     ),

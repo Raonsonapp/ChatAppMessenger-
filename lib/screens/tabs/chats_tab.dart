@@ -83,7 +83,7 @@ class ChatsTab extends StatelessWidget {
                   child: Text(
                     'Ҳанӯз чат надоред — тугмаи "+" -ро пахш карда корбарро ёбед',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 12.5),
+                    style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
                   ),
                 );
               }

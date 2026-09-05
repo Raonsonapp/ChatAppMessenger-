@@ -283,7 +283,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
-            Container(width: 3, height: 30, color: AppColors.neonCyan.withOpacity(0.7)),
+            Container(width: 3, height: 30, color: AppColors.neonCyan.withValues(alpha: 0.7)),
             const SizedBox(width: 8),
             Expanded(
               child: Text(

@@ -75,7 +75,7 @@ class UserConversationTile extends StatelessWidget {
                         ),
                         Text(
                           _formatTime(conversation.lastMessageTime),
-                          style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 11.5),
+                          style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 11.5),
                         ),
                       ],
                     ),

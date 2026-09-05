@@ -287,7 +287,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
-            Container(width: 3, height: 30, color: AppColors.neonCyan.withOpacity(0.7)),
+            Container(width: 3, height: 30, color: AppColors.neonCyan.withValues(alpha: 0.7)),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -329,7 +329,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             Text(
               'Савол диҳед, ё яке аз инҳоро озмоед',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 12.5),
+              style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
             ),
             const SizedBox(height: 20),
             Row(

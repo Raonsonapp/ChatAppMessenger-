@@ -159,7 +159,7 @@ class ContactInfoScreen extends StatelessWidget {
                                   SwitchListTile(
                                     value: isMuted,
                                     onChanged: (_) => _toggleMute(isMuted),
-                                    activeColor: AppColors.neonEmerald,
+                                    activeThumbColor: AppColors.neonEmerald,
                                     title: const Text(
                                       'Хомӯш кардани огоҳиномаҳо',
                                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),

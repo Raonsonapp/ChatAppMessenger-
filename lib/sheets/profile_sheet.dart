@@ -110,7 +110,7 @@ class ProfileSheet extends StatelessWidget {
               Expanded(
                 child: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
               ),
-              Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withOpacity(0.6), size: 17),
+              Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 17),
             ],
           ),
         ),

@@ -22,8 +22,8 @@ class NeonBackdrop extends StatelessWidget {
             ),
           ),
         ),
-        Positioned(top: -80, left: -60, child: _blurCircle(AppColors.neonEmerald.withOpacity(0.25), 220)),
-        Positioned(bottom: -100, right: -70, child: _blurCircle(AppColors.neonCyan.withOpacity(0.20), 260)),
+        Positioned(top: -80, left: -60, child: _blurCircle(AppColors.neonEmerald.withValues(alpha: 0.25), 220)),
+        Positioned(bottom: -100, right: -70, child: _blurCircle(AppColors.neonCyan.withValues(alpha: 0.20), 260)),
         Positioned.fill(child: child),
       ],
     );

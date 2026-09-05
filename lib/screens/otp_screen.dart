@@ -98,7 +98,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Ба ${widget.phoneNumber} SMS фиристода шуд',
-                  style: TextStyle(color: AppColors.textSecondary.withOpacity(0.85), fontSize: 13),
+                  style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.85), fontSize: 13),
                 ),
                 const SizedBox(height: 28),
                 GlassContainer(

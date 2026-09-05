@@ -33,7 +33,7 @@ class _TypingBubbleState extends State<TypingBubble> with SingleTickerProviderSt
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.glassFill,
-          border: Border.all(color: AppColors.neonCyan.withOpacity(0.4)),
+          border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.4)),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(18),
             topRight: Radius.circular(18),

@@ -127,7 +127,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
           Expanded(
             child: Text(title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
           ),
-          Switch(value: value, onChanged: onChanged, activeColor: AppColors.neonEmerald),
+          Switch(value: value, onChanged: onChanged, activeThumbColor: AppColors.neonEmerald),
         ],
       ),
     );

@@ -16,7 +16,7 @@ class AppLogo extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: AppColors.neonGradient,
         boxShadow: [
-          BoxShadow(color: AppColors.neonEmerald.withOpacity(0.5), blurRadius: 16, spreadRadius: 0.5),
+          BoxShadow(color: AppColors.neonEmerald.withValues(alpha: 0.5), blurRadius: 16, spreadRadius: 0.5),
         ],
       ),
       child: Icon(LucideIcons.zap, color: AppColors.background, size: size * 0.55),

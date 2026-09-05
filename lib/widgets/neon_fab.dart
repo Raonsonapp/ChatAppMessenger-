@@ -19,7 +19,7 @@ class NeonFab extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: AppColors.neonGradient,
         boxShadow: [
-          BoxShadow(color: AppColors.neonEmerald.withOpacity(0.5), blurRadius: 20, spreadRadius: 1),
+          BoxShadow(color: AppColors.neonEmerald.withValues(alpha: 0.5), blurRadius: 20, spreadRadius: 1),
         ],
       ),
       child: Material(

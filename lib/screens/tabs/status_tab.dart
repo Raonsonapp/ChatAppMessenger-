@@ -84,7 +84,7 @@ class StatusTab extends StatelessWidget {
                         const Text('Тарихи ман', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
                         Text(
                           hasStatus ? '${myItems.length} навсозӣ · барои дидан зер кунед' : 'Барои иловаи навсозӣ зер кунед',
-                          style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 12.5),
+                          style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
                         ),
                       ],
                     ),
@@ -98,7 +98,7 @@ class StatusTab extends StatelessWidget {
         Text(
           'НАВСОЗИҲОИ ОХИРИН',
           style: TextStyle(
-            color: AppColors.textSecondary.withOpacity(0.6),
+            color: AppColors.textSecondary.withValues(alpha: 0.6),
             fontSize: 11.5,
             letterSpacing: 1.2,
             fontWeight: FontWeight.w600,
@@ -124,7 +124,7 @@ class StatusTab extends StatelessWidget {
             if (owners.isEmpty) {
               return Text(
                 'Навсозиҳои дӯстони шумо дар ин ҷо намоён мешаванд',
-                style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 12.5),
+                style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 12.5),
               );
             }
             return Column(
@@ -138,7 +138,7 @@ class StatusTab extends StatelessWidget {
           children: [
             Text(
               'КАНАЛҲО',
-              style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 11.5, letterSpacing: 1.2, fontWeight: FontWeight.w600),
+              style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6), fontSize: 11.5, letterSpacing: 1.2, fontWeight: FontWeight.w600),
             ),
             GestureDetector(
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DiscoverChannelsScreen())),
@@ -155,7 +155,7 @@ class StatusTab extends StatelessWidget {
             if (channels.isEmpty) {
               return Text(
                 'Шумо ба ягон канал обуна нашудаед',
-                style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 12.5),
+                style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 12.5),
               );
             }
             return Column(
@@ -262,7 +262,7 @@ class _OtherStatusRow extends StatelessWidget {
                         Text(ownerName, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
                         Text(
                           '${items.length} навсозӣ',
-                          style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 12.5),
+                          style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
                         ),
                       ],
                     ),
@@ -271,7 +271,7 @@ class _OtherStatusRow extends StatelessWidget {
                     latest.createdAt == null
                         ? ''
                         : '${latest.createdAt!.hour.toString().padLeft(2, '0')}:${latest.createdAt!.minute.toString().padLeft(2, '0')}',
-                    style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 11.5),
+                    style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 11.5),
                   ),
                 ],
               ),

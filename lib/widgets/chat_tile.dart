@@ -114,11 +114,11 @@ class ChatTile extends StatelessWidget {
                               ),
                             ),
                             if (pinned)
-                              Icon(LucideIcons.bookmark, size: 13, color: AppColors.textSecondary.withOpacity(0.6))
+                              Icon(LucideIcons.bookmark, size: 13, color: AppColors.textSecondary.withValues(alpha: 0.6))
                             else
                               Text(
                                 time,
-                                style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 11.5),
+                                style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 11.5),
                               ),
                           ],
                         ),

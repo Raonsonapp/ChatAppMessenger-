@@ -142,14 +142,14 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
               children: [
                 Text(title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                 const SizedBox(height: 2),
-                Text(subtitle, style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 11.5)),
+                Text(subtitle, style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 11.5)),
               ],
             ),
           ),
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.neonEmerald,
+            activeThumbColor: AppColors.neonEmerald,
           ),
         ],
       ),

@@ -98,7 +98,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Мо ба ин рақам SMS бо рамзи тасдиқ мефиристем',
-                  style: TextStyle(color: AppColors.textSecondary.withOpacity(0.85), fontSize: 13),
+                  style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.85), fontSize: 13),
                 ),
                 const SizedBox(height: 28),
                 GlassContainer(

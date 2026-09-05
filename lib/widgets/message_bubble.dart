@@ -138,7 +138,7 @@ class MessageBubble extends StatelessWidget {
                     children: [
                       Icon(LucideIcons.zap, size: 11, color: AppColors.neonCyan),
                       const SizedBox(width: 4),
-                      Text('ChatAI', style: TextStyle(fontSize: 10, color: AppColors.neonCyan.withOpacity(0.9))),
+                      Text('ChatAI', style: TextStyle(fontSize: 10, color: AppColors.neonCyan.withValues(alpha: 0.9))),
                     ],
                   ),
                 )
@@ -147,7 +147,7 @@ class MessageBubble extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 8, bottom: 3),
                   child: Text(
                     senderLabel!,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.neonCyan.withOpacity(0.85)),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.neonCyan.withValues(alpha: 0.85)),
                   ),
                 ),
               Stack(
@@ -166,14 +166,14 @@ class MessageBubble extends StatelessWidget {
                             color: (isMe && !message.deleted && !hasImage) ? null : AppColors.glassFill,
                             border: isMe
                                 ? null
-                                : Border.all(color: isAI ? AppColors.neonCyan.withOpacity(0.4) : AppColors.glassBorder),
+                                : Border.all(color: isAI ? AppColors.neonCyan.withValues(alpha: 0.4) : AppColors.glassBorder),
                             borderRadius: BorderRadius.only(
                               topLeft: const Radius.circular(18),
                               topRight: const Radius.circular(18),
                               bottomLeft: Radius.circular(isMe ? 18 : 4),
                               bottomRight: Radius.circular(isMe ? 4 : 18),
                             ),
-                            boxShadow: isAI ? [BoxShadow(color: AppColors.neonCyan.withOpacity(0.15), blurRadius: 12)] : null,
+                            boxShadow: isAI ? [BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.15), blurRadius: 12)] : null,
                           ),
                     child: isSticker
                         ? Text(message.text, style: const TextStyle(fontSize: 92))
@@ -186,16 +186,16 @@ class MessageBubble extends StatelessWidget {
                             margin: EdgeInsets.only(bottom: 6, left: hasImage ? 4 : 0, right: hasImage ? 4 : 0, top: hasImage ? 4 : 0),
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.15),
+                              color: Colors.black.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border(left: BorderSide(color: AppColors.neonCyan.withOpacity(0.7), width: 2.5)),
+                              border: Border(left: BorderSide(color: AppColors.neonCyan.withValues(alpha: 0.7), width: 2.5)),
                             ),
                             child: Text(
                               message.replyToText!,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: (isMe && !hasImage ? AppColors.background : AppColors.textPrimary).withOpacity(0.75),
+                                color: (isMe && !hasImage ? AppColors.background : AppColors.textPrimary).withValues(alpha: 0.75),
                                 fontSize: 12,
                                 fontStyle: FontStyle.italic,
                               ),
@@ -269,7 +269,7 @@ class MessageBubble extends StatelessWidget {
                   children: [
                     Text(
                       _formatTime(message.timestamp),
-                      style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 10),
+                      style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6), fontSize: 10),
                     ),
                     if (isMe && !isAI && showReadReceipts) ...[
                       const SizedBox(width: 3),
@@ -288,7 +288,7 @@ class MessageBubble extends StatelessWidget {
   /// Feather надорад иконаи "ду галочка"-и WhatsApp — бо ду
   /// LucideIcons.check-и рӯйиҳамафтода шабеҳсозӣ мешавад.
   Widget _buildReadReceipt() {
-    final color = message.read ? AppColors.neonEmerald : AppColors.textSecondary.withOpacity(0.6);
+    final color = message.read ? AppColors.neonEmerald : AppColors.textSecondary.withValues(alpha: 0.6);
     if (!message.read) {
       return Icon(LucideIcons.check, size: 13, color: color);
     }

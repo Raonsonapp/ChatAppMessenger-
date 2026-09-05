@@ -46,14 +46,14 @@ class CommunitiesTab extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(LucideIcons.hash, color: AppColors.textSecondary.withOpacity(0.5), size: 48),
+                  Icon(LucideIcons.hash, color: AppColors.textSecondary.withValues(alpha: 0.5), size: 48),
                   const SizedBox(height: 16),
                   const Text('Ягон ҷамъият нест', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 8),
                   Text(
                     'Ҷамъиятҳо якчанд гурӯҳро дар як ҷо ҷамъ мекунанд',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 13),
+                    style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 13),
                   ),
                   const SizedBox(height: 20),
                   OutlinedButton.icon(
