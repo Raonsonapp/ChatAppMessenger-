@@ -5,8 +5,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../theme/app_theme.dart';
 import '../../models/app_status.dart';
+import '../../models/app_channel.dart';
 import '../create_status_screen.dart';
 import '../status_viewer_screen.dart';
+import '../channel_screen.dart';
+import '../discover_channels_screen.dart';
 
 class StatusTab extends StatelessWidget {
   const StatusTab({super.key});
@@ -126,6 +129,73 @@ class StatusTab extends StatelessWidget {
             }
             return Column(
               children: owners.map((doc) => _OtherStatusRow(ownerId: doc.id, currentUid: currentUid)).toList(),
+            );
+          },
+        ),
+        const SizedBox(height: 30),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'КАНАЛҲО',
+              style: TextStyle(color: AppColors.textSecondary.withOpacity(0.6), fontSize: 11.5, letterSpacing: 1.2, fontWeight: FontWeight.w600),
+            ),
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DiscoverChannelsScreen())),
+              child: const Text('Кашф кардан', style: TextStyle(color: AppColors.neonEmerald, fontSize: 12.5, fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance.collection('channels').where('followers', arrayContains: currentUid).limit(50).snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const SizedBox.shrink();
+            final channels = snapshot.data!.docs.map(AppChannel.fromDoc).toList();
+            if (channels.isEmpty) {
+              return Text(
+                'Шумо ба ягон канал обуна нашудаед',
+                style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 12.5),
+              );
+            }
+            return Column(
+              children: channels.map((channel) {
+                return Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChannelScreen(channelId: channel.id))),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.surface, border: Border.all(color: AppColors.glassBorder)),
+                            child: const Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 20),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(channel.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
+                                Text(
+                                  channel.lastMessage.isEmpty ? '${channel.followers.length} обунашуда' : channel.lastMessage,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             );
           },
         ),

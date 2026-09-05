@@ -12,7 +12,15 @@ import '../services/media_service.dart';
 class AttachmentSheet extends StatelessWidget {
   final ValueChanged<XFile> onImagePicked;
   final VoidCallback onContactTap;
-  const AttachmentSheet({super.key, required this.onImagePicked, required this.onContactTap});
+  final ValueChanged<XFile>? onGifPicked;
+  final VoidCallback? onStickerTap;
+  const AttachmentSheet({
+    super.key,
+    required this.onImagePicked,
+    required this.onContactTap,
+    this.onGifPicked,
+    this.onStickerTap,
+  });
 
   Future<void> _pickGallery(BuildContext context) async {
     final file = await MediaService.pickFromGallery();
@@ -32,6 +40,15 @@ class AttachmentSheet extends StatelessWidget {
     }
   }
 
+  Future<void> _pickGif(BuildContext context) async {
+    final file = await MediaService.pickGif();
+    if (!context.mounted) return;
+    if (file != null) {
+      Navigator.pop(context);
+      onGifPicked?.call(file);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -48,8 +65,9 @@ class AttachmentSheet extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 18),
               decoration: BoxDecoration(color: AppColors.glassBorder, borderRadius: BorderRadius.circular(4)),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Wrap(
+              alignment: WrapAlignment.spaceEvenly,
+              runSpacing: 16,
               children: [
                 _item(
                   icon: LucideIcons.image,
@@ -72,6 +90,23 @@ class AttachmentSheet extends StatelessWidget {
                     onContactTap();
                   },
                 ),
+                if (onGifPicked != null)
+                  _item(
+                    icon: LucideIcons.clapperboard,
+                    color: const Color(0xFF2FAE60),
+                    label: 'GIF',
+                    onTap: () => _pickGif(context),
+                  ),
+                if (onStickerTap != null)
+                  _item(
+                    icon: LucideIcons.sticker,
+                    color: const Color(0xFFE0A429),
+                    label: 'Стикер',
+                    onTap: () {
+                      Navigator.pop(context);
+                      onStickerTap!();
+                    },
+                  ),
               ],
             ),
           ],

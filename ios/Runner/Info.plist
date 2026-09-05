@@ -34,6 +34,11 @@
 	<string>ChatApp барои зангҳои овозӣ ва видеоӣ ба микрофон дастрасӣ лозим дорад</string>
 	<key>NSContactsUsageDescription</key>
 	<string>ChatApp барои ёфтани дӯстони шумо дар барнома ба контактҳо дастрасӣ лозим дорад</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>voip</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

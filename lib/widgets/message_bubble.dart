@@ -116,7 +116,8 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAI = message.isAI;
-    final hasImage = !message.deleted && message.mediaUrl != null && message.mediaType == 'image';
+    final isSticker = !message.deleted && message.mediaType == 'sticker';
+    final hasImage = !message.deleted && message.mediaUrl != null && (message.mediaType == 'image' || message.mediaType == 'gif');
     final distinctReactions = message.reactions.values.toSet().toList();
 
     return GestureDetector(
@@ -153,24 +154,30 @@ class MessageBubble extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   Container(
-                    padding: hasImage
-                        ? const EdgeInsets.all(4)
-                        : const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                    decoration: BoxDecoration(
-                      gradient: (isMe && !message.deleted && !hasImage) ? AppColors.neonGradient : null,
-                      color: (isMe && !message.deleted && !hasImage) ? null : AppColors.glassFill,
-                      border: isMe
-                          ? null
-                          : Border.all(color: isAI ? AppColors.neonCyan.withOpacity(0.4) : AppColors.glassBorder),
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(18),
-                        topRight: const Radius.circular(18),
-                        bottomLeft: Radius.circular(isMe ? 18 : 4),
-                        bottomRight: Radius.circular(isMe ? 4 : 18),
-                      ),
-                      boxShadow: isAI ? [BoxShadow(color: AppColors.neonCyan.withOpacity(0.15), blurRadius: 12)] : null,
-                    ),
-                    child: Column(
+                    padding: isSticker
+                        ? EdgeInsets.zero
+                        : hasImage
+                            ? const EdgeInsets.all(4)
+                            : const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                    decoration: isSticker
+                        ? null
+                        : BoxDecoration(
+                            gradient: (isMe && !message.deleted && !hasImage) ? AppColors.neonGradient : null,
+                            color: (isMe && !message.deleted && !hasImage) ? null : AppColors.glassFill,
+                            border: isMe
+                                ? null
+                                : Border.all(color: isAI ? AppColors.neonCyan.withOpacity(0.4) : AppColors.glassBorder),
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(18),
+                              topRight: const Radius.circular(18),
+                              bottomLeft: Radius.circular(isMe ? 18 : 4),
+                              bottomRight: Radius.circular(isMe ? 4 : 18),
+                            ),
+                            boxShadow: isAI ? [BoxShadow(color: AppColors.neonCyan.withOpacity(0.15), blurRadius: 12)] : null,
+                          ),
+                    child: isSticker
+                        ? Text(message.text, style: const TextStyle(fontSize: 92))
+                        : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [

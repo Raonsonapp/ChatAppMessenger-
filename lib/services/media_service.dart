@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 /// САБТ: интихоби воқеии расм аз галерея/камера ва боркунии воқеӣ ба
@@ -13,6 +14,15 @@ class MediaService {
 
   static Future<XFile?> pickFromCamera() {
     return _picker.pickImage(source: ImageSource.camera, imageQuality: 80, maxWidth: 1600);
+  }
+
+  /// Интихоби файли GIF бе фишурдасозӣ (тавассути file_picker), то
+  /// анимация вайрон нашавад.
+  static Future<XFile?> pickGif() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['gif']);
+    final path = result?.files.single.path;
+    if (path == null) return null;
+    return XFile(path);
   }
 
   /// Боркунии расм ба Firebase Storage, бозгашти URL-и воқеӣ

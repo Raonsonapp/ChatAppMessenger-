@@ -13,6 +13,7 @@ import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/attachment_sheet.dart';
 import '../widgets/emoji_picker_sheet.dart';
+import '../widgets/sticker_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
 import 'contact_info_screen.dart';
 import 'call_screen.dart';
@@ -90,8 +91,37 @@ class _UserChatScreenState extends State<UserChatScreen> {
       builder: (_) => AttachmentSheet(
         onImagePicked: _sendImageMessage,
         onContactTap: _openContactPicker,
+        onGifPicked: (file) => _sendImageMessage(file, mediaType: 'gif'),
+        onStickerTap: _openStickerPicker,
       ),
     );
+  }
+
+  void _openStickerPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => StickerPickerSheet(onStickerSelected: _sendSticker),
+    );
+  }
+
+  Future<void> _sendSticker(String sticker) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await _messagesRef.add({
+      'text': sticker,
+      'senderId': uid,
+      'isAI': false,
+      'createdAt': FieldValue.serverTimestamp(),
+      'read': false,
+      'mediaType': 'sticker',
+    });
+    await _conversationRef.set({
+      'lastMessage': '$sticker Стикер',
+      'lastMessageTime': FieldValue.serverTimestamp(),
+      'lastSenderId': uid,
+    }, SetOptions(merge: true));
+    _scrollToBottom();
   }
 
   void _openContactPicker() {
@@ -122,7 +152,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
     _scrollToBottom();
   }
 
-  Future<void> _sendImageMessage(XFile file) async {
+  Future<void> _sendImageMessage(XFile file, {String mediaType = 'image'}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     setState(() => _isUploading = true);
@@ -135,7 +165,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         'createdAt': FieldValue.serverTimestamp(),
         'read': false,
         'mediaUrl': url,
-        'mediaType': 'image',
+        'mediaType': mediaType,
       });
       await _conversationRef.set({
         'lastMessage': '📷 Расм',
@@ -431,6 +461,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
                   IconButton(
                     onPressed: _openEmojiPicker,
                     icon: const Icon(LucideIcons.face_slightly_smiling, color: AppColors.textSecondary, size: 21),
+                  ),
+                  IconButton(
+                    onPressed: _openStickerPicker,
+                    icon: const Icon(LucideIcons.sticker, color: AppColors.textSecondary, size: 20),
                   ),
                   Expanded(
                     child: TextField(

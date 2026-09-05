@@ -17,13 +17,20 @@ dependencies:
   flutter_lucide: ^1.41.0
 
   # Firebase — асоси backend (Auth + Firestore + Storage)
-  firebase_core: ^4.9.0
+  firebase_core: ^4.14.0
   firebase_auth: ^6.5.3
   cloud_firestore: ^6.6.0
   firebase_storage: ^13.5.0
 
+  # Push-огоҳиномаҳои воқеӣ (паём, занг) — мисли WhatsApp дар паснамо низ
+  firebase_messaging: ^16.6.0
+  flutter_local_notifications: ^22.3.0
+
   # Интихоби расм аз галерея/камера (барои паёмҳои расмӣ)
   image_picker: ^1.2.3
+
+  # Интихоби файли GIF бе фишурдасозӣ
+  file_picker: ^12.2.0
 
   # Контактҳои воқеии телефон (барои интихоби корбар ҳангоми чати нав)
   flutter_contacts: ^1.1.9+2

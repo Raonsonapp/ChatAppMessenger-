@@ -16,6 +16,7 @@ import '../widgets/message_bubble.dart';
 import '../widgets/typing_bubble.dart';
 import '../widgets/attachment_sheet.dart';
 import '../widgets/emoji_picker_sheet.dart';
+import '../widgets/sticker_picker_sheet.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final ChatConversation conversation;
@@ -99,11 +100,36 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       builder: (_) => AttachmentSheet(
         onImagePicked: _sendImageMessage,
         onContactTap: () => showComingSoonSnack(context, 'Мубодилаи контакт дар ChatAI'),
+        onGifPicked: (file) => _sendImageMessage(file, mediaType: 'gif'),
+        onStickerTap: _openStickerPicker,
       ),
     );
   }
 
-  Future<void> _sendImageMessage(XFile file) async {
+  void _openStickerPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => StickerPickerSheet(onStickerSelected: _sendSticker),
+    );
+  }
+
+  Future<void> _sendSticker(String sticker) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+    await _messagesRef.add({
+      'text': sticker,
+      'senderId': uid,
+      'isAI': false,
+      'createdAt': FieldValue.serverTimestamp(),
+      'mediaType': 'sticker',
+    });
+    _scrollToBottom();
+    if (widget.conversation.isAIChat) {
+      _simulateAIReply();
+    }
+  }
+
+  Future<void> _sendImageMessage(XFile file, {String mediaType = 'image'}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
     setState(() => _isUploading = true);
     try {
@@ -114,7 +140,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         'isAI': false,
         'createdAt': FieldValue.serverTimestamp(),
         'mediaUrl': url,
-        'mediaType': 'image',
+        'mediaType': mediaType,
       });
       _scrollToBottom();
       if (widget.conversation.isAIChat) {
@@ -123,7 +149,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Хатои боркунии расм: $e')),
+          SnackBar(content: Text('Хатои боркунӣ: $e')),
         );
       }
     } finally {
@@ -428,6 +454,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   IconButton(
                     onPressed: _openEmojiPicker,
                     icon: const Icon(LucideIcons.face_slightly_smiling, color: AppColors.textSecondary, size: 21),
+                  ),
+                  IconButton(
+                    onPressed: _openStickerPicker,
+                    icon: const Icon(LucideIcons.sticker, color: AppColors.textSecondary, size: 20),
                   ),
                   Expanded(
                     child: TextField(
