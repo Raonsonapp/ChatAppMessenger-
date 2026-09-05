@@ -21,12 +21,17 @@ subprojects {
 // `afterEvaluate` рӯи он даъват кардан мумкин нест ("already evaluated").
 // Баъзе плагинҳои сеюмшахс (масалан agora_rtc_engine) ҳанӯз бо compileSdk-и
 // кӯҳна (31) меоянд, ки бо androidx-и навтарин (34+ талаб мекунад) мухолифат
-// мекунад ва checkReleaseAarMetadata-ро вайрон мекунад. Ҳамаи субпроектҳоро
-// маҷбур мекунем, ки бо compileSdk 36 компилятсия шаванд.
+// мекунад ва checkReleaseAarMetadata-ро вайрон мекунад. Аммо баъзе плагинҳои
+// дигар (масалан permission_handler_android) аллакай бо compileSdk 37 худашон
+// эълон мекунанд (барои рамзҳои SDK-и нав), бинобар ин бояд ФАҚАТ баланд
+// кунем (ҳеҷ гоҳ паст накунем) — ба ҷои маҷбур кардани як адади собит.
 subprojects {
     afterEvaluate {
         extensions.findByName("android")?.withGroovyBuilder {
-            setProperty("compileSdk", 36)
+            val current = getProperty("compileSdk") as? Int ?: 0
+            if (current < 37) {
+                setProperty("compileSdk", 37)
+            }
         }
     }
 }

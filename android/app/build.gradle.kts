@@ -16,8 +16,9 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.example.chatapp"
     // Agora RTC-и воқеӣ (androidx.fragment/window/lifecycle-и навтарин) ба
-    // compileSdk 34+ ниёз дорад — flutter.compileSdkVersion кофӣ нест.
-    compileSdk = 36
+    // compileSdk 34+ ниёз дорад, ва permission_handler_android 14.1.0 худаш
+    // 37-ро эълон мекунад — flutter.compileSdkVersion кофӣ нест.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
