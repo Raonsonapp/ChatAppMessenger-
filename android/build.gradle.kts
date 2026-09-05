@@ -19,6 +19,18 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Баъзе плагинҳои сеюмшахс (масалан agora_rtc_engine) ҳанӯз бо compileSdk-и
+// кӯҳна (31) меоянд, ки бо androidx-и навтарин (34+ талаб мекунад) мухолифат
+// мекунад ва checkReleaseAarMetadata-ро вайрон мекунад. Ҳамаи субпроектҳоро
+// маҷбур мекунем, ки бо compileSdk 36 компилятсия шаванд.
+subprojects {
+    afterEvaluate {
+        extensions.findByName("android")?.withGroovyBuilder {
+            setProperty("compileSdk", 36)
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
