@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/neon_backdrop.dart';
+import '../widgets/incoming_call_listener.dart';
 import 'chat_list_screen.dart';
 import 'welcome_screen.dart';
 
@@ -27,7 +28,7 @@ class AuthGate extends StatelessWidget {
           );
         }
         if (snapshot.hasData) {
-          return const ChatListScreen();
+          return const IncomingCallListener(child: ChatListScreen());
         }
         return const WelcomeScreen();
       },

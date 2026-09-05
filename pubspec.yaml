@@ -28,6 +28,10 @@ dependencies:
   # Контактҳои воқеии телефон (барои интихоби корбар ҳангоми чати нав)
   flutter_contacts: ^1.1.9+2
 
+  # Занги воқеии садоӣ/видеоӣ (Agora RTC)
+  agora_rtc_engine: ^6.6.4
+  permission_handler: ^13.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
