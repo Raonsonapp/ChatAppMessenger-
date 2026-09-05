@@ -6,17 +6,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
-import 'group_chat_screen.dart';
+import 'community_chat_screen.dart';
 
-class CreateGroupScreen extends StatefulWidget {
-  const CreateGroupScreen({super.key});
+/// Сохтани ҷамъияти воқеӣ дар Cloud Firestore (`communities/{id}`) —
+/// монанди CreateGroupScreen, вале бо тавсиф.
+class CreateCommunityScreen extends StatefulWidget {
+  const CreateCommunityScreen({super.key});
 
   @override
-  State<CreateGroupScreen> createState() => _CreateGroupScreenState();
+  State<CreateCommunityScreen> createState() => _CreateCommunityScreenState();
 }
 
-class _CreateGroupScreenState extends State<CreateGroupScreen> {
+class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, String>> _results = [];
   final Map<String, String> _selected = {};
@@ -27,6 +30,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _descController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -68,14 +72,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     });
   }
 
-  Future<void> _createGroup() async {
+  Future<void> _createCommunity() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Номи гурӯҳро ворид кунед');
-      return;
-    }
-    if (_selected.length < 2) {
-      setState(() => _error = 'Ҳадди ақал 2 корбар интихоб кунед');
+      setState(() => _error = 'Номи ҷамъиятро ворид кунед');
       return;
     }
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
@@ -92,9 +92,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     final members = [currentUid, ..._selected.keys];
     final memberNames = {currentUid: myName, ..._selected};
 
-    // САБТ: сохтани воқеии гурӯҳ дар Cloud Firestore
-    final groupDoc = await FirebaseFirestore.instance.collection('groups').add({
+    final doc = await FirebaseFirestore.instance.collection('communities').add({
       'name': name,
+      'description': _descController.text.trim(),
       'members': members,
       'memberNames': memberNames,
       'admins': [currentUid],
@@ -108,7 +108,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => GroupChatScreen(groupId: groupDoc.id, groupName: name, memberNames: memberNames),
+        builder: (_) => CommunityChatScreen(communityId: doc.id, communityName: name, memberNames: memberNames),
       ),
     );
   }
@@ -130,7 +130,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    const Text('Гурӯҳи нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
+                    const Text('Ҷамъияти нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
                   ],
                 ),
               ),
@@ -143,7 +143,26 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     controller: _nameController,
                     style: const TextStyle(color: AppColors.textPrimary),
                     decoration: const InputDecoration(
-                      hintText: 'Номи гурӯҳ',
+                      hintText: 'Номи ҷамъият',
+                      hintStyle: TextStyle(color: AppColors.textSecondary),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GlassContainer(
+                  borderRadius: 14,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  child: TextField(
+                    controller: _descController,
+                    style: const TextStyle(color: AppColors.textPrimary),
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      hintText: 'Тавсиф (ихтиёрӣ)',
                       hintStyle: TextStyle(color: AppColors.textSecondary),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -246,10 +265,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    onPressed: _isCreating ? null : _createGroup,
+                    onPressed: _isCreating ? null : _createCommunity,
                     child: _isCreating
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
-                        : const Text('Сохтани гурӯҳ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        : const Text('Сохтани ҷамъият', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ),
               ),

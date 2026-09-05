@@ -7,30 +7,29 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 
-/// Маълумоти воқеии гурӯҳ — аъзоён аз Firestore, амалҳои admin воқеан
-/// дар `groups/{id}` сабт мешаванд (на fake).
-class GroupInfoScreen extends StatelessWidget {
-  final String groupId;
-  const GroupInfoScreen({super.key, required this.groupId});
+/// Маълумоти воқеии ҷамъият — сохти монанд ба GroupInfoScreen.
+class CommunityInfoScreen extends StatelessWidget {
+  final String communityId;
+  const CommunityInfoScreen({super.key, required this.communityId});
 
-  DocumentReference<Map<String, dynamic>> get _groupRef =>
-      FirebaseFirestore.instance.collection('groups').doc(groupId);
+  DocumentReference<Map<String, dynamic>> get _communityRef =>
+      FirebaseFirestore.instance.collection('communities').doc(communityId);
 
-  Future<void> _promote(String uid) => _groupRef.update({
+  Future<void> _promote(String uid) => _communityRef.update({
         'admins': FieldValue.arrayUnion([uid]),
       });
 
-  Future<void> _demote(String uid) => _groupRef.update({
+  Future<void> _demote(String uid) => _communityRef.update({
         'admins': FieldValue.arrayRemove([uid]),
       });
 
-  Future<void> _removeMember(String uid) => _groupRef.update({
+  Future<void> _removeMember(String uid) => _communityRef.update({
         'members': FieldValue.arrayRemove([uid]),
         'admins': FieldValue.arrayRemove([uid]),
         'memberNames.$uid': FieldValue.delete(),
       });
 
-  Future<void> _leaveGroup(BuildContext context) async {
+  Future<void> _leaveCommunity(BuildContext context) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     await _removeMember(uid);
@@ -45,7 +44,7 @@ class GroupInfoScreen extends StatelessWidget {
       isScrollControlled: true,
       builder: (_) => _AddMemberSheet(
         onSelected: (uid, name) async {
-          await _groupRef.update({
+          await _communityRef.update({
             'members': FieldValue.arrayUnion([uid]),
             'memberNames.$uid': name,
           });
@@ -88,7 +87,7 @@ class GroupInfoScreen extends StatelessWidget {
               ),
               ListTile(
                 leading: const Icon(LucideIcons.user_minus, color: Colors.redAccent, size: 20),
-                title: const Text('Хориҷ аз гурӯҳ', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
+                title: const Text('Хориҷ аз ҷамъият', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
                 onTap: () {
                   Navigator.pop(context);
                   _removeMember(uid);
@@ -110,13 +109,14 @@ class GroupInfoScreen extends StatelessWidget {
       body: NeonBackdrop(
         child: SafeArea(
           child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-            stream: _groupRef.snapshots(),
+            stream: _communityRef.snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData || !snapshot.data!.exists) {
                 return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
               }
               final data = snapshot.data!.data()!;
-              final name = (data['name'] ?? 'Гурӯҳ') as String;
+              final name = (data['name'] ?? 'Ҷамъият') as String;
+              final description = (data['description'] ?? '') as String;
               final members = List<String>.from(data['members'] as List? ?? []);
               final admins = List<String>.from(data['admins'] as List? ?? []);
               final memberNames = (data['memberNames'] as Map<String, dynamic>? ?? {})
@@ -131,10 +131,10 @@ class GroupInfoScreen extends StatelessWidget {
                       children: [
                         IconButton(
                           onPressed: () => Navigator.pop(context),
-                          icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                          icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 18),
                         ),
                         const Text(
-                          'Маълумоти гурӯҳ',
+                          'Маълумоти ҷамъият',
                           style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
                         ),
                       ],
@@ -149,7 +149,7 @@ class GroupInfoScreen extends StatelessWidget {
                             width: 84,
                             height: 84,
                             decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                            child: const Icon(LucideIcons.users, color: AppColors.background, size: 36),
+                            child: const Icon(LucideIcons.hash, color: AppColors.background, size: 36),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -159,6 +159,12 @@ class GroupInfoScreen extends StatelessWidget {
                             style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
                           ),
                         ),
+                        if (description.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Center(
+                            child: Text(description, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                          ),
+                        ],
                         Center(
                           child: Text('${members.length} аъзо', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
                         ),
@@ -221,9 +227,9 @@ class GroupInfoScreen extends StatelessWidget {
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: () => _leaveGroup(context),
+                            onPressed: () => _leaveCommunity(context),
                             icon: const Icon(LucideIcons.log_out, color: Colors.redAccent, size: 18),
-                            label: const Text('Баромадан аз гурӯҳ', style: TextStyle(color: Colors.redAccent)),
+                            label: const Text('Баромадан аз ҷамъият', style: TextStyle(color: Colors.redAccent)),
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Colors.redAccent),
                               padding: const EdgeInsets.symmetric(vertical: 12),

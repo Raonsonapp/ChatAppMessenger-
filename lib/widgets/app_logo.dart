@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
 
@@ -18,7 +19,7 @@ class AppLogo extends StatelessWidget {
           BoxShadow(color: AppColors.neonEmerald.withOpacity(0.5), blurRadius: 16, spreadRadius: 0.5),
         ],
       ),
-      child: Icon(Icons.bolt_rounded, color: AppColors.background, size: size * 0.6),
+      child: Icon(LucideIcons.zap, color: AppColors.background, size: size * 0.55),
     );
   }
 }

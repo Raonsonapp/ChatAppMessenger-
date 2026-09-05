@@ -13,6 +13,9 @@ dependencies:
   # Иконкаҳои услуби iOS (стандартан бо flutter create меояд)
   cupertino_icons: ^1.0.8
 
+  # Феҳристи иконкаҳои услуби react-icons (Lucide — идомаи фаъоли Feather) — тарроҳии зебо ва ягона
+  flutter_lucide: ^1.41.0
+
   # Firebase — асоси backend (Auth + Firestore + Storage)
   firebase_core: ^4.9.0
   firebase_auth: ^6.5.3
@@ -21,6 +24,9 @@ dependencies:
 
   # Интихоби расм аз галерея/камера (барои паёмҳои расмӣ)
   image_picker: ^1.2.3
+
+  # Контактҳои воқеии телефон (барои интихоби корбар ҳангоми чати нав)
+  flutter_contacts: ^1.1.9+2
 
 dev_dependencies:
   flutter_test:

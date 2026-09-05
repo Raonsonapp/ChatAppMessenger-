@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
 import '../utils/snackbar_utils.dart';
@@ -9,7 +10,10 @@ import '../widgets/neon_backdrop.dart';
 import '../widgets/neon_fab.dart';
 import '../sheets/new_chat_sheet.dart';
 import '../sheets/profile_sheet.dart';
+import '../sheets/new_call_sheet.dart';
 import 'chat_search_screen.dart';
+import 'create_status_screen.dart';
+import 'create_community_screen.dart';
 import 'tabs/chats_tab.dart';
 import 'tabs/status_tab.dart';
 import 'tabs/communities_tab.dart';
@@ -46,16 +50,33 @@ class _ChatListScreenState extends State<ChatListScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatSearchScreen()));
   }
 
+  void _openCreateStatus() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateStatusScreen()));
+  }
+
+  void _openCreateCommunity() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityScreen()));
+  }
+
+  void _openNewCallSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => const NewCallSheet(),
+    );
+  }
+
   Widget? _buildFab() {
     switch (_currentIndex) {
       case 0:
         return NeonFab(onPressed: _openNewChatSheet);
       case 1:
-        return NeonFab(icon: Icons.camera_alt_rounded, onPressed: () => showComingSoonSnack(context, 'Статуси нав'));
+        return NeonFab(icon: LucideIcons.camera, onPressed: _openCreateStatus);
       case 2:
-        return NeonFab(onPressed: () => showComingSoonSnack(context, 'Ҷамъияти нав'));
+        return NeonFab(onPressed: _openCreateCommunity);
       case 3:
-        return NeonFab(onPressed: () => showComingSoonSnack(context, 'Занги нав'));
+        return NeonFab(icon: LucideIcons.phone_call, onPressed: _openNewCallSheet);
       default:
         return null;
     }
@@ -113,11 +134,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
           Row(
             children: [
-              _iconButton(Icons.camera_alt_rounded, onTap: () => showComingSoonSnack(context, 'Камера')),
+              _iconButton(LucideIcons.camera, onTap: () => showComingSoonSnack(context, 'Камера')),
               const SizedBox(width: 8),
-              _iconButton(Icons.search_rounded, onTap: _openSearch),
+              _iconButton(LucideIcons.search, onTap: _openSearch),
               const SizedBox(width: 8),
-              _iconButton(Icons.more_vert_rounded, onTap: _openProfileSheet),
+              _iconButton(LucideIcons.ellipsis_vertical, onTap: _openProfileSheet),
             ],
           ),
         ],
@@ -158,10 +179,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
               selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5),
               unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11.5),
               items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_rounded), label: 'Чатҳо'),
-                BottomNavigationBarItem(icon: Icon(Icons.donut_large), label: 'Статусҳо'),
-                BottomNavigationBarItem(icon: Icon(Icons.groups_rounded), label: 'Ҷамъиятҳо'),
-                BottomNavigationBarItem(icon: Icon(Icons.call_rounded), label: 'Зангҳо'),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.message_circle), label: 'Чатҳо'),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.circle), label: 'Статусҳо'),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.users), label: 'Ҷамъиятҳо'),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.phone), label: 'Зангҳо'),
               ],
             ),
           ),

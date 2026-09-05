@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -102,7 +103,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         children: [
                           IconButton(
                             onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
+                            icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                           ),
                           const SizedBox(width: 4),
                           const Text(
@@ -117,7 +118,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           width: 84,
                           height: 84,
                           decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                          child: const Icon(Icons.person_rounded, color: AppColors.background, size: 42),
+                          child: const Icon(LucideIcons.user, color: AppColors.background, size: 38),
                         ),
                       ),
                       const SizedBox(height: 8),

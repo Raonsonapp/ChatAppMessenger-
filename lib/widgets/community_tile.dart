@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
-import '../models/app_group.dart';
-import '../screens/group_chat_screen.dart';
+import '../models/app_community.dart';
+import '../screens/community_chat_screen.dart';
 
-class GroupTile extends StatelessWidget {
-  final AppGroup group;
-  const GroupTile({super.key, required this.group});
+class CommunityTile extends StatelessWidget {
+  final AppCommunity community;
+  const CommunityTile({super.key, required this.community});
 
   String _formatTime(DateTime? t) {
     if (t == null) return '';
@@ -27,10 +27,10 @@ class GroupTile extends StatelessWidget {
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => GroupChatScreen(
-              groupId: group.id,
-              groupName: group.name,
-              memberNames: group.memberNames,
+            builder: (_) => CommunityChatScreen(
+              communityId: community.id,
+              communityName: community.name,
+              memberNames: community.memberNames,
             ),
           ),
         ),
@@ -49,7 +49,7 @@ class GroupTile extends StatelessWidget {
                   color: AppColors.surface,
                   border: Border.all(color: AppColors.glassBorder),
                 ),
-                child: const Icon(LucideIcons.users, color: AppColors.textSecondary, size: 22),
+                child: const Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -60,20 +60,20 @@ class GroupTile extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            group.name,
+                            community.name,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15.5),
                           ),
                         ),
                         Text(
-                          _formatTime(group.lastMessageTime),
+                          _formatTime(community.lastMessageTime),
                           style: TextStyle(color: AppColors.textSecondary.withOpacity(0.7), fontSize: 11.5),
                         ),
                       ],
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      group.lastMessage.isEmpty ? 'Гурӯҳ сохта шуд' : group.lastMessage,
+                      community.lastMessage.isEmpty ? '${community.members.length} аъзо' : community.lastMessage,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5),

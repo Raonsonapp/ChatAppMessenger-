@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
 import '../models/chat_conversation.dart';
@@ -35,7 +36,7 @@ class ChatAIBanner extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                child: const Icon(Icons.auto_awesome_rounded, color: AppColors.background, size: 24),
+                child: const Icon(LucideIcons.zap, color: AppColors.background, size: 22),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -55,7 +56,7 @@ class ChatAIBanner extends StatelessWidget {
             children: [
               Expanded(
                 child: _AiActionChip(
-                  icon: Icons.image_rounded,
+                  icon: LucideIcons.image,
                   label: 'Расм',
                   onTap: () => _openWithPrompt(context, 'Лутфан барои ман расме эҷод кун: '),
                 ),
@@ -63,7 +64,7 @@ class ChatAIBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _AiActionChip(
-                  icon: Icons.music_note_rounded,
+                  icon: LucideIcons.music,
                   label: 'Мусиқӣ',
                   onTap: () => _openWithPrompt(context, 'Лутфан барои ман мусиқие эҷод кун: '),
                 ),
@@ -71,7 +72,7 @@ class ChatAIBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _AiActionChip(
-                  icon: Icons.videocam_rounded,
+                  icon: LucideIcons.video,
                   label: 'Видео',
                   onTap: () => _openWithPrompt(context, 'Лутфан барои ман видеое эҷод кун: '),
                 ),

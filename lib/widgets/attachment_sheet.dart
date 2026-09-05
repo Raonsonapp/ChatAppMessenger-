@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
@@ -51,19 +52,19 @@ class AttachmentSheet extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _item(
-                  icon: Icons.photo_rounded,
+                  icon: LucideIcons.image,
                   color: const Color(0xFFBF59CF),
                   label: 'Галерея',
                   onTap: () => _pickGallery(context),
                 ),
                 _item(
-                  icon: Icons.camera_alt_rounded,
+                  icon: LucideIcons.camera,
                   color: const Color(0xFFE0567C),
                   label: 'Камера',
                   onTap: () => _pickCamera(context),
                 ),
                 _item(
-                  icon: Icons.person_rounded,
+                  icon: LucideIcons.user,
                   color: const Color(0xFF4B7BEC),
                   label: 'Контакт',
                   onTap: () {

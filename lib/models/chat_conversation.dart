@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 /// ChatAI — суҳбати ягонаи собит бо ID-и статикӣ
 class ChatConversation {
@@ -19,7 +20,7 @@ class AppChats {
   static const aiAssistant = ChatConversation(
     id: 'ai_assistant',
     name: 'ChatAI',
-    avatarIcon: Icons.auto_awesome_rounded,
+    avatarIcon: LucideIcons.zap,
     isAIChat: true,
   );
 }

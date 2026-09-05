@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../theme/app_theme.dart';
@@ -113,7 +114,7 @@ class ChatTile extends StatelessWidget {
                               ),
                             ),
                             if (pinned)
-                              Icon(Icons.push_pin_rounded, size: 14, color: AppColors.textSecondary.withOpacity(0.6))
+                              Icon(LucideIcons.bookmark, size: 13, color: AppColors.textSecondary.withOpacity(0.6))
                             else
                               Text(
                                 time,

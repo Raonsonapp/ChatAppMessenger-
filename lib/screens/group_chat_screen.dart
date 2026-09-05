@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
@@ -268,7 +269,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             ),
             IconButton(
               onPressed: () => setState(() => _replyingTo = null),
-              icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 18),
+              icon: const Icon(LucideIcons.x, color: AppColors.textSecondary, size: 17),
             ),
           ],
         ),
@@ -286,7 +287,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           children: [
             IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 18),
+              icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
             ),
             Expanded(
               child: InkWell(
@@ -302,7 +303,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         color: AppColors.surface,
                         border: Border.all(color: AppColors.glassBorder),
                       ),
-                      child: const Icon(Icons.groups_rounded, color: AppColors.textSecondary, size: 20),
+                      child: const Icon(LucideIcons.users, color: AppColors.textSecondary, size: 18),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -325,7 +326,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             ),
             IconButton(
               onPressed: () => showComingSoonSnack(context, 'Занги видео'),
-              icon: const Icon(Icons.videocam_rounded, color: AppColors.textSecondary, size: 22),
+              icon: const Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
             ),
           ],
         ),
@@ -347,7 +348,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 children: [
                   IconButton(
                     onPressed: _openEmojiPicker,
-                    icon: const Icon(Icons.emoji_emotions_outlined, color: AppColors.textSecondary, size: 22),
+                    icon: const Icon(LucideIcons.face_slightly_smiling, color: AppColors.textSecondary, size: 21),
                   ),
                   Expanded(
                     child: TextField(
@@ -366,7 +367,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   ),
                   IconButton(
                     onPressed: _isUploading ? null : _openAttachmentSheet,
-                    icon: const Icon(Icons.attach_file_rounded, color: AppColors.textSecondary, size: 21),
+                    icon: const Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
                   ),
                   IconButton(
                     onPressed: _isUploading
@@ -375,7 +376,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             final file = await MediaService.pickFromCamera();
                             if (file != null) _sendImageMessage(file);
                           },
-                    icon: const Icon(Icons.camera_alt_rounded, color: AppColors.textSecondary, size: 21),
+                    icon: const Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
                   ),
                 ],
               ),
@@ -393,7 +394,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       padding: EdgeInsets.all(11),
                       child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                     )
-                  : const Icon(Icons.arrow_upward_rounded, color: AppColors.background, size: 20),
+                  : const Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
             ),
           ),
         ],

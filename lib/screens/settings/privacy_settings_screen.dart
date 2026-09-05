@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -67,7 +68,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 18),
+                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     const Text(
                       'Махфият',

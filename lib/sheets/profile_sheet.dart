@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -40,7 +41,7 @@ class ProfileSheet extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-              child: const Icon(Icons.person_rounded, color: AppColors.background, size: 32),
+              child: const Icon(LucideIcons.user, color: AppColors.background, size: 28),
             ),
             const SizedBox(height: 12),
             if (uid != null)
@@ -58,7 +59,7 @@ class ProfileSheet extends StatelessWidget {
             Text(phone, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
             const SizedBox(height: 18),
             _menuRow(
-              icon: Icons.person_outline_rounded,
+              icon: LucideIcons.user,
               label: 'Профили ман',
               onTap: () {
                 Navigator.pop(context);
@@ -67,7 +68,7 @@ class ProfileSheet extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             _menuRow(
-              icon: Icons.settings_outlined,
+              icon: LucideIcons.settings,
               label: 'Танзимот',
               onTap: () {
                 Navigator.pop(context);
@@ -79,7 +80,7 @@ class ProfileSheet extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () => _signOut(context),
-                icon: const Icon(Icons.logout_rounded, color: AppColors.neonCyan),
+                icon: const Icon(LucideIcons.log_out, color: AppColors.neonCyan, size: 18),
                 label: const Text('Баромадан', style: TextStyle(color: AppColors.textPrimary)),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.glassBorder),
@@ -104,12 +105,12 @@ class ProfileSheet extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           child: Row(
             children: [
-              Icon(icon, color: AppColors.neonCyan, size: 20),
+              Icon(icon, color: AppColors.neonCyan, size: 19),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
               ),
-              Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary.withOpacity(0.6), size: 18),
+              Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withOpacity(0.6), size: 17),
             ],
           ),
         ),

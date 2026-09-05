@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
@@ -63,7 +64,7 @@ class MessageBubble extends StatelessWidget {
               const Divider(color: AppColors.glassBorder, height: 20),
               _actionTile(
                 context,
-                icon: Icons.reply_rounded,
+                icon: LucideIcons.corner_up_left,
                 label: 'Ҷавоб додан',
                 onTap: () {
                   Navigator.pop(context);
@@ -73,7 +74,7 @@ class MessageBubble extends StatelessWidget {
               if (message.mediaUrl == null)
                 _actionTile(
                   context,
-                  icon: Icons.copy_rounded,
+                  icon: LucideIcons.copy,
                   label: 'Нусхабардорӣ',
                   onTap: () {
                     Navigator.pop(context);
@@ -83,7 +84,7 @@ class MessageBubble extends StatelessWidget {
               if (isMe)
                 _actionTile(
                   context,
-                  icon: Icons.delete_outline_rounded,
+                  icon: LucideIcons.trash,
                   label: 'Нест кардан',
                   color: Colors.redAccent,
                   onTap: () {
@@ -134,7 +135,7 @@ class MessageBubble extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.auto_awesome_rounded, size: 12, color: AppColors.neonCyan),
+                      Icon(LucideIcons.zap, size: 11, color: AppColors.neonCyan),
                       const SizedBox(width: 4),
                       Text('ChatAI', style: TextStyle(fontSize: 10, color: AppColors.neonCyan.withOpacity(0.9))),
                     ],
@@ -213,7 +214,7 @@ class MessageBubble extends StatelessWidget {
                                 width: 220,
                                 height: 120,
                                 alignment: Alignment.center,
-                                child: const Icon(Icons.broken_image_rounded, color: AppColors.textSecondary),
+                                child: const Icon(LucideIcons.triangle_alert, color: AppColors.textSecondary),
                               ),
                             ),
                           ),
@@ -265,11 +266,7 @@ class MessageBubble extends StatelessWidget {
                     ),
                     if (isMe && !isAI && showReadReceipts) ...[
                       const SizedBox(width: 3),
-                      Icon(
-                        message.read ? Icons.done_all_rounded : Icons.done_rounded,
-                        size: 13,
-                        color: message.read ? AppColors.neonEmerald : AppColors.textSecondary.withOpacity(0.6),
-                      ),
+                      _buildReadReceipt(),
                     ],
                   ],
                 ),
@@ -277,6 +274,25 @@ class MessageBubble extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Feather надорад иконаи "ду галочка"-и WhatsApp — бо ду
+  /// LucideIcons.check-и рӯйиҳамафтода шабеҳсозӣ мешавад.
+  Widget _buildReadReceipt() {
+    final color = message.read ? AppColors.neonEmerald : AppColors.textSecondary.withOpacity(0.6);
+    if (!message.read) {
+      return Icon(LucideIcons.check, size: 13, color: color);
+    }
+    return SizedBox(
+      width: 16,
+      height: 13,
+      child: Stack(
+        children: [
+          Icon(LucideIcons.check, size: 13, color: color),
+          Positioned(left: 4, child: Icon(LucideIcons.check, size: 13, color: color)),
+        ],
       ),
     );
   }

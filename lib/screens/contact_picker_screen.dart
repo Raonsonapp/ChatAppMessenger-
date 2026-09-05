@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
@@ -6,6 +7,8 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import '../theme/app_theme.dart';
 import '../models/app_conversation.dart';
 import 'user_chat_screen.dart';
+import 'create_group_screen.dart';
+import 'create_community_screen.dart';
 
 /// Интихоби contact аз contact-ҳои воқеии телефон.
 /// + дигар рақам талаб намекунад: contact аз телефон интихоб мешавад.
@@ -207,19 +210,26 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
         ),
         actions: [
           _topAction(
-            icon: Icons.search_rounded,
+            icon: LucideIcons.search,
             onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
           ),
           _topAction(
-            icon: Icons.more_vert_rounded,
+            icon: LucideIcons.ellipsis_vertical,
             onTap: () => showModalBottomSheet<void>(
               context: context,
               backgroundColor: AppColors.surface,
               builder: (_) => SafeArea(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    ListTile(leading: Icon(Icons.refresh_rounded), title: Text('Навсозии контактҳо')),
+                  children: [
+                    ListTile(
+                      leading: const Icon(LucideIcons.refresh_cw, color: AppColors.textPrimary),
+                      title: const Text('Навсозии контактҳо', style: TextStyle(color: AppColors.textPrimary)),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _loadContacts();
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -233,14 +243,14 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
             padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
             child: Column(
               children: [
-                _quickAction(Icons.group_add_rounded, 'Гурӯҳи нав', () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Сохтани гурӯҳро баъдтар пайваст мекунем.')));
+                _quickAction(LucideIcons.users, 'Гурӯҳи нав', () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateGroupScreen()));
                 }),
-                _quickAction(Icons.person_add_alt_1_rounded, 'Контакти нав', () {
+                _quickAction(LucideIcons.user_plus, 'Контакти нав', () {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Контактро дар телефони худ илова кунед, баъд ин ҷо навсозӣ кунед.')));
                 }),
-                _quickAction(Icons.groups_rounded, 'Ҷамъияти нав', () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ҷамъият ҳоло ба backend пайваст нашудааст.')));
+                _quickAction(LucideIcons.hash, 'Ҷамъияти нав', () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityScreen()));
                 }),
               ],
             ),
@@ -253,7 +263,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
               decoration: InputDecoration(
                 hintText: 'Ҷустуҷӯ',
                 hintStyle: const TextStyle(color: AppColors.textSecondary),
-                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textSecondary),
+                prefixIcon: const Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
                 filled: true,
                 fillColor: AppColors.surface,
                 border: OutlineInputBorder(
@@ -294,7 +304,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.contacts_outlined, color: AppColors.textSecondary, size: 44),
+              const Icon(LucideIcons.users, color: AppColors.textSecondary, size: 40),
               const SizedBox(height: 12),
               Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 12),

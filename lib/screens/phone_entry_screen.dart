@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_theme.dart';
@@ -87,7 +88,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
               children: [
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
+                  icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                 ),
                 const SizedBox(height: 12),
                 const Text(

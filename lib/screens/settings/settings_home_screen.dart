@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
@@ -25,7 +26,7 @@ class SettingsHomeScreen extends StatelessWidget {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 18),
+                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     const Text(
                       'Танзимот',
@@ -41,7 +42,7 @@ class SettingsHomeScreen extends StatelessWidget {
                     _sectionCard(context, [
                       _row(
                         context,
-                        icon: Icons.privacy_tip_outlined,
+                        icon: LucideIcons.shield,
                         label: 'Махфият',
                         onTap: () => Navigator.push(
                           context,
@@ -50,7 +51,7 @@ class SettingsHomeScreen extends StatelessWidget {
                       ),
                       _row(
                         context,
-                        icon: Icons.notifications_outlined,
+                        icon: LucideIcons.bell,
                         label: 'Огоҳиномаҳо',
                         onTap: () => Navigator.push(
                           context,
@@ -62,19 +63,19 @@ class SettingsHomeScreen extends StatelessWidget {
                     _sectionCard(context, [
                       _row(
                         context,
-                        icon: Icons.palette_outlined,
+                        icon: LucideIcons.eye,
                         label: 'Намуди зоҳирӣ',
                         onTap: () => showComingSoonSnack(context, 'Намуди зоҳирӣ'),
                       ),
                       _row(
                         context,
-                        icon: Icons.storage_outlined,
+                        icon: LucideIcons.database,
                         label: 'Захира ва маълумот',
                         onTap: () => showComingSoonSnack(context, 'Захира ва маълумот'),
                       ),
                       _row(
                         context,
-                        icon: Icons.language_outlined,
+                        icon: LucideIcons.globe,
                         label: 'Забон',
                         onTap: () => showComingSoonSnack(context, 'Забон'),
                       ),
@@ -83,13 +84,13 @@ class SettingsHomeScreen extends StatelessWidget {
                     _sectionCard(context, [
                       _row(
                         context,
-                        icon: Icons.help_outline_rounded,
+                        icon: LucideIcons.circle_question_mark,
                         label: 'Кӯмак',
                         onTap: () => showComingSoonSnack(context, 'Кӯмак'),
                       ),
                       _row(
                         context,
-                        icon: Icons.info_outline_rounded,
+                        icon: LucideIcons.info,
                         label: 'Дар бораи ChatApp',
                         onTap: () => showComingSoonSnack(context, 'Дар бораи барнома'),
                         showDivider: false,
@@ -131,12 +132,12 @@ class SettingsHomeScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
               child: Row(
                 children: [
-                  Icon(icon, color: AppColors.neonCyan, size: 20),
+                  Icon(icon, color: AppColors.neonCyan, size: 19),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14.5)),
                   ),
-                  Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary.withOpacity(0.6), size: 18),
+                  Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withOpacity(0.6), size: 17),
                 ],
               ),
             ),

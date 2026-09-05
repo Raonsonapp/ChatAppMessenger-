@@ -26,6 +26,14 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>ChatApp барои гирифтани акс ва видеои занг ба камера дастрасӣ лозим дорад</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ChatApp барои фиристодани расм аз галерея ба он дастрасӣ лозим дорад</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>ChatApp барои зангҳои овозӣ ва видеоӣ ба микрофон дастрасӣ лозим дорад</string>
+	<key>NSContactsUsageDescription</key>
+	<string>ChatApp барои ёфтани дӯстони шумо дар барнома ба контактҳо дастрасӣ лозим дорад</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

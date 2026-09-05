@@ -5,28 +5,26 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
-import '../models/app_conversation.dart';
-import '../screens/user_chat_screen.dart';
-import '../screens/create_group_screen.dart';
-import '../screens/contact_picker_screen.dart';
+import '../models/app_call.dart';
+import '../screens/call_screen.dart';
 
-/// Феҳристи ҷустуҷӯи корбарони воқеӣ + гузаргоҳ ба сохтани гурӯҳи нав.
-class NewChatSheet extends StatefulWidget {
-  const NewChatSheet({super.key});
+/// Интихоби корбар барои сар кардани занги нав (садоӣ ё видеоӣ).
+class NewCallSheet extends StatefulWidget {
+  const NewCallSheet({super.key});
 
   @override
-  State<NewChatSheet> createState() => _NewChatSheetState();
+  State<NewCallSheet> createState() => _NewCallSheetState();
 }
 
-class _NewChatSheetState extends State<NewChatSheet> {
-  final TextEditingController _searchController = TextEditingController();
-  List<Map<String, dynamic>> _results = [];
+class _NewCallSheetState extends State<NewCallSheet> {
+  final TextEditingController _controller = TextEditingController();
+  List<Map<String, String>> _results = [];
   bool _isSearching = false;
   bool _hasSearched = false;
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -40,10 +38,8 @@ class _NewChatSheetState extends State<NewChatSheet> {
       return;
     }
     setState(() => _isSearching = true);
-
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     final snapshot = await FirebaseFirestore.instance.collection('users').limit(50).get();
-
     final ql = q.toLowerCase();
     final matches = snapshot.docs.where((doc) {
       if (doc.id == currentUid) return false;
@@ -53,13 +49,8 @@ class _NewChatSheetState extends State<NewChatSheet> {
       return phone.contains(q) || name.toLowerCase().contains(ql);
     }).map((doc) {
       final data = doc.data();
-      return {
-        'uid': doc.id,
-        'name': (data['name'] ?? 'Корбар') as String,
-        'phone': (data['phone'] ?? '') as String,
-      };
+      return {'uid': doc.id, 'name': (data['name'] ?? 'Корбар') as String, 'phone': (data['phone'] ?? '') as String};
     }).toList();
-
     if (!mounted) return;
     setState(() {
       _results = matches;
@@ -68,56 +59,15 @@ class _NewChatSheetState extends State<NewChatSheet> {
     });
   }
 
-  Future<void> _openChatWith(String otherUid, String otherName) async {
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUid == null) return;
-
-    final conversationId = AppConversation.idFor(currentUid, otherUid);
-
-    final currentUserDoc = await FirebaseFirestore.instance.collection('users').doc(currentUid).get();
-    final myName = (currentUserDoc.data()?['name'] as String?) ?? 'Корбар';
-
-    await FirebaseFirestore.instance.collection('conversations').doc(conversationId).set({
-      'participants': [currentUid, otherUid],
-      'participantNames': {
-        currentUid: myName,
-        otherUid: otherName,
-      },
-    }, SetOptions(merge: true));
-
-    if (!mounted) return;
+  void _startCall(String uid, String name, CallType type) {
     Navigator.pop(context);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => UserChatScreen(
-          conversationId: conversationId,
-          otherUserName: otherName,
-          otherUserId: otherUid,
-        ),
-      ),
-    );
-  }
-
-  void _openCreateGroup() {
-    Navigator.pop(context);
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateGroupScreen()));
-  }
-
-  void _openDeviceContacts() {
-    Navigator.pop(context);
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactPickerScreen()));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => CallScreen(otherUserId: uid, otherUserName: name, type: type)));
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 12,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
+      padding: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
       child: GlassContainer(
         borderRadius: 24,
         padding: const EdgeInsets.all(16),
@@ -133,33 +83,8 @@ class _NewChatSheetState extends State<NewChatSheet> {
                 decoration: BoxDecoration(color: AppColors.glassBorder, borderRadius: BorderRadius.circular(4)),
               ),
             ),
-            const Text('Контакти нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+            const Text('Занги нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 12),
-            // Гурӯҳи нав — ҷои доимӣ дар боло, мисли WhatsApp
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                child: const Icon(LucideIcons.users, color: AppColors.background, size: 20),
-              ),
-              title: const Text('Гурӯҳи нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
-              onTap: _openCreateGroup,
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.surface, border: Border.all(color: AppColors.glassBorder)),
-                child: const Icon(LucideIcons.smartphone, color: AppColors.neonCyan, size: 19),
-              ),
-              title: const Text('Контактҳои телефон', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
-              onTap: _openDeviceContacts,
-            ),
-            const Divider(color: AppColors.glassBorder, height: 4),
-            const SizedBox(height: 10),
             Container(
               decoration: BoxDecoration(
                 color: AppColors.glassFill,
@@ -168,7 +93,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: TextField(
-                controller: _searchController,
+                controller: _controller,
                 style: const TextStyle(color: AppColors.textPrimary),
                 onSubmitted: _search,
                 decoration: InputDecoration(
@@ -178,7 +103,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
                   prefixIcon: const Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
                   suffixIcon: IconButton(
                     icon: const Icon(LucideIcons.arrow_right, color: AppColors.neonEmerald, size: 19),
-                    onPressed: () => _search(_searchController.text),
+                    onPressed: () => _search(_controller.text),
                   ),
                 ),
               ),
@@ -193,19 +118,20 @@ class _NewChatSheetState extends State<NewChatSheet> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Text(
-                  'Ҳеҷ корбаре бо ин рақам/ном ёфт нашуд',
+                  'Ҳеҷ корбаре ёфт нашуд',
                   style: TextStyle(color: AppColors.textSecondary.withOpacity(0.8), fontSize: 12.5),
                 ),
               )
             else
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 280),
+                constraints: const BoxConstraints(maxHeight: 300),
                 child: ListView.builder(
                   shrinkWrap: true,
                   itemCount: _results.length,
                   itemBuilder: (context, index) {
                     final user = _results[index];
-                    final name = user['name'] as String;
+                    final uid = user['uid']!;
+                    final name = user['name']!;
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: Container(
@@ -224,8 +150,20 @@ class _NewChatSheetState extends State<NewChatSheet> {
                         ),
                       ),
                       title: Text(name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                      subtitle: Text(user['phone'] as String, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                      onTap: () => _openChatWith(user['uid'] as String, name),
+                      subtitle: Text(user['phone'] ?? '', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: () => _startCall(uid, name, CallType.audio),
+                            icon: const Icon(LucideIcons.phone, color: AppColors.neonEmerald, size: 19),
+                          ),
+                          IconButton(
+                            onPressed: () => _startCall(uid, name, CallType.video),
+                            icon: const Icon(LucideIcons.video, color: AppColors.neonCyan, size: 19),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),

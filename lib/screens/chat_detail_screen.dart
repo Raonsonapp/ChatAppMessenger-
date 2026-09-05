@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
@@ -186,7 +187,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final convo = widget.conversation;
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -234,6 +235,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         return MessageBubble(
                           message: message,
                           isMe: message.senderId == currentUid,
+                          currentUid: currentUid,
                           onReply: (m) => setState(() => _replyingTo = m),
                           onDelete: _deleteMessage,
                         );
@@ -271,7 +273,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
             IconButton(
               onPressed: () => setState(() => _replyingTo = null),
-              icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 18),
+              icon: const Icon(LucideIcons.x, color: AppColors.textSecondary, size: 17),
             ),
           ],
         ),
@@ -290,7 +292,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               width: 64,
               height: 64,
               decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-              child: const Icon(Icons.auto_awesome_rounded, color: AppColors.background, size: 30),
+              child: const Icon(LucideIcons.zap, color: AppColors.background, size: 28),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -307,15 +309,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _suggestionChip(Icons.image_rounded, 'Расм', 'Лутфан барои ман расме эҷод кун: '),
+                  child: _suggestionChip(LucideIcons.image, 'Расм', 'Лутфан барои ман расме эҷод кун: '),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _suggestionChip(Icons.music_note_rounded, 'Мусиқӣ', 'Лутфан барои ман мусиқие эҷод кун: '),
+                  child: _suggestionChip(LucideIcons.music, 'Мусиқӣ', 'Лутфан барои ман мусиқие эҷод кун: '),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _suggestionChip(Icons.videocam_rounded, 'Видео', 'Лутфан барои ман видеое эҷод кун: '),
+                  child: _suggestionChip(LucideIcons.video, 'Видео', 'Лутфан барои ман видеое эҷод кун: '),
                 ),
               ],
             ),
@@ -361,7 +363,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           children: [
             IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 18),
+              icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
             ),
             Container(
               width: 40,
@@ -398,11 +400,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
             IconButton(
               onPressed: () => showComingSoonSnack(context, 'Занги видео'),
-              icon: const Icon(Icons.videocam_rounded, color: AppColors.textSecondary, size: 22),
+              icon: const Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
             ),
             IconButton(
               onPressed: () => showComingSoonSnack(context, 'Занг'),
-              icon: const Icon(Icons.call_rounded, color: AppColors.textSecondary, size: 19),
+              icon: const Icon(LucideIcons.phone, color: AppColors.textSecondary, size: 18),
             ),
           ],
         ),
@@ -425,7 +427,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 children: [
                   IconButton(
                     onPressed: _openEmojiPicker,
-                    icon: const Icon(Icons.emoji_emotions_outlined, color: AppColors.textSecondary, size: 22),
+                    icon: const Icon(LucideIcons.face_slightly_smiling, color: AppColors.textSecondary, size: 21),
                   ),
                   Expanded(
                     child: TextField(
@@ -444,7 +446,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   ),
                   IconButton(
                     onPressed: _isUploading ? null : _openAttachmentSheet,
-                    icon: const Icon(Icons.attach_file_rounded, color: AppColors.textSecondary, size: 21),
+                    icon: const Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
                   ),
                   IconButton(
                     onPressed: _isUploading
@@ -453,7 +455,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                             final file = await MediaService.pickFromCamera();
                             if (file != null) _sendImageMessage(file);
                           },
-                    icon: const Icon(Icons.camera_alt_rounded, color: AppColors.textSecondary, size: 21),
+                    icon: const Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
                   ),
                 ],
               ),
@@ -471,7 +473,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       padding: EdgeInsets.all(11),
                       child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                     )
-                  : const Icon(Icons.arrow_upward_rounded, color: AppColors.background, size: 20),
+                  : const Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
             ),
           ),
         ],

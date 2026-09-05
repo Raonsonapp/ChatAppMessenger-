@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
 
@@ -7,7 +8,7 @@ import '../theme/app_theme.dart';
 class NeonFab extends StatelessWidget {
   final VoidCallback onPressed;
   final IconData icon;
-  const NeonFab({super.key, required this.onPressed, this.icon = Icons.add_rounded});
+  const NeonFab({super.key, required this.onPressed, this.icon = LucideIcons.plus});
 
   @override
   Widget build(BuildContext context) {

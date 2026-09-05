@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
+import '../models/app_call.dart';
+import 'call_screen.dart';
 
 /// Маълумоти воқеии контакт — mute/манъ/тоза кардани чат ҳама воқеан
 /// дар Firestore сабт мешаванд.
@@ -69,7 +72,7 @@ class ContactInfoScreen extends StatelessWidget {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 18),
+                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     const Text(
                       'Маълумоти контакт',
@@ -118,6 +121,35 @@ class ContactInfoScreen extends StatelessWidget {
                                 style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
                               ),
                             ),
+                            const SizedBox(height: 18),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _callButton(
+                                  context,
+                                  icon: LucideIcons.phone,
+                                  label: 'Занг',
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CallScreen(otherUserId: otherUserId, otherUserName: otherUserName, type: CallType.audio),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                _callButton(
+                                  context,
+                                  icon: LucideIcons.video,
+                                  label: 'Видео',
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CallScreen(otherUserId: otherUserId, otherUserName: otherUserName, type: CallType.video),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: 24),
                             GlassContainer(
                               borderRadius: 16,
@@ -135,7 +167,7 @@ class ContactInfoScreen extends StatelessWidget {
                                   ),
                                   const Divider(color: AppColors.glassBorder, height: 1),
                                   ListTile(
-                                    leading: const Icon(Icons.delete_sweep_outlined, color: AppColors.neonCyan),
+                                    leading: const Icon(LucideIcons.trash, color: AppColors.neonCyan, size: 20),
                                     title: const Text(
                                       'Тоза кардани чат',
                                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
@@ -144,7 +176,7 @@ class ContactInfoScreen extends StatelessWidget {
                                   ),
                                   const Divider(color: AppColors.glassBorder, height: 1),
                                   ListTile(
-                                    leading: Icon(Icons.block_rounded, color: isBlocked ? AppColors.neonEmerald : Colors.redAccent),
+                                    leading: Icon(LucideIcons.slash, color: isBlocked ? AppColors.neonEmerald : Colors.redAccent, size: 20),
                                     title: Text(
                                       isBlocked ? 'Бекор кардани манъ' : 'Манъ кардани корбар',
                                       style: TextStyle(
@@ -169,6 +201,33 @@ class ContactInfoScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _callButton(BuildContext context, {required IconData icon, required String label, required VoidCallback onTap}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(28),
+            onTap: onTap,
+            child: Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.glassFill,
+                border: Border.all(color: AppColors.glassBorder),
+              ),
+              child: Icon(icon, color: AppColors.neonEmerald, size: 22),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5)),
+      ],
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -102,9 +103,9 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                   hintText: '+992...',
                   hintStyle: const TextStyle(color: AppColors.textSecondary),
                   border: InputBorder.none,
-                  prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20),
+                  prefixIcon: const Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.arrow_forward_rounded, color: AppColors.neonEmerald, size: 20),
+                    icon: const Icon(LucideIcons.arrow_right, color: AppColors.neonEmerald, size: 19),
                     onPressed: () => _search(_controller.text),
                   ),
                 ),

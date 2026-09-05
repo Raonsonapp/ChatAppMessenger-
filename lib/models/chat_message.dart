@@ -15,6 +15,7 @@ class ChatMessage {
   final bool read;
   final String? mediaUrl;
   final String? mediaType;
+  final Map<String, String> reactions;
 
   ChatMessage({
     required this.id,
@@ -28,10 +29,12 @@ class ChatMessage {
     this.read = false,
     this.mediaUrl,
     this.mediaType,
+    this.reactions = const {},
   });
 
   factory ChatMessage.fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
+    final rawReactions = (data['reactions'] as Map<String, dynamic>?) ?? {};
     return ChatMessage(
       id: doc.id,
       text: (data['text'] ?? '') as String,
@@ -44,6 +47,7 @@ class ChatMessage {
       read: (data['read'] ?? false) as bool,
       mediaUrl: data['mediaUrl'] as String?,
       mediaType: data['mediaType'] as String?,
+      reactions: rawReactions.map((k, v) => MapEntry(k, v as String)),
     );
   }
 }

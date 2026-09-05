@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -46,7 +47,7 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 18),
+                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     Expanded(
                       child: GlassContainer(
@@ -61,7 +62,7 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
                             hintText: 'Ҷустуҷӯи чат...',
                             hintStyle: TextStyle(color: AppColors.textSecondary),
                             border: InputBorder.none,
-                            icon: Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20),
+                            icon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
                           ),
                         ),
                       ),
