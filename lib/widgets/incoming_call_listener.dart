@@ -47,7 +47,7 @@ class _IncomingCallListenerState extends State<IncomingCallListener> {
     if (_showing || !mounted) return;
     for (final doc in snapshot.docs) {
       if (_handledCallIds.contains(doc.id)) continue;
-      final data = doc.data() as Map<String, dynamic>;
+      final data = doc.data();
       final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
       _handledCallIds.add(doc.id);
       if (createdAt != null && DateTime.now().difference(createdAt).inSeconds > 40) {

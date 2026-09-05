@@ -19,10 +19,9 @@ class MediaService {
   /// Интихоби файли GIF бе фишурдасозӣ (тавассути file_picker), то
   /// анимация вайрон нашавад.
   static Future<XFile?> pickGif() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['gif']);
-    final path = result?.files.single.path;
-    if (path == null) return null;
-    return XFile(path);
+    final files = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['gif']);
+    if (files.isEmpty) return null;
+    return files.first.xFile;
   }
 
   /// Боркунии расм ба Firebase Storage, бозгашти URL-и воқеӣ

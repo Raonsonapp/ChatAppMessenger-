@@ -55,10 +55,10 @@ Future<void> _showMessageNotification(Map<String, dynamic> data) async {
   );
 
   await _localNotifications.show(
-    _notificationId(data),
-    senderName,
-    text.isEmpty ? '📷 Расм' : text,
-    const NotificationDetails(android: androidDetails, iOS: DarwinNotificationDetails()),
+    id: _notificationId(data),
+    title: senderName,
+    body: text.isEmpty ? '📷 Расм' : text,
+    notificationDetails: const NotificationDetails(android: androidDetails, iOS: DarwinNotificationDetails()),
     payload: payload,
   );
 }
@@ -87,10 +87,10 @@ Future<void> _showIncomingCallNotification(Map<String, dynamic> data) async {
   );
 
   await _localNotifications.show(
-    _notificationId(data),
-    callerName,
-    isVideo ? 'Занги видеоии воридотӣ...' : 'Занги воридотӣ...',
-    NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
+    id: _notificationId(data),
+    title: callerName,
+    body: isVideo ? 'Занги видеоии воридотӣ...' : 'Занги воридотӣ...',
+    notificationDetails: NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
     payload: payload,
   );
 }
