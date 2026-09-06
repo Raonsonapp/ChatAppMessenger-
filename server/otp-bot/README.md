@@ -11,15 +11,17 @@
 1. **Боти Telegram созед**: дар Telegram ба [@BotFather](https://t.me/BotFather)
    нависед, `/newbot`-ро иҷро кунед, ном ва username диҳед — токенро нигоҳ доред.
 2. **Service Account-и Firebase**: Firebase Console → Project Settings →
-   Service accounts → Generate new private key. Файли JSON-ро ба base64 табдил
-   диҳед: `base64 -w0 service-account.json`.
+   [Service accounts](https://console.firebase.google.com/project/chatapp-57fb2/settings/serviceaccounts/adminsdk)
+   → "Generate new private key" — файли `.json` боргирӣ мешавад.
 3. Дар [railway.com](https://railway.com) лоиҳаи нав созед → "Deploy from GitHub
    repo" → ҳамин репозиторийро интихоб кунед, вале **Root Directory**-ро ба
    `server/otp-bot` танзим кунед (Railway дар танзимоти Service → Settings →
    Root Directory).
 4. Дар Variables-и Railway ду тағйирёбандаро илова кунед:
    - `TELEGRAM_BOT_TOKEN` — токени BotFather
-   - `FIREBASE_SERVICE_ACCOUNT_BASE64` — сатри base64-и қадами 2
+   - `FIREBASE_SERVICE_ACCOUNT_JSON` — тамоми матни файли JSON-и қадами 2-ро
+     АЙНАН нусхабардорӣ карда дар ин ҷо часпонед (якҷоя бо `{` ва `}`).
+     Base64 лозим нест — Railway қиматҳои бисёрхаттаро қабул мекунад.
 5. Railway худкор deploy мекунад (Nixpacks Node-ро муайян мекунад, `npm start`
    иҷро мешавад). Пас аз deploy, URL-и хидматро (масалан
    `https://chatapp-otp-bot-production.up.railway.app`) нусхабардорӣ кунед.
@@ -31,7 +33,7 @@
 
 ```bash
 cd server/otp-bot
-cp .env.example .env   # TELEGRAM_BOT_TOKEN ва FIREBASE_SERVICE_ACCOUNT_BASE64-ро пур кунед
+cp .env.example .env   # TELEGRAM_BOT_TOKEN ва FIREBASE_SERVICE_ACCOUNT_JSON-ро пур кунед
 npm install
 npm start
 ```

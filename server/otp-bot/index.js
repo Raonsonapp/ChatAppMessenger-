@@ -18,12 +18,17 @@ if (!BOT_TOKEN) {
 // firebase-admin ФАҚАТ барои сохтани custom token лозим аст (то signInWithCustomToken
 // дар апп корбарро ба ҳамон системаи Firebase Auth ворид кунад, ки Firestore/Storage
 // қоидаҳояшон ба он такя мекунанд) — на барои фиристодани SMS.
+// Ду тарз дастгирӣ мешавад: рост JSON (нусхабардорӣ аз файли боргирифташуда,
+// осонтар) ё base64 (агар пештара ҳамин тавр гузошта бошӣ).
+const rawServiceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
-if (!serviceAccountBase64) {
-  console.error('FIREBASE_SERVICE_ACCOUNT_BASE64 муайян нашудааст.');
+if (!rawServiceAccountJson && !serviceAccountBase64) {
+  console.error('FIREBASE_SERVICE_ACCOUNT_JSON (ё FIREBASE_SERVICE_ACCOUNT_BASE64) муайян нашудааст.');
   process.exit(1);
 }
-const serviceAccount = JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('utf8'));
+const serviceAccount = rawServiceAccountJson
+  ? JSON.parse(rawServiceAccountJson)
+  : JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('utf8'));
 admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 
 /** phone (E.164, e.g. "+992901234567") -> { code, expiresAt, lastSentAt, chatId } */
