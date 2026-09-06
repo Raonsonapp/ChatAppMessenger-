@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
+import '../services/otp_bot_service.dart';
 import 'otp_screen.dart';
 
 class PhoneEntryScreen extends StatefulWidget {
@@ -17,7 +17,7 @@ class PhoneEntryScreen extends StatefulWidget {
 class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
   final TextEditingController _codeController = TextEditingController(text: '992');
   final TextEditingController _numberController = TextEditingController();
-  bool _isSending = false;
+  bool _isOpeningBot = false;
   String? _errorText;
 
   @override
@@ -33,49 +33,31 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
     return '+$code$number';
   }
 
-  Future<void> _sendCode() async {
+  Future<void> _openBotAndContinue() async {
     final number = _numberController.text.trim();
     if (number.replaceAll(RegExp(r'[^0-9]'), '').length < 7) {
       setState(() => _errorText = 'Рақами телефонро дуруст ворид кунед');
       return;
     }
     setState(() {
-      _isSending = true;
+      _isOpeningBot = true;
       _errorText = null;
     });
 
     final phone = _fullPhoneNumber;
+    final opened = await OtpBotService.openTelegramBot();
 
-    // САБТ: дархости воқеии SMS тавассути Firebase Phone Authentication
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: phone,
-      timeout: const Duration(seconds: 60),
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        // Дар баъзе дастгоҳҳо Android худкор SMS-ро мехонад
-        await FirebaseAuth.instance.signInWithCredential(credential);
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        if (!mounted) return;
-        setState(() {
-          _isSending = false;
-          _errorText = e.message ?? 'Хатои тасдиқ. Аз нав кӯшиш кунед.';
-        });
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        if (!mounted) return;
-        setState(() => _isSending = false);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OtpScreen(
-              verificationId: verificationId,
-              phoneNumber: phone,
-              resendToken: resendToken,
-            ),
-          ),
-        );
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {},
+    if (!mounted) return;
+    setState(() => _isOpeningBot = false);
+
+    if (!opened) {
+      setState(() => _errorText = 'Telegram кушода нашуд. Мутмаин шавед, ки Telegram насб аст.');
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => OtpScreen(phoneNumber: phone)),
     );
   }
 
@@ -101,7 +83,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Мо ба ин рақам SMS бо рамзи тасдиқ мефиристем',
+                  'Боти моро дар Telegram кушоед, рақами худро мубодила кунед ва рамзи 6-рақамаро аз он гиред',
                   style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.85), fontSize: 13),
                 ),
                 const SizedBox(height: 28),
@@ -151,21 +133,22 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.neonEmerald,
                       foregroundColor: AppColors.background,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    onPressed: _isSending ? null : _sendCode,
-                    child: _isSending
+                    onPressed: _isOpeningBot ? null : _openBotAndContinue,
+                    icon: _isOpeningBot
                         ? const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                           )
-                        : const Text('Идома', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        : const Icon(LucideIcons.send, size: 18),
+                    label: const Text('Кушодани бот дар Telegram', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ),
               ],

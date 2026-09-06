@@ -1,0 +1,20 @@
+{
+  "name": "chatapp-otp-bot",
+  "version": "1.0.0",
+  "description": "Telegram-bot-based OTP delivery + verification server for ChatApp phone login",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "telegraf": "4.16.3",
+    "express": "5.2.1",
+    "cors": "2.8.6",
+    "firebase-admin": "14.3.0",
+    "dotenv": "17.4.2"
+  }
+}

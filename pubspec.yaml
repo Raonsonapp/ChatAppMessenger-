@@ -39,6 +39,10 @@ dependencies:
   agora_rtc_engine: ^6.6.4
   permission_handler: ^13.0.2
 
+  # Дархостҳо ба сервери OTP-бот (Telegram) ва кушодани боти Telegram
+  http: ^1.6.0
+  url_launcher: ^6.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

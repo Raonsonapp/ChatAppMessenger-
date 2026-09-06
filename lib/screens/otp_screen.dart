@@ -8,19 +8,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
+import '../services/otp_bot_service.dart';
 import 'complete_profile_screen.dart';
 import 'chat_list_screen.dart';
 
 class OtpScreen extends StatefulWidget {
-  final String verificationId;
   final String phoneNumber;
-  final int? resendToken;
-  const OtpScreen({
-    super.key,
-    required this.verificationId,
-    required this.phoneNumber,
-    this.resendToken,
-  });
+  const OtpScreen({super.key, required this.phoneNumber});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -33,15 +27,12 @@ class _OtpScreenState extends State<OtpScreen> {
   bool _isVerifying = false;
   bool _isResending = false;
   String? _errorText;
-  late String _verificationId = widget.verificationId;
-  int? _resendToken;
   int _secondsLeft = _resendCooldown;
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _resendToken = widget.resendToken;
     _startCountdown();
   }
 
@@ -61,41 +52,17 @@ class _OtpScreenState extends State<OtpScreen> {
 
   Future<void> _resendCode() async {
     if (_secondsLeft > 0 || _isResending) return;
-    setState(() {
-      _isResending = true;
-      _errorText = null;
-    });
+    setState(() => _isResending = true);
 
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: widget.phoneNumber,
-      forceResendingToken: _resendToken,
-      timeout: const Duration(seconds: 60),
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        await FirebaseAuth.instance.signInWithCredential(credential);
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        if (!mounted) return;
-        setState(() {
-          _isResending = false;
-          _errorText = e.message ?? 'Хатои тасдиқ. Аз нав кӯшиш кунед.';
-        });
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        if (!mounted) return;
-        setState(() {
-          _isResending = false;
-          _verificationId = verificationId;
-          _resendToken = resendToken;
-        });
-        _startCountdown();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Рамзи нав фиристода шуд')),
-        );
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        _verificationId = verificationId;
-      },
-    );
+    final opened = await OtpBotService.openTelegramBot();
+
+    if (!mounted) return;
+    setState(() => _isResending = false);
+    if (opened) {
+      _startCountdown();
+    } else {
+      setState(() => _errorText = 'Telegram кушода нашуд');
+    }
   }
 
   @override
@@ -117,12 +84,10 @@ class _OtpScreenState extends State<OtpScreen> {
     });
 
     try {
-      // САБТ: тасдиқи воқеии рамзи OTP тавассути Firebase
-      final credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId,
-        smsCode: code,
-      );
-      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      // Рамз тавассути боти Telegram фиристода шуда буд; сервери мо онро
+      // тасдиқ карда, ба ивазаш Firebase custom token медиҳад.
+      final token = await OtpBotService.verifyCode(phone: widget.phoneNumber, code: code);
+      final userCredential = await FirebaseAuth.instance.signInWithCustomToken(token);
       final uid = userCredential.user?.uid;
       if (uid == null) throw Exception('UID нест');
 
@@ -142,6 +107,12 @@ class _OtpScreenState extends State<OtpScreen> {
           (route) => false,
         );
       }
+    } on OtpVerifyException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isVerifying = false;
+        _errorText = e.message;
+      });
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -173,7 +144,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Ба ${widget.phoneNumber} SMS фиристода шуд',
+                  'Рамзе, ки боти Telegram ба ${widget.phoneNumber} фиристод',
                   style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.85), fontSize: 13),
                 ),
                 const SizedBox(height: 28),
@@ -235,8 +206,8 @@ class _OtpScreenState extends State<OtpScreen> {
                           onPressed: _secondsLeft > 0 ? null : _resendCode,
                           child: Text(
                             _secondsLeft > 0
-                                ? 'Рамзро аз нав фиристодан ($_secondsLeft с)'
-                                : 'Рамзро аз нав фиристодан',
+                                ? 'Кушодани бот барои рамзи нав ($_secondsLeft с)'
+                                : 'Кушодани бот барои рамзи нав',
                             style: TextStyle(
                               color: _secondsLeft > 0 ? AppColors.textSecondary : AppColors.neonEmerald,
                               fontWeight: FontWeight.w600,
