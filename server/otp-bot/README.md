@@ -18,7 +18,7 @@
    `server/otp-bot` танзим кунед (Railway дар танзимоти Service → Settings →
    Root Directory).
 4. Дар Variables-и Railway ду тағйирёбандаро илова кунед:
-   - `BOT_TOKEN` — токени BotFather
+   - `TELEGRAM_BOT_TOKEN` — токени BotFather
    - `FIREBASE_SERVICE_ACCOUNT_BASE64` — сатри base64-и қадами 2
 5. Railway худкор deploy мекунад (Nixpacks Node-ро муайян мекунад, `npm start`
    иҷро мешавад). Пас аз deploy, URL-и хидматро (масалан
@@ -31,7 +31,7 @@
 
 ```bash
 cd server/otp-bot
-cp .env.example .env   # BOT_TOKEN ва FIREBASE_SERVICE_ACCOUNT_BASE64-ро пур кунед
+cp .env.example .env   # TELEGRAM_BOT_TOKEN ва FIREBASE_SERVICE_ACCOUNT_BASE64-ро пур кунед
 npm install
 npm start
 ```

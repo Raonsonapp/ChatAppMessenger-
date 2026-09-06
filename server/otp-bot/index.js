@@ -5,13 +5,13 @@ const cors = require('cors');
 const { Telegraf, Markup } = require('telegraf');
 const admin = require('firebase-admin');
 
-const BOT_TOKEN = process.env.BOT_TOKEN;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
 const PORT = process.env.PORT || 3000;
 const CODE_TTL_MS = 5 * 60 * 1000; // 5 дақиқа
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 сония
 
 if (!BOT_TOKEN) {
-  console.error('BOT_TOKEN муайян нашудааст (.env ё Railway variables-ро тафтиш кунед).');
+  console.error('TELEGRAM_BOT_TOKEN муайян нашудааст (.env ё Railway variables-ро тафтиш кунед).');
   process.exit(1);
 }
 
