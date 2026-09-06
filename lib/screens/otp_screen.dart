@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,20 +14,94 @@ import 'chat_list_screen.dart';
 class OtpScreen extends StatefulWidget {
   final String verificationId;
   final String phoneNumber;
-  const OtpScreen({super.key, required this.verificationId, required this.phoneNumber});
+  final int? resendToken;
+  const OtpScreen({
+    super.key,
+    required this.verificationId,
+    required this.phoneNumber,
+    this.resendToken,
+  });
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
 }
 
 class _OtpScreenState extends State<OtpScreen> {
+  static const _resendCooldown = 60;
+
   final TextEditingController _codeController = TextEditingController();
   bool _isVerifying = false;
+  bool _isResending = false;
   String? _errorText;
+  late String _verificationId = widget.verificationId;
+  int? _resendToken;
+  int _secondsLeft = _resendCooldown;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _resendToken = widget.resendToken;
+    _startCountdown();
+  }
+
+  void _startCountdown() {
+    _timer?.cancel();
+    setState(() => _secondsLeft = _resendCooldown);
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_secondsLeft <= 1) {
+        timer.cancel();
+        setState(() => _secondsLeft = 0);
+      } else {
+        setState(() => _secondsLeft -= 1);
+      }
+    });
+  }
+
+  Future<void> _resendCode() async {
+    if (_secondsLeft > 0 || _isResending) return;
+    setState(() {
+      _isResending = true;
+      _errorText = null;
+    });
+
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: widget.phoneNumber,
+      forceResendingToken: _resendToken,
+      timeout: const Duration(seconds: 60),
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        await FirebaseAuth.instance.signInWithCredential(credential);
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        if (!mounted) return;
+        setState(() {
+          _isResending = false;
+          _errorText = e.message ?? 'Хатои тасдиқ. Аз нав кӯшиш кунед.';
+        });
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        if (!mounted) return;
+        setState(() {
+          _isResending = false;
+          _verificationId = verificationId;
+          _resendToken = resendToken;
+        });
+        _startCountdown();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Рамзи нав фиристода шуд')),
+        );
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        _verificationId = verificationId;
+      },
+    );
+  }
 
   @override
   void dispose() {
     _codeController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -43,7 +119,7 @@ class _OtpScreenState extends State<OtpScreen> {
     try {
       // САБТ: тасдиқи воқеии рамзи OTP тавассути Firebase
       final credential = PhoneAuthProvider.credential(
-        verificationId: widget.verificationId,
+        verificationId: _verificationId,
         smsCode: code,
       );
       final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
@@ -146,6 +222,28 @@ class _OtpScreenState extends State<OtpScreen> {
                           )
                         : const Text('Тасдиқ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: _isResending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.neonEmerald),
+                        )
+                      : TextButton(
+                          onPressed: _secondsLeft > 0 ? null : _resendCode,
+                          child: Text(
+                            _secondsLeft > 0
+                                ? 'Рамзро аз нав фиристодан ($_secondsLeft с)'
+                                : 'Рамзро аз нав фиристодан',
+                            style: TextStyle(
+                              color: _secondsLeft > 0 ? AppColors.textSecondary : AppColors.neonEmerald,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
                 ),
               ],
             ),

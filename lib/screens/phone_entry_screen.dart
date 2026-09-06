@@ -67,7 +67,11 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OtpScreen(verificationId: verificationId, phoneNumber: phone),
+            builder: (_) => OtpScreen(
+              verificationId: verificationId,
+              phoneNumber: phone,
+              resendToken: resendToken,
+            ),
           ),
         );
       },
