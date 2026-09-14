@@ -3,7 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Telegraf, Markup } = require('telegraf');
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
 const PORT = process.env.PORT || 3000;
@@ -29,7 +30,7 @@ if (!rawServiceAccountJson && !serviceAccountBase64) {
 const serviceAccount = rawServiceAccountJson
   ? JSON.parse(rawServiceAccountJson)
   : JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('utf8'));
-admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+initializeApp({ credential: cert(serviceAccount) });
 
 /** phone (E.164, e.g. "+992901234567") -> { code, expiresAt, lastSentAt, chatId } */
 const otpStore = new Map();
@@ -97,8 +98,16 @@ bot.catch((err) => {
   console.error('Хатои бот:', err);
 });
 
-bot.launch();
-console.log('Telegram бот бо тарзи polling оғоз ёфт.');
+// Дар ҳолати polling, launch() ҳељ гоҳ resolve намешавад — то даме ки бот кор
+// мекунад, pending мемонад. Вале агар шикаст хӯрад (масалан токени нодуруст),
+// promise reject мешавад; бе ин catch он ба unhandled rejection табдил ёфта,
+// тамоми процессро бо stack trace-и нофаҳмо мекушт.
+bot.launch().catch((err) => {
+  console.error('Оғози боти Telegram муваффақ нашуд:', err.message ?? err);
+  console.error('TELEGRAM_BOT_TOKEN-ро тафтиш кунед (@BotFather).');
+  process.exit(1);
+});
+console.log('Боти Telegram дар ҳоли пайвастшавӣ (polling)...');
 
 // ---------- REST API барои апп ----------
 
@@ -134,7 +143,7 @@ app.post('/api/otp/verify', async (req, res) => {
   otpStore.delete(normalizedPhone);
 
   const uid = uidForPhone(normalizedPhone);
-  const token = await admin.auth().createCustomToken(uid, { phone: normalizedPhone });
+  const token = await getAuth().createCustomToken(uid, { phone: normalizedPhone });
 
   res.json({ token, uid, phone: normalizedPhone });
 });
