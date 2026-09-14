@@ -4,8 +4,8 @@ class OtpServerConfig {
   /// URL-и хидмати Railway.
   static const String baseUrl = 'https://chatappmessenger-production.up.railway.app';
 
-  /// Username-и боти Telegram (бе '@'), масалан: 'chatapp_otp_bot'
-  static const String telegramBotUsername = 'YOUR_BOT_USERNAME';
+  /// Username-и боти Telegram (бе '@').
+  static const String telegramBotUsername = 'VerificationChatAppBot';
 
   static String get telegramBotDeepLink => 'https://t.me/$telegramBotUsername';
 }

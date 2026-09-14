@@ -148,6 +148,9 @@ app.post('/api/otp/verify', async (req, res) => {
   res.json({ token, uid, phone: normalizedPhone });
 });
 
-app.listen(PORT, () => {
-  console.log(`OTP REST API дар порти ${PORT} кор мекунад.`);
+// Ба 0.0.0.0 баста мешавад: бе ин Node ба '::' мебандад ва дар контейнер
+// метавонад танҳо IPv6-ро бигирад, дар ҳоле ки Railway тавассути IPv4 пайваст
+// мешавад — натиҷа 502 "Application failed to respond".
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`OTP REST API дар 0.0.0.0:${PORT} кор мекунад (PORT env = ${process.env.PORT ?? 'нест'}).`);
 });
