@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const crypto = require('node:crypto');
+
 const express = require('express');
 const cors = require('cors');
 const { Telegraf, Markup } = require('telegraf');
@@ -149,8 +151,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Ҳолати бот, то бидуни логҳои Railway ҳам фаҳмидан мумкин бошад, ки бот дар
+// кадом усул кор мекунад ва чаро.
+const botStatus = { mode: 'оғоз нашуда', detail: null };
+
 app.get('/', (_req, res) => {
-  res.json({ ok: true, service: 'chatapp-otp-bot' });
+  res.json({
+    ok: true,
+    service: 'chatapp-otp-bot',
+    bot: botStatus,
+    publicDomain: process.env.PUBLIC_URL || process.env.RAILWAY_PUBLIC_DOMAIN || null,
+  });
 });
 
 app.post('/api/otp/verify', async (req, res) => {
@@ -192,17 +203,26 @@ async function start() {
   const publicDomain = process.env.PUBLIC_URL || process.env.RAILWAY_PUBLIC_DOMAIN;
 
   if (publicDomain) {
+    // Роҳи худи telegraf аз hash-и (токен + версияи Node) сохта мешавад, яъне
+    // ҳангоми навсозии Node тағйир меёбад. Роҳи худамон танҳо ба токен вобаста
+    // аст — устувор мемонад ва ҳамчунон тахминнашаванда.
+    const webhookPath =
+      '/telegram/' + crypto.createHash('sha256').update(BOT_TOKEN).digest('hex').slice(0, 32);
     try {
-      // Роҳи webhook-ро худи telegraf аз hash-и токен месозад — тахмин кардан
-      // мумкин нест, бинобар ин бегонагон update-и қалбакӣ фиристода наметавонанд.
-      app.use(await bot.createWebhook({ domain: publicDomain }));
-      console.log(`Бот бо webhook кор мекунад (домен: ${publicDomain}).`);
+      app.use(await bot.createWebhook({ domain: publicDomain, path: webhookPath }));
+      botStatus.mode = 'webhook';
+      botStatus.detail = `https://${publicDomain.replace(/^https?:\/\//, '')}${webhookPath}`;
+      console.log(`Бот бо webhook кор мекунад: ${botStatus.detail}`);
     } catch (err) {
-      console.error(`Насби webhook муваффақ нашуд: ${err?.message ?? err}`);
+      botStatus.mode = 'polling';
+      botStatus.detail = `насби webhook муваффақ нашуд: ${err?.message ?? err}`;
+      console.error(botStatus.detail);
       console.error('Бозгашт ба polling.');
       launchBotWithRetry();
     }
   } else {
+    botStatus.mode = 'polling';
+    botStatus.detail = 'PUBLIC_URL ва RAILWAY_PUBLIC_DOMAIN ҳарду холӣ';
     console.log('Домени ҷамъиятӣ маълум нест — бот бо polling кор мекунад.');
     launchBotWithRetry();
   }
