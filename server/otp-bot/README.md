@@ -14,9 +14,10 @@
    [Service accounts](https://console.firebase.google.com/project/chatapp-57fb2/settings/serviceaccounts/adminsdk)
    → "Generate new private key" — файли `.json` боргирӣ мешавад.
 3. Дар [railway.com](https://railway.com) лоиҳаи нав созед → "Deploy from GitHub
-   repo" → ҳамин репозиторийро интихоб кунед, вале **Root Directory**-ро ба
-   `server/otp-bot` танзим кунед (Railway дар танзимоти Service → Settings →
-   Root Directory).
+   repo" → ҳамин репозиторийро интихоб кунед. **ҲАТМӢ:** дар Service →
+   Settings → Source → **Root Directory**-ро ба `server/otp-bot` танзим кунед.
+   Бе ин, Railway решаи репозиторий (лоиҳаи Flutter)-ро build карданӣ мешавад
+   ва бо хатогӣ мешиканад, чунки дар он ҷо `package.json` нест.
 4. Дар Variables-и Railway ду тағйирёбандаро илова кунед:
    - `TELEGRAM_BOT_TOKEN` — токени BotFather
    - `FIREBASE_SERVICE_ACCOUNT_JSON` — тамоми матни файли JSON-и қадами 2-ро
