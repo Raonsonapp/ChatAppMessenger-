@@ -23,12 +23,16 @@
    - `FIREBASE_SERVICE_ACCOUNT_JSON` — тамоми матни файли JSON-и қадами 2-ро
      АЙНАН нусхабардорӣ карда дар ин ҷо часпонед (якҷоя бо `{` ва `}`).
      Base64 лозим нест — Railway қиматҳои бисёрхаттаро қабул мекунад.
-5. Railway худкор deploy мекунад (Nixpacks Node-ро муайян мекунад, `npm start`
-   иҷро мешавад). Пас аз deploy, URL-и хидматро (масалан
-   `https://chatapp-otp-bot-production.up.railway.app`) нусхабардорӣ кунед.
-6. Дар апп: `lib/config/otp_server_config.dart`-ро кушоед ва
-   `otpServerBaseUrl`-ро ба ҳамон URL иваз кунед, ва `telegramBotUsername`-ро
-   ба username-и боти сохтаатон (бе `@`).
+5. Railway худкор deploy мекунад — тавассути `Dockerfile`-и ҳамин папка
+   (Settings → Build → Builder: Dockerfile). Пас аз deploy, дар Settings →
+   Networking → "Generate Domain" домен созед, target port-ро `3000` гузоред.
+6. Дар апп: `lib/config/otp_server_config.dart`-ро кушоед ва `baseUrl`-ро ба
+   ҳамон домен иваз кунед, ва `telegramBotUsername`-ро ба username-и боти
+   сохтаатон (бе `@`).
+
+> Эзоҳ: Railway "Config as Code"-ро (`railway.json`) аз кор мебарорад ва
+> хидматҳои нав онро истифода бурда наметавонанд, бинобар ин ҳамаи танзимот
+> дастӣ дар UI-и Railway гузошта мешаванд.
 
 ## Санҷиши маҳаллӣ
 
