@@ -129,7 +129,9 @@ app.post('/api/otp/verify', async (req, res) => {
   const entry = otpStore.get(normalizedPhone);
 
   if (!entry) {
-    return res.status(400).json({ error: 'Аввал рамзро тавассути бот дархост кунед' });
+    return res.status(400).json({
+      error: 'Барои ин рақам рамз дархост нашудааст. Дар бот маҳз ҳамин рақамро мубодила кунед.',
+    });
   }
   if (Date.now() > entry.expiresAt) {
     otpStore.delete(normalizedPhone);
