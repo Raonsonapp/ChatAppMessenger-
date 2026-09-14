@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/app_theme.dart';
 import '../../models/app_community.dart';
 import '../../widgets/community_tile.dart';
+import '../../utils/doc_sort.dart';
 import '../create_community_screen.dart';
 
 class CommunitiesTab extends StatelessWidget {
@@ -20,7 +21,6 @@ class CommunitiesTab extends StatelessWidget {
       stream: FirebaseFirestore.instance
           .collection('communities')
           .where('members', arrayContains: currentUid)
-          .orderBy('lastMessageTime', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -38,7 +38,7 @@ class CommunitiesTab extends StatelessWidget {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
         }
-        final docs = snapshot.data!.docs;
+        final docs = sortByTimeDesc(snapshot.data!.docs, 'lastMessageTime');
         if (docs.isEmpty) {
           return Center(
             child: Padding(

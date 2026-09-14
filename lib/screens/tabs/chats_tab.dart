@@ -9,6 +9,7 @@ import '../../widgets/chat_tile.dart';
 import '../../widgets/user_conversation_tile.dart';
 import '../../widgets/group_tile.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/doc_sort.dart';
 
 class ChatsTab extends StatelessWidget {
   const ChatsTab({super.key});
@@ -28,7 +29,6 @@ class ChatsTab extends StatelessWidget {
             stream: FirebaseFirestore.instance
                 .collection('groups')
                 .where('members', arrayContains: currentUid)
-                .orderBy('lastMessageTime', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
@@ -41,7 +41,7 @@ class ChatsTab extends StatelessWidget {
                 );
               }
               if (!snapshot.hasData) return const SizedBox.shrink();
-              final docs = snapshot.data!.docs;
+              final docs = sortByTimeDesc(snapshot.data!.docs, 'lastMessageTime');
               if (docs.isEmpty) return const SizedBox.shrink();
               return Column(
                 children: docs.map((doc) {
@@ -58,7 +58,6 @@ class ChatsTab extends StatelessWidget {
             stream: FirebaseFirestore.instance
                 .collection('conversations')
                 .where('participants', arrayContains: currentUid)
-                .orderBy('lastMessageTime', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
@@ -76,7 +75,7 @@ class ChatsTab extends StatelessWidget {
                   child: Center(child: CircularProgressIndicator(color: AppColors.neonEmerald)),
                 );
               }
-              final docs = snapshot.data!.docs;
+              final docs = sortByTimeDesc(snapshot.data!.docs, 'lastMessageTime');
               if (docs.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),

@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../theme/app_theme.dart';
 import '../../models/app_call.dart';
+import '../../utils/doc_sort.dart';
 import '../call_screen.dart';
 
 class CallsTab extends StatelessWidget {
@@ -19,7 +20,6 @@ class CallsTab extends StatelessWidget {
       stream: FirebaseFirestore.instance
           .collection('calls')
           .where('participants', arrayContains: currentUid)
-          .orderBy('createdAt', descending: true)
           .limit(100)
           .snapshots(),
       builder: (context, snapshot) {
@@ -38,7 +38,7 @@ class CallsTab extends StatelessWidget {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
         }
-        final calls = snapshot.data!.docs.map(AppCall.fromDoc).toList();
+        final calls = sortByTimeDesc(snapshot.data!.docs, 'createdAt').map(AppCall.fromDoc).toList();
         if (calls.isEmpty) {
           return Center(
             child: Padding(
