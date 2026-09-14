@@ -98,15 +98,32 @@ bot.catch((err) => {
   console.error('Хатои бот:', err);
 });
 
-// Дар ҳолати polling, launch() ҳељ гоҳ resolve намешавад — то даме ки бот кор
-// мекунад, pending мемонад. Вале агар шикаст хӯрад (масалан токени нодуруст),
-// promise reject мешавад; бе ин catch он ба unhandled rejection табдил ёфта,
-// тамоми процессро бо stack trace-и нофаҳмо мекушт.
-bot.launch().catch((err) => {
-  console.error('Оғози боти Telegram муваффақ нашуд:', err.message ?? err);
-  console.error('TELEGRAM_BOT_TOKEN-ро тафтиш кунед (@BotFather).');
-  process.exit(1);
-});
+// Дар ҳолати polling, launch() то охири кори бот resolve намешавад. Агар
+// reject шавад, бояд фарқ кунем:
+//   401 — токен нодуруст аст, такрор фоида надорад.
+//   409 — контейнери кӯҳна ҳанӯз getUpdates мекунад (ҳангоми deploy якчанд
+//         сония ҳарду зинда мемонанд). Ин муваққатист — бояд такрор кунем,
+//         вагарна ҳар deploy ботро то абад мекушад.
+async function launchBotWithRetry() {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await bot.launch();
+      return;
+    } catch (err) {
+      if (err?.response?.error_code === 401) {
+        console.error('Telegram токенро қабул накард (401).');
+        console.error('TELEGRAM_BOT_TOKEN-ро тафтиш кунед (@BotFather).');
+        process.exit(1);
+      }
+      const waitMs = Math.min(30_000, 2_000 * attempt);
+      console.error(`Оғози бот муваффақ нашуд: ${err?.message ?? err}`);
+      console.error(`Такрори кӯшиш пас аз ${waitMs / 1000} сония...`);
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+  }
+}
+
+launchBotWithRetry();
 console.log('Боти Telegram дар ҳоли пайвастшавӣ (polling)...');
 
 // ---------- REST API барои апп ----------
