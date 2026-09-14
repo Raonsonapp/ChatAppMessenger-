@@ -16,8 +16,8 @@ class OtpVerifyException implements Exception {
 /// Firebase SMS, балки тавассути боти Telegram мефиристад ва тасдиқ мекунад.
 class OtpBotService {
   /// Боти Telegram-ро мекушояд, то корбар рақами худро мубодила карда рамзро гирад.
-  static Future<bool> openTelegramBot() {
-    final uri = Uri.parse(OtpServerConfig.telegramBotDeepLink);
+  static Future<bool> openTelegramBot(String phone) {
+    final uri = Uri.parse(OtpServerConfig.telegramBotDeepLink(phone));
     return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 

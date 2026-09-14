@@ -54,7 +54,7 @@ class _OtpScreenState extends State<OtpScreen> {
     if (_secondsLeft > 0 || _isResending) return;
     setState(() => _isResending = true);
 
-    final opened = await OtpBotService.openTelegramBot();
+    final opened = await OtpBotService.openTelegramBot(widget.phoneNumber);
 
     if (!mounted) return;
     setState(() => _isResending = false);

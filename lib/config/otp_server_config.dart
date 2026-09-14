@@ -7,5 +7,10 @@ class OtpServerConfig {
   /// Username-и боти Telegram (бе '@').
   static const String telegramBotUsername = 'VerificationChatAppBot';
 
-  static String get telegramBotDeepLink => 'https://t.me/$telegramBotUsername';
+  /// Бо `?start=` — Telegram ботро худкор оғоз мекунад ва рақамро ҳамчун
+  /// payload мефиристад, то бот донад, ки барнома кадом рақамро интизор аст.
+  static String telegramBotDeepLink(String phone) {
+    final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    return 'https://t.me/$telegramBotUsername?start=$digits';
+  }
 }

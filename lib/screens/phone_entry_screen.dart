@@ -45,7 +45,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
     });
 
     final phone = _fullPhoneNumber;
-    final opened = await OtpBotService.openTelegramBot();
+    final opened = await OtpBotService.openTelegramBot(phone);
 
     if (!mounted) return;
     setState(() => _isOpeningBot = false);

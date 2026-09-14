@@ -52,9 +52,21 @@ function uidForPhone(phone) {
 
 const bot = new Telegraf(BOT_TOKEN);
 
+/** chatId -> рақаме, ки барнома интизор аст (аз payload-и линки `?start=`) */
+const expectedPhoneByChat = new Map();
+
 bot.start((ctx) => {
+  // Барнома рақамро ҳамчун payload мефиристад: t.me/<bot>?start=992XXXXXXXX
+  const payloadDigits = String(ctx.startPayload ?? '').replace(/[^0-9]/g, '');
+  let hint = '';
+  if (payloadDigits) {
+    const expected = `+${payloadDigits}`;
+    expectedPhoneByChat.set(ctx.chat.id, expected);
+    hint = `\n\nБарнома рақами ${expected}-ро интизор аст.`;
+  }
+
   ctx.reply(
-    'Хуш омадед! Барои гирифтани рамзи 6-рақамаи вуруд ба ChatApp, тугмаи зерро пахш карда рақами телефони худро мубодила кунед.',
+    'Хуш омадед! Барои гирифтани рамзи 6-рақамаи вуруд ба ChatApp, тугмаи зерро пахш карда рақами телефони худро мубодила кунед.' + hint,
     Markup.keyboard([Markup.button.contactRequest('📱 Фиристодани рақами телефон')])
       .resize()
       .oneTime(),
@@ -88,8 +100,16 @@ bot.on('contact', async (ctx) => {
     chatId: ctx.chat.id,
   });
 
+  // Агар корбар дар барнома як рақам нависаду дар бот рақами дигарро мубодила
+  // кунад, сервер рамзро намеёбад. Инро дарҳол равшан мегӯем.
+  const expected = expectedPhoneByChat.get(ctx.chat.id);
+  const mismatchNote =
+    expected && expected !== phone
+      ? `\n\n⚠️ Дар барнома ${expected} навишта шудааст, вале шумо ${phone}-ро мубодила кардед. Дар барнома маҳз ${phone}-ро нависед.`
+      : '';
+
   await ctx.reply(
-    `Рамзи шумо: ${code}\n\nИн рамзро дар барномаи ChatApp ворид кунед. Рамз то 5 дақиқа эътибор дорад.`,
+    `Рамзи шумо: ${code}\n\nИн рамзро дар барномаи ChatApp ворид кунед. Рамз то 5 дақиқа эътибор дорад.${mismatchNote}`,
     Markup.removeKeyboard(),
   );
 });
