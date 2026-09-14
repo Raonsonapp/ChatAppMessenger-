@@ -143,9 +143,6 @@ async function launchBotWithRetry() {
   }
 }
 
-launchBotWithRetry();
-console.log('Боти Telegram дар ҳоли пайвастшавӣ (polling)...');
-
 // ---------- REST API барои апп ----------
 
 const app = express();
@@ -187,9 +184,35 @@ app.post('/api/otp/verify', async (req, res) => {
   res.json({ token, uid, phone: normalizedPhone });
 });
 
-// Ба 0.0.0.0 баста мешавад: бе ин Node ба '::' мебандад ва дар контейнер
-// метавонад танҳо IPv6-ро бигирад, дар ҳоле ки Railway тавассути IPv4 пайваст
-// мешавад — натиҷа 502 "Application failed to respond".
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`OTP REST API дар 0.0.0.0:${PORT} кор мекунад (PORT env = ${process.env.PORT ?? 'нест'}).`);
-});
+async function start() {
+  // Агар домени ҷамъиятӣ маълум бошад (дар Railway — RAILWAY_PUBLIC_DOMAIN),
+  // webhook беҳтар аз polling аст: Telegram худаш update мефиристад, ҳељ
+  // getUpdates нест, пас хатои 409 "terminated by other getUpdates request"
+  // ҳангоми deploy-и нав умуман ба вуҷуд намеояд.
+  const publicDomain = process.env.PUBLIC_URL || process.env.RAILWAY_PUBLIC_DOMAIN;
+
+  if (publicDomain) {
+    try {
+      // Роҳи webhook-ро худи telegraf аз hash-и токен месозад — тахмин кардан
+      // мумкин нест, бинобар ин бегонагон update-и қалбакӣ фиристода наметавонанд.
+      app.use(await bot.createWebhook({ domain: publicDomain }));
+      console.log(`Бот бо webhook кор мекунад (домен: ${publicDomain}).`);
+    } catch (err) {
+      console.error(`Насби webhook муваффақ нашуд: ${err?.message ?? err}`);
+      console.error('Бозгашт ба polling.');
+      launchBotWithRetry();
+    }
+  } else {
+    console.log('Домени ҷамъиятӣ маълум нест — бот бо polling кор мекунад.');
+    launchBotWithRetry();
+  }
+
+  // Ба 0.0.0.0 баста мешавад: бе ин Node ба '::' мебандад ва дар контейнер
+  // метавонад танҳо IPv6-ро бигирад, дар ҳоле ки Railway тавассути IPv4 пайваст
+  // мешавад — натиҷа 502 "Application failed to respond".
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`OTP REST API дар 0.0.0.0:${PORT} кор мекунад (PORT env = ${process.env.PORT ?? 'нест'}).`);
+  });
+}
+
+start();
