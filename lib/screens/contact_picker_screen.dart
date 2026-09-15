@@ -6,6 +6,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 
 import '../theme/app_theme.dart';
 import '../models/app_conversation.dart';
+import '../utils/phone.dart';
 import 'user_chat_screen.dart';
 import 'create_group_screen.dart';
 import 'create_community_screen.dart';
@@ -42,9 +43,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
     super.dispose();
   }
 
-  String _normalizePhone(String value) {
-    return value.replaceAll(RegExp(r'[^0-9+]'), '');
-  }
+  String _normalizePhone(String value) => phoneMatchKey(value);
 
   Future<void> _loadContacts() async {
     try {
