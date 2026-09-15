@@ -7,6 +7,9 @@ import '../../widgets/neon_backdrop.dart';
 import '../../utils/snackbar_utils.dart';
 import 'privacy_settings_screen.dart';
 import 'notifications_settings_screen.dart';
+import 'storage_settings_screen.dart';
+import 'help_screen.dart';
+import 'about_screen.dart';
 
 class SettingsHomeScreen extends StatelessWidget {
   const SettingsHomeScreen({super.key});
@@ -71,7 +74,10 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.database,
                         label: 'Захира ва маълумот',
-                        onTap: () => showComingSoonSnack(context, 'Захира ва маълумот'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const StorageSettingsScreen()),
+                        ),
                       ),
                       _row(
                         context,
@@ -86,13 +92,19 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.circle_question_mark,
                         label: 'Кӯмак',
-                        onTap: () => showComingSoonSnack(context, 'Кӯмак'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const HelpScreen()),
+                        ),
                       ),
                       _row(
                         context,
                         icon: LucideIcons.info,
                         label: 'Дар бораи ChatApp',
-                        onTap: () => showComingSoonSnack(context, 'Дар бораи барнома'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const AboutScreen()),
+                        ),
                         showDivider: false,
                       ),
                     ]),
