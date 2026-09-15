@@ -11,6 +11,7 @@ import '../widgets/neon_backdrop.dart';
 import '../services/otp_bot_service.dart';
 import 'complete_profile_screen.dart';
 import 'chat_list_screen.dart';
+import '../l10n/l10n.dart';
 
 class OtpScreen extends StatefulWidget {
   final String phoneNumber;
@@ -61,7 +62,7 @@ class _OtpScreenState extends State<OtpScreen> {
     if (opened) {
       _startCountdown();
     } else {
-      setState(() => _errorText = 'Telegram кушода нашуд');
+      setState(() => _errorText = tr('k125'));
     }
   }
 
@@ -75,7 +76,7 @@ class _OtpScreenState extends State<OtpScreen> {
   Future<void> _verifyCode() async {
     final code = _codeController.text.trim();
     if (code.length < 6) {
-      setState(() => _errorText = 'Рамзи 6-рақамаро пурра ворид кунед');
+      setState(() => _errorText = tr('k126'));
       return;
     }
     setState(() {
@@ -89,7 +90,7 @@ class _OtpScreenState extends State<OtpScreen> {
       final token = await OtpBotService.verifyCode(phone: widget.phoneNumber, code: code);
       final userCredential = await FirebaseAuth.instance.signInWithCustomToken(token);
       final uid = userCredential.user?.uid;
-      if (uid == null) throw Exception('UID нест');
+      if (uid == null) throw Exception(tr('k127'));
 
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (!mounted) return;
@@ -117,7 +118,7 @@ class _OtpScreenState extends State<OtpScreen> {
       if (!mounted) return;
       setState(() {
         _isVerifying = false;
-        _errorText = e.message ?? 'Рамз нодуруст аст';
+        _errorText = e.message ?? tr('k128');
       });
     }
   }
@@ -139,12 +140,12 @@ class _OtpScreenState extends State<OtpScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Рамзи тасдиқро ворид кунед',
+                  tr('k129'),
                   style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Рамзе, ки боти Telegram ба ${widget.phoneNumber} фиристод',
+                  trf('k130', [widget.phoneNumber]),
                   style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.85), fontSize: 13),
                 ),
                 const SizedBox(height: 28),
@@ -191,7 +192,7 @@ class _OtpScreenState extends State<OtpScreen> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                           )
-                        : const Text('Тасдиқ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        : Text(tr('k131'), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -206,8 +207,8 @@ class _OtpScreenState extends State<OtpScreen> {
                           onPressed: _secondsLeft > 0 ? null : _resendCode,
                           child: Text(
                             _secondsLeft > 0
-                                ? 'Кушодани бот барои рамзи нав ($_secondsLeft с)'
-                                : 'Кушодани бот барои рамзи нав',
+                                ? trf('k132', [_secondsLeft])
+                                : tr('k133'),
                             style: TextStyle(
                               color: _secondsLeft > 0 ? AppColors.textSecondary : AppColors.neonEmerald,
                               fontWeight: FontWeight.w600,

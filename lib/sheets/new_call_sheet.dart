@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../models/app_call.dart';
 import '../screens/call_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Интихоби корбар барои сар кардани занги нав (садоӣ ё видеоӣ).
 class NewCallSheet extends StatefulWidget {
@@ -49,7 +50,7 @@ class _NewCallSheetState extends State<NewCallSheet> {
       return phone.contains(q) || name.toLowerCase().contains(ql);
     }).map((doc) {
       final data = doc.data();
-      return {'uid': doc.id, 'name': (data['name'] ?? 'Корбар') as String, 'phone': (data['phone'] ?? '') as String};
+      return {'uid': doc.id, 'name': (data['name'] ?? tr('k002')) as String, 'phone': (data['phone'] ?? '') as String};
     }).toList();
     if (!mounted) return;
     setState(() {
@@ -83,7 +84,7 @@ class _NewCallSheetState extends State<NewCallSheet> {
                 decoration: BoxDecoration(color: AppColors.glassBorder, borderRadius: BorderRadius.circular(4)),
               ),
             ),
-            Text('Занги нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+            Text(tr('k227'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
@@ -118,7 +119,7 @@ class _NewCallSheetState extends State<NewCallSheet> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Text(
-                  'Ҳеҷ корбаре ёфт нашуд',
+                  tr('k226'),
                   style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
                 ),
               )

@@ -8,6 +8,7 @@ import '../../models/app_community.dart';
 import '../../widgets/community_tile.dart';
 import '../../utils/doc_sort.dart';
 import '../create_community_screen.dart';
+import '../../l10n/l10n.dart';
 
 class CommunitiesTab extends StatelessWidget {
   const CommunitiesTab({super.key});
@@ -28,7 +29,7 @@ class CommunitiesTab extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                'Хатои Firestore (эҳтимол index лозим аст): ${snapshot.error}',
+                trf('k197', [snapshot.error]),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
               ),
@@ -48,10 +49,10 @@ class CommunitiesTab extends StatelessWidget {
                 children: [
                   Icon(LucideIcons.hash, color: AppColors.textSecondary.withValues(alpha: 0.5), size: 48),
                   const SizedBox(height: 16),
-                  Text('Ягон ҷамъият нест', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+                  Text(tr('k202'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 8),
                   Text(
-                    'Ҷамъиятҳо якчанд гурӯҳро дар як ҷо ҷамъ мекунанд',
+                    tr('k203'),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 13),
                   ),
@@ -59,7 +60,7 @@ class CommunitiesTab extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityScreen())),
                     icon: Icon(LucideIcons.plus, size: 16, color: AppColors.neonEmerald),
-                    label: Text('Сохтани ҷамъият', style: TextStyle(color: AppColors.textPrimary)),
+                    label: Text(tr('k100'), style: TextStyle(color: AppColors.textPrimary)),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: AppColors.glassBorder),
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),

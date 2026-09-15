@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import 'community_chat_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Сохтани ҷамъияти воқеӣ дар Cloud Firestore (`communities/{id}`) —
 /// монанди CreateGroupScreen, вале бо тавсиф.
@@ -53,7 +54,7 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
       return phone.contains(q) || name.toLowerCase().contains(ql);
     }).map((doc) {
       final data = doc.data();
-      return {'uid': doc.id, 'name': (data['name'] ?? 'Корбар') as String, 'phone': (data['phone'] ?? '') as String};
+      return {'uid': doc.id, 'name': (data['name'] ?? tr('k002')) as String, 'phone': (data['phone'] ?? '') as String};
     }).toList();
     if (!mounted) return;
     setState(() {
@@ -75,7 +76,7 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
   Future<void> _createCommunity() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Номи ҷамъиятро ворид кунед');
+      setState(() => _error = tr('k097'));
       return;
     }
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
@@ -87,7 +88,7 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
     });
 
     final currentUserDoc = await FirebaseFirestore.instance.collection('users').doc(currentUid).get();
-    final myName = (currentUserDoc.data()?['name'] as String?) ?? 'Ман';
+    final myName = (currentUserDoc.data()?['name'] as String?) ?? tr('k015');
 
     final members = [currentUid, ..._selected.keys];
     final memberNames = {currentUid: myName, ..._selected};
@@ -130,7 +131,7 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
                       onPressed: () => Navigator.pop(context),
                       icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    Text('Ҷамъияти нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
+                    Text(tr('k086'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
                   ],
                 ),
               ),
@@ -143,7 +144,7 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
                     controller: _nameController,
                     style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Номи ҷамъият',
+                      hintText: tr('k098'),
                       hintStyle: TextStyle(color: AppColors.textSecondary),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -162,7 +163,7 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
                     style: TextStyle(color: AppColors.textPrimary),
                     maxLines: 2,
                     decoration: InputDecoration(
-                      hintText: 'Тавсиф (ихтиёрӣ)',
+                      hintText: tr('k095'),
                       hintStyle: TextStyle(color: AppColors.textSecondary),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -198,7 +199,7 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
                     style: TextStyle(color: AppColors.textPrimary),
                     onSubmitted: _search,
                     decoration: InputDecoration(
-                      hintText: 'Ҷустуҷӯи корбар барои илова...',
+                      hintText: tr('k099'),
                       hintStyle: TextStyle(color: AppColors.textSecondary),
                       border: InputBorder.none,
                       prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
@@ -268,7 +269,7 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
                     onPressed: _isCreating ? null : _createCommunity,
                     child: _isCreating
                         ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
-                        : const Text('Сохтани ҷамъият', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        : Text(tr('k100'), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ),
               ),

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../l10n/l10n.dart';
 
 /// Ҳуҷҷати `communities/{id}` — ҷамъияте, ки якчанд гурӯҳро дар як ҷо
 /// ҷамъ мекунад. Барои соддагӣ, ҳар ҷамъият як чати умумӣ (Эълонҳо) дорад.
@@ -32,7 +33,7 @@ class AppCommunity {
     final rawNames = (data['memberNames'] as Map<String, dynamic>?) ?? {};
     return AppCommunity(
       id: doc.id,
-      name: (data['name'] ?? 'Ҷамъият') as String,
+      name: (data['name'] ?? tr('k004')) as String,
       description: (data['description'] ?? '') as String,
       members: List<String>.from(data['members'] as List? ?? []),
       memberNames: rawNames.map((k, v) => MapEntry(k, v as String)),

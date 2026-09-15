@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../l10n/l10n.dart';
 
 /// Ҳуҷҷати `statuses/{uid}/items/{id}` — як навсозии статус (мисли Stories).
 /// Статусҳо пас аз 24 соат "гузашта" ҳисоб мешаванд (тибқи expiresAt).
@@ -34,7 +35,7 @@ class AppStatus {
     return AppStatus(
       id: doc.id,
       ownerId: (data['ownerId'] ?? '') as String,
-      ownerName: (data['ownerName'] ?? 'Корбар') as String,
+      ownerName: (data['ownerName'] ?? tr('k002')) as String,
       text: data['text'] as String?,
       imageUrl: data['imageUrl'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),

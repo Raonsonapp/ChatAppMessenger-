@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'l10n/l10n.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
@@ -12,8 +13,7 @@ class DefaultFirebaseOptions {
         return android;
       default:
         throw UnsupportedError(
-          'DefaultFirebaseOptions барои ин платформа танзим нашудааст. '
-          'Танҳо Web ва Android дастгирӣ мешаванд.',
+          tr('k001'),
         );
     }
   }

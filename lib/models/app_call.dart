@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../l10n/l10n.dart';
 
 enum CallType { audio, video }
 
@@ -38,9 +39,9 @@ class AppCall {
     return AppCall(
       id: doc.id,
       callerId: (data['callerId'] ?? '') as String,
-      callerName: (data['callerName'] ?? 'Корбар') as String,
+      callerName: (data['callerName'] ?? tr('k002')) as String,
       calleeId: (data['calleeId'] ?? '') as String,
-      calleeName: (data['calleeName'] ?? 'Корбар') as String,
+      calleeName: (data['calleeName'] ?? tr('k002')) as String,
       type: (data['type'] == 'video') ? CallType.video : CallType.audio,
       outcome: CallOutcome.values.firstWhere(
         (o) => o.name == (data['outcome'] ?? 'completed'),

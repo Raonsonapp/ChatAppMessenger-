@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../models/app_call.dart';
 import '../services/agora_config.dart';
 import '../widgets/neon_backdrop.dart';
+import '../l10n/l10n.dart';
 
 enum _CallStage { connecting, ringing, connected, ended }
 
@@ -66,16 +67,16 @@ class _CallScreenState extends State<CallScreen> {
     final camGranted = widget.type == CallType.video ? await Permission.camera.request() : PermissionStatus.granted;
     final micGranted = await Permission.microphone.request();
     if (!camGranted.isGranted && widget.type == CallType.video) {
-      setState(() => _error = 'Барои занги видеоӣ иҷозати камера лозим аст');
+      setState(() => _error = tr('k013'));
       return;
     }
     if (!micGranted.isGranted) {
-      setState(() => _error = 'Барои занг иҷозати микрофон лозим аст');
+      setState(() => _error = tr('k014'));
       return;
     }
 
     if (widget.isCaller) {
-      final myName = FirebaseAuth.instance.currentUser?.displayName ?? 'Ман';
+      final myName = FirebaseAuth.instance.currentUser?.displayName ?? tr('k015');
       final doc = await FirebaseFirestore.instance.collection('calls').add(
         AppCall.newCallMap(
           callerId: _currentUid,
@@ -140,7 +141,7 @@ class _CallScreenState extends State<CallScreen> {
         },
         onError: (err, msg) {
           if (!mounted) return;
-          setState(() => _error = 'Хатои занг: $msg');
+          setState(() => _error = trf('k016', [msg]));
         },
       ));
 
@@ -169,7 +170,7 @@ class _CallScreenState extends State<CallScreen> {
         setState(() => _stage = _CallStage.connecting);
       }
     } catch (e) {
-      if (mounted) setState(() => _error = 'Пайваст нашуд: $e');
+      if (mounted) setState(() => _error = trf('k017', [e]));
     }
   }
 
@@ -279,7 +280,7 @@ class _CallScreenState extends State<CallScreen> {
                     _error ??
                         (connected
                             ? _formatDuration(_seconds)
-                            : (widget.isCaller ? (isVideo ? 'Занги видеоӣ...' : 'Занг мезанад...') : 'Пайваст шудан...')),
+                            : (widget.isCaller ? (isVideo ? tr('k018') : tr('k019')) : tr('k020'))),
                     style: TextStyle(
                       color: (isVideo && connected) ? Colors.white70 : AppColors.textSecondary.withValues(alpha: 0.85),
                       fontSize: 14.5,

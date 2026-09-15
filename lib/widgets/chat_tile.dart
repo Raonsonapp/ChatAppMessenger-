@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 import '../models/chat_conversation.dart';
 import '../screens/chat_detail_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Сатри чат — WhatsApp-тарз: ҳамаи қаторҳо якхела ба назар мерасанд.
 /// ChatAI танҳо бо нишони сӯзан (pin) фарқ мекунад — на бо банер/glow.
@@ -69,7 +70,7 @@ class ChatTile extends StatelessWidget {
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: _lastMessageStream,
                   builder: (context, snapshot) {
-                    String preview = conversation.isAIChat ? 'Ба ман чизе нависед...' : 'Оғози сӯҳбат кунед';
+                    String preview = conversation.isAIChat ? tr('k235') : tr('k236');
                     String time = '';
                     if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
                       final data = snapshot.data!.docs.first.data();

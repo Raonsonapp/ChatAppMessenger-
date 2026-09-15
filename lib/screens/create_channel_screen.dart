@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import 'channel_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Сохтани канали воқеӣ дар Firestore (`channels/{id}`).
 class CreateChannelScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
   Future<void> _create() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Номи каналро ворид кунед');
+      setState(() => _error = tr('k092'));
       return;
     }
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -44,7 +45,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
     });
 
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    final myName = (userDoc.data()?['name'] as String?) ?? 'Ман';
+    final myName = (userDoc.data()?['name'] as String?) ?? tr('k015');
 
     final doc = await FirebaseFirestore.instance.collection('channels').add({
       'name': name,
@@ -78,7 +79,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                       onPressed: () => Navigator.pop(context),
                       icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    Text('Канали нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
+                    Text(tr('k093'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
                   ],
                 ),
               ),
@@ -93,7 +94,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                         controller: _nameController,
                         style: TextStyle(color: AppColors.textPrimary),
                         decoration: InputDecoration(
-                          hintText: 'Номи канал',
+                          hintText: tr('k094'),
                           hintStyle: TextStyle(color: AppColors.textSecondary),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -109,7 +110,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                         maxLines: 3,
                         style: TextStyle(color: AppColors.textPrimary),
                         decoration: InputDecoration(
-                          hintText: 'Тавсиф (ихтиёрӣ)',
+                          hintText: tr('k095'),
                           hintStyle: TextStyle(color: AppColors.textSecondary),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -133,7 +134,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                         onPressed: _isCreating ? null : _create,
                         child: _isCreating
                             ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
-                            : const Text('Сохтани канал', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                            : Text(tr('k096'), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                       ),
                     ),
                   ],

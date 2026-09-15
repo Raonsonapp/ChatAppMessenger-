@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import 'chat_list_screen.dart';
+import '../l10n/l10n.dart';
 
 class CompleteProfileScreen extends StatefulWidget {
   final String phoneNumber;
@@ -33,7 +34,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   Future<void> _saveProfile() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      setState(() => _errorText = 'Номро ворид кунед');
+      setState(() => _errorText = tr('k060'));
       return;
     }
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -62,7 +63,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _errorText = 'Хатои сабт: $e';
+        _errorText = trf('k061', [e]);
       });
     }
   }
@@ -80,15 +81,15 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               children: [
                 const SizedBox(height: 12),
                 Text(
-                  'Профили худро пур кунед',
+                  tr('k062'),
                   style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                 ),
                 const SizedBox(height: 20),
-                _buildField('Ном', _nameController, hint: 'Масалан: Шаҳром'),
+                _buildField(tr('k063'), _nameController, hint: tr('k064')),
                 const SizedBox(height: 14),
-                _buildField('Nickname (ихтиёрӣ)', _nicknameController, hint: '@shahron'),
+                _buildField(tr('k065'), _nicknameController, hint: '@shahron'),
                 const SizedBox(height: 14),
-                _buildField('Дар бораи ман (ихтиёрӣ)', _aboutController, hint: 'Салом! Ман ChatApp истифода мебарам'),
+                _buildField(tr('k066'), _aboutController, hint: tr('k067')),
                 if (_errorText != null) ...[
                   const SizedBox(height: 10),
                   Text(_errorText!, style: const TextStyle(color: Colors.redAccent, fontSize: 12.5)),
@@ -110,7 +111,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                           )
-                        : const Text('Идома', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        : Text(tr('k068'), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ),
               ],

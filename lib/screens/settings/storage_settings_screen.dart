@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
+import '../../l10n/l10n.dart';
 
 class StorageSettingsScreen extends StatefulWidget {
   const StorageSettingsScreen({super.key});
@@ -56,15 +57,15 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
     cache.clearLiveImages();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Кэши расмҳо тоза шуд (${_formatBytes(freed)})')),
+      SnackBar(content: Text(trf('k184', [_formatBytes(freed)]))),
     );
     setState(() {});
   }
 
   static String _formatBytes(int bytes) {
-    if (bytes < 1024) return '$bytes Б';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} КБ';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} МБ';
+    if (bytes < 1024) return trf('k185', [bytes]);
+    if (bytes < 1024 * 1024) return trf('k186', [(bytes / 1024).toStringAsFixed(1)]);
+    return trf('k187', [(bytes / (1024 * 1024)).toStringAsFixed(1)]);
   }
 
   @override
@@ -87,7 +88,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                       icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     Text(
-                      'Захира ва маълумот',
+                      tr('k182'),
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
                   ],
@@ -100,7 +101,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                     Padding(
                       padding: const EdgeInsets.only(left: 4, bottom: 8),
                       child: Text(
-                        'СӮҲБАТҲОИ ШУМО',
+                        tr('k188'),
                         style: TextStyle(
                           color: AppColors.textSecondary.withValues(alpha: 0.7),
                           fontSize: 11,
@@ -119,11 +120,11 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                             )
                           : Column(
                               children: [
-                                _statRow(LucideIcons.message_circle, 'Чатҳои шахсӣ', _chats),
+                                _statRow(LucideIcons.message_circle, tr('k189'), _chats),
                                 Divider(color: AppColors.glassBorder, height: 1),
-                                _statRow(LucideIcons.users, 'Гурӯҳҳо', _groups),
+                                _statRow(LucideIcons.users, tr('k190'), _groups),
                                 Divider(color: AppColors.glassBorder, height: 1),
-                                _statRow(LucideIcons.hash, 'Ҷамъиятҳо', _communities),
+                                _statRow(LucideIcons.hash, tr('k046'), _communities),
                               ],
                             ),
                     ),
@@ -131,7 +132,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                     Padding(
                       padding: const EdgeInsets.only(left: 4, bottom: 8),
                       child: Text(
-                        'КЭШ',
+                        tr('k191'),
                         style: TextStyle(
                           color: AppColors.textSecondary.withValues(alpha: 0.7),
                           fontSize: 11,
@@ -147,8 +148,8 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                         children: [
                           _statRowText(
                             LucideIcons.image,
-                            'Расмҳо дар хотира',
-                            '${cache.currentSize} дона · ${_formatBytes(cache.currentSizeBytes)}',
+                            tr('k192'),
+                            trf('k193', [cache.currentSize, _formatBytes(cache.currentSizeBytes)]),
                           ),
                           Divider(color: AppColors.glassBorder, height: 1),
                           Material(
@@ -156,14 +157,14 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: _clearImageCache,
-                              child: const Padding(
+                              child: Padding(
                                 padding: EdgeInsets.symmetric(vertical: 14),
                                 child: Row(
                                   children: [
                                     Icon(LucideIcons.trash, color: Colors.redAccent, size: 18),
                                     SizedBox(width: 14),
                                     Text(
-                                      'Тоза кардани кэши расмҳо',
+                                      tr('k194'),
                                       style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600, fontSize: 14),
                                     ),
                                   ],
@@ -178,8 +179,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Text(
-                        'Кэш танҳо дар ин дастгоҳ аст — тоза карданаш ба паёмҳо ё расмҳои '
-                        'фиристодашуда таъсир намерасонад.',
+                        tr('k195'),
                         style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.75), fontSize: 12, height: 1.4),
                       ),
                     ),

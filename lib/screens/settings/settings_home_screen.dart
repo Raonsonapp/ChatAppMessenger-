@@ -4,13 +4,14 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
-import '../../utils/snackbar_utils.dart';
 import 'privacy_settings_screen.dart';
 import 'notifications_settings_screen.dart';
 import 'appearance_settings_screen.dart';
+import 'language_settings_screen.dart';
 import 'storage_settings_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
+import '../../l10n/l10n.dart';
 
 class SettingsHomeScreen extends StatelessWidget {
   const SettingsHomeScreen({super.key});
@@ -33,7 +34,7 @@ class SettingsHomeScreen extends StatelessWidget {
                       icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     Text(
-                      'Танзимот',
+                      tr('k181'),
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
                   ],
@@ -47,7 +48,7 @@ class SettingsHomeScreen extends StatelessWidget {
                       _row(
                         context,
                         icon: LucideIcons.shield,
-                        label: 'Махфият',
+                        label: tr('k174'),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const PrivacySettingsScreen()),
@@ -56,7 +57,7 @@ class SettingsHomeScreen extends StatelessWidget {
                       _row(
                         context,
                         icon: LucideIcons.bell,
-                        label: 'Огоҳиномаҳо',
+                        label: tr('k146'),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const NotificationsSettingsScreen()),
@@ -68,7 +69,7 @@ class SettingsHomeScreen extends StatelessWidget {
                       _row(
                         context,
                         icon: LucideIcons.eye,
-                        label: 'Намуди зоҳирӣ',
+                        label: tr('k147'),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const AppearanceSettingsScreen()),
@@ -77,7 +78,7 @@ class SettingsHomeScreen extends StatelessWidget {
                       _row(
                         context,
                         icon: LucideIcons.database,
-                        label: 'Захира ва маълумот',
+                        label: tr('k182'),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const StorageSettingsScreen()),
@@ -86,8 +87,11 @@ class SettingsHomeScreen extends StatelessWidget {
                       _row(
                         context,
                         icon: LucideIcons.globe,
-                        label: 'Забон',
-                        onTap: () => showComingSoonSnack(context, 'Забон'),
+                        label: tr('k183'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LanguageSettingsScreen()),
+                        ),
                       ),
                     ]),
                     const SizedBox(height: 14),
@@ -95,7 +99,7 @@ class SettingsHomeScreen extends StatelessWidget {
                       _row(
                         context,
                         icon: LucideIcons.circle_question_mark,
-                        label: 'Кӯмак',
+                        label: tr('k169'),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const HelpScreen()),
@@ -104,7 +108,7 @@ class SettingsHomeScreen extends StatelessWidget {
                       _row(
                         context,
                         icon: LucideIcons.info,
-                        label: 'Дар бораи ChatApp',
+                        label: tr('k139'),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const AboutScreen()),

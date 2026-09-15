@@ -8,6 +8,7 @@ import '../models/app_channel.dart';
 import '../widgets/neon_backdrop.dart';
 import 'channel_screen.dart';
 import 'create_channel_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Кашфи ҳамаи каналҳои воқеӣ (коллексияи `channels`), бо тугмаи обуна.
 class DiscoverChannelsScreen extends StatelessWidget {
@@ -35,7 +36,7 @@ class DiscoverChannelsScreen extends StatelessWidget {
                           onPressed: () => Navigator.pop(context),
                           icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                         ),
-                        Text('Кашфи каналҳо', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18)),
+                        Text(tr('k111'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18)),
                       ],
                     ),
                     IconButton(
@@ -51,7 +52,7 @@ class DiscoverChannelsScreen extends StatelessWidget {
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return Center(
-                        child: Text('Хатои Firestore: ${snapshot.error}', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                        child: Text(trf('k029', [snapshot.error]), style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                       );
                     }
                     if (!snapshot.hasData) {
@@ -63,7 +64,7 @@ class DiscoverChannelsScreen extends StatelessWidget {
                         child: Padding(
                           padding: const EdgeInsets.all(24),
                           child: Text(
-                            'Ягон канал ҳанӯз сохта нашудааст. Аввалин канали худро созед!',
+                            tr('k112'),
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 13),
                           ),
@@ -85,7 +86,7 @@ class DiscoverChannelsScreen extends StatelessWidget {
                             child: Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 20),
                           ),
                           title: Text(channel.name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
-                          subtitle: Text('${channel.followers.length} обунашуда', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                          subtitle: Text(trf('k023', [channel.followers.length]), style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                           trailing: OutlinedButton(
                             onPressed: () => FirebaseFirestore.instance.collection('channels').doc(channel.id).update({
                               'followers': isFollowing ? FieldValue.arrayRemove([currentUid]) : FieldValue.arrayUnion([currentUid]),
@@ -96,7 +97,7 @@ class DiscoverChannelsScreen extends StatelessWidget {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                             child: Text(
-                              isFollowing ? 'Обуна' : 'Обуна шудан',
+                              isFollowing ? tr('k113') : tr('k025'),
                               style: TextStyle(color: isFollowing ? AppColors.textSecondary : AppColors.neonEmerald, fontSize: 12, fontWeight: FontWeight.w700),
                             ),
                           ),

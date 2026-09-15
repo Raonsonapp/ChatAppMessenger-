@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/settings/settings_home_screen.dart';
+import '../l10n/l10n.dart';
 
 class ProfileSheet extends StatelessWidget {
   const ProfileSheet({super.key});
@@ -50,7 +51,7 @@ class ProfileSheet extends StatelessWidget {
                 builder: (context, snapshot) {
                   final name = snapshot.data?.data()?['name'] as String?;
                   return Text(
-                    (name == null || name.isEmpty) ? 'Корбар' : name,
+                    (name == null || name.isEmpty) ? tr('k002') : name,
                     style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
                   );
                 },
@@ -60,7 +61,7 @@ class ProfileSheet extends StatelessWidget {
             const SizedBox(height: 18),
             _menuRow(
               icon: LucideIcons.user,
-              label: 'Профили ман',
+              label: tr('k115'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen()));
@@ -69,7 +70,7 @@ class ProfileSheet extends StatelessWidget {
             const SizedBox(height: 8),
             _menuRow(
               icon: LucideIcons.settings,
-              label: 'Танзимот',
+              label: tr('k181'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsHomeScreen()));
@@ -81,7 +82,7 @@ class ProfileSheet extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: () => _signOut(context),
                 icon: Icon(LucideIcons.log_out, color: AppColors.neonCyan, size: 18),
-                label: Text('Баромадан', style: TextStyle(color: AppColors.textPrimary)),
+                label: Text(tr('k230'), style: TextStyle(color: AppColors.textPrimary)),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: AppColors.glassBorder),
                   padding: const EdgeInsets.symmetric(vertical: 12),

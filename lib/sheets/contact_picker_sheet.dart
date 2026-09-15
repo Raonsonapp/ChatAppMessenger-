@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
+import '../l10n/l10n.dart';
 
 /// Интихоби воқеии контакт аз корбарони бақайдгирифташуда, барои
 /// фиристодан ҳамчун корти контакт дар дохили чат.
@@ -50,7 +51,7 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
     }).map((doc) {
       final data = doc.data();
       return {
-        'name': (data['name'] ?? 'Корбар') as String,
+        'name': (data['name'] ?? tr('k002')) as String,
         'phone': (data['phone'] ?? '') as String,
       };
     }).toList();
@@ -86,7 +87,7 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                 decoration: BoxDecoration(color: AppColors.glassBorder, borderRadius: BorderRadius.circular(4)),
               ),
             ),
-            Text('Интихоби контакт', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+            Text(tr('k080'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
@@ -121,7 +122,7 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Text(
-                  'Ҳеҷ корбаре ёфт нашуд',
+                  tr('k226'),
                   style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
                 ),
               )

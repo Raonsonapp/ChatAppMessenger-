@@ -6,6 +6,7 @@ import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../services/otp_bot_service.dart';
 import 'otp_screen.dart';
+import '../l10n/l10n.dart';
 
 class PhoneEntryScreen extends StatefulWidget {
   const PhoneEntryScreen({super.key});
@@ -36,7 +37,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
   Future<void> _openBotAndContinue() async {
     final number = _numberController.text.trim();
     if (number.replaceAll(RegExp(r'[^0-9]'), '').length < 7) {
-      setState(() => _errorText = 'Рақами телефонро дуруст ворид кунед');
+      setState(() => _errorText = tr('k134'));
       return;
     }
     setState(() {
@@ -51,7 +52,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
     setState(() => _isOpeningBot = false);
 
     if (!opened) {
-      setState(() => _errorText = 'Telegram кушода нашуд. Мутмаин шавед, ки Telegram насб аст.');
+      setState(() => _errorText = tr('k135'));
       return;
     }
 
@@ -78,12 +79,12 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Рақами телефони худро ворид кунед',
+                  tr('k136'),
                   style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Боти моро дар Telegram кушоед, рақами худро мубодила кунед ва рамзи 6-рақамаро аз он гиред',
+                  tr('k137'),
                   style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.85), fontSize: 13),
                 ),
                 const SizedBox(height: 28),
@@ -148,7 +149,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                           )
                         : const Icon(LucideIcons.send, size: 18),
-                    label: const Text('Кушодани бот дар Telegram', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                    label: Text(tr('k138'), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ),
               ],

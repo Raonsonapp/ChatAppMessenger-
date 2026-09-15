@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/neon_backdrop.dart';
 import 'phone_entry_screen.dart';
+import '../l10n/l10n.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -22,7 +23,7 @@ class WelcomeScreen extends StatelessWidget {
                 const AppLogo(size: 96),
                 const SizedBox(height: 24),
                 Text(
-                  'Хуш омадед ба ChatApp',
+                  tr('k215'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.textPrimary,
@@ -32,7 +33,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Барои идома додан, рақами телефони худро тасдиқ кунед',
+                  tr('k216'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.textSecondary.withValues(alpha: 0.85),
@@ -53,8 +54,8 @@ class WelcomeScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(builder: (_) => const PhoneEntryScreen()),
                     ),
-                    child: const Text(
-                      'Идома',
+                    child: Text(
+                      tr('k068'),
                       style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                     ),
                   ),

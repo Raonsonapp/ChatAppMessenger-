@@ -10,6 +10,7 @@ import '../create_status_screen.dart';
 import '../status_viewer_screen.dart';
 import '../channel_screen.dart';
 import '../discover_channels_screen.dart';
+import '../../l10n/l10n.dart';
 
 class StatusTab extends StatelessWidget {
   const StatusTab({super.key});
@@ -81,9 +82,9 @@ class StatusTab extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Тарихи ман', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
+                        Text(tr('k204'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
                         Text(
-                          hasStatus ? '${myItems.length} навсозӣ · барои дидан зер кунед' : 'Барои иловаи навсозӣ зер кунед',
+                          hasStatus ? trf('k205', [myItems.length]) : tr('k206'),
                           style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
                         ),
                       ],
@@ -96,7 +97,7 @@ class StatusTab extends StatelessWidget {
         ),
         const SizedBox(height: 30),
         Text(
-          'НАВСОЗИҲОИ ОХИРИН',
+          tr('k207'),
           style: TextStyle(
             color: AppColors.textSecondary.withValues(alpha: 0.6),
             fontSize: 11.5,
@@ -110,7 +111,7 @@ class StatusTab extends StatelessWidget {
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return Text(
-                'Хатои боркунӣ: ${snapshot.error}',
+                trf('k028', [snapshot.error]),
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
               );
             }
@@ -123,7 +124,7 @@ class StatusTab extends StatelessWidget {
             final owners = snapshot.data!.docs.where((d) => d.id != currentUid).toList();
             if (owners.isEmpty) {
               return Text(
-                'Навсозиҳои дӯстони шумо дар ин ҷо намоён мешаванд',
+                tr('k208'),
                 style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 12.5),
               );
             }
@@ -137,12 +138,12 @@ class StatusTab extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'КАНАЛҲО',
+              tr('k209'),
               style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6), fontSize: 11.5, letterSpacing: 1.2, fontWeight: FontWeight.w600),
             ),
             GestureDetector(
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DiscoverChannelsScreen())),
-              child: Text('Кашф кардан', style: TextStyle(color: AppColors.neonEmerald, fontSize: 12.5, fontWeight: FontWeight.w700)),
+              child: Text(tr('k210'), style: TextStyle(color: AppColors.neonEmerald, fontSize: 12.5, fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -154,7 +155,7 @@ class StatusTab extends StatelessWidget {
             final channels = snapshot.data!.docs.map(AppChannel.fromDoc).toList();
             if (channels.isEmpty) {
               return Text(
-                'Шумо ба ягон канал обуна нашудаед',
+                tr('k211'),
                 style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 12.5),
               );
             }
@@ -182,7 +183,7 @@ class StatusTab extends StatelessWidget {
                               children: [
                                 Text(channel.name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
                                 Text(
-                                  channel.lastMessage.isEmpty ? '${channel.followers.length} обунашуда' : channel.lastMessage,
+                                  channel.lastMessage.isEmpty ? trf('k023', [channel.followers.length]) : channel.lastMessage,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
@@ -261,7 +262,7 @@ class _OtherStatusRow extends StatelessWidget {
                       children: [
                         Text(ownerName, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
                         Text(
-                          '${items.length} навсозӣ',
+                          trf('k212', [items.length]),
                           style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
                         ),
                       ],

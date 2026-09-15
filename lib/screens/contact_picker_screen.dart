@@ -10,6 +10,7 @@ import '../utils/phone.dart';
 import 'user_chat_screen.dart';
 import 'create_group_screen.dart';
 import 'create_community_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Интихоби contact аз contact-ҳои воқеии телефон.
 /// + дигар рақам талаб намекунад: contact аз телефон интихоб мешавад.
@@ -52,7 +53,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
         if (!mounted) return;
         setState(() {
           _loading = false;
-          _error = 'Барои дидани контактҳо иҷозаи Contacts лозим аст.';
+          _error = tr('k077');
         });
         return;
       }
@@ -79,7 +80,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'Контактҳоро бор кардан нашуд.';
+        _error = tr('k078');
       });
     }
   }
@@ -132,7 +133,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
     if (currentUid == null) return;
 
     String? otherUid;
-    String otherName = contact.displayName.trim().isEmpty ? 'Корбар' : contact.displayName.trim();
+    String otherName = contact.displayName.trim().isEmpty ? tr('k002') : contact.displayName.trim();
 
     for (final phone in contact.phones) {
       final match = _registeredUsersByPhone[_normalizePhone(phone.number)];
@@ -148,7 +149,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
     if (otherUid == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ин contact ҳоло дар ChatApp сабтином нашудааст.')),
+        SnackBar(content: Text(tr('k079'))),
       );
       return;
     }
@@ -198,11 +199,11 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Интихоби контакт',
+              tr('k080'),
               style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 18),
             ),
             Text(
-              '${_contacts.length} контакт',
+              trf('k081', [_contacts.length]),
               style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
           ],
@@ -223,7 +224,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
                   children: [
                     ListTile(
                       leading: Icon(LucideIcons.refresh_cw, color: AppColors.textPrimary),
-                      title: Text('Навсозии контактҳо', style: TextStyle(color: AppColors.textPrimary)),
+                      title: Text(tr('k082'), style: TextStyle(color: AppColors.textPrimary)),
                       onTap: () {
                         Navigator.pop(context);
                         _loadContacts();
@@ -242,13 +243,13 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
             padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
             child: Column(
               children: [
-                _quickAction(LucideIcons.users, 'Гурӯҳи нав', () {
+                _quickAction(LucideIcons.users, tr('k083'), () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateGroupScreen()));
                 }),
-                _quickAction(LucideIcons.user_plus, 'Контакти нав', () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Контактро дар телефони худ илова кунед, баъд ин ҷо навсозӣ кунед.')));
+                _quickAction(LucideIcons.user_plus, tr('k084'), () {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k085'))));
                 }),
-                _quickAction(LucideIcons.hash, 'Ҷамъияти нав', () {
+                _quickAction(LucideIcons.hash, tr('k086'), () {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityScreen()));
                 }),
               ],
@@ -260,7 +261,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
               controller: _searchController,
               style: TextStyle(color: AppColors.textPrimary),
               decoration: InputDecoration(
-                hintText: 'Ҷустуҷӯ',
+                hintText: tr('k087'),
                 hintStyle: TextStyle(color: AppColors.textSecondary),
                 prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
                 filled: true,
@@ -307,7 +308,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
               const SizedBox(height: 12),
               Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 12),
-              FilledButton(onPressed: _loadContacts, child: const Text('Аз нав')),
+              FilledButton(onPressed: _loadContacts, child: Text(tr('k088'))),
             ],
           ),
         ),
@@ -316,7 +317,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
 
     if (_filtered.isEmpty) {
       return Center(
-        child: Text('Контакт ёфт нашуд', style: TextStyle(color: AppColors.textSecondary)),
+        child: Text(tr('k089'), style: TextStyle(color: AppColors.textSecondary)),
       );
     }
 
@@ -344,11 +345,11 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
                 : null,
           ),
           title: Text(
-            contact.displayName.isEmpty ? 'Бе ном' : contact.displayName,
+            contact.displayName.isEmpty ? tr('k090') : contact.displayName,
             style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
           ),
           subtitle: Text(
-            registered ? 'Дар ChatApp ҳаст' : (contact.phones.isNotEmpty ? contact.phones.first.number : ''),
+            registered ? tr('k091') : (contact.phones.isNotEmpty ? contact.phones.first.number : ''),
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
           onTap: () => _selectContact(contact),

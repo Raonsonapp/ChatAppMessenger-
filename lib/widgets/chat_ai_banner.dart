@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../models/chat_conversation.dart';
 import '../screens/chat_detail_screen.dart';
 import 'glass_container.dart';
+import '../l10n/l10n.dart';
 
 /// Блоки ChatAI (мисли Meta AI) — имконияти сохтани расм, мусиқӣ ва видео.
 /// Пахши ҳар чип корбарро ба чати AI Ассистент мебарад бо матни омодашуда
@@ -45,7 +46,7 @@ class ChatAIBanner extends StatelessWidget {
                   children: [
                     Text('ChatAI', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 16)),
                     SizedBox(height: 2),
-                    Text('Расм, мусиқӣ ё видео эҷод кунед', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                    Text(tr('k234'), style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                   ],
                 ),
               ),
@@ -57,24 +58,24 @@ class ChatAIBanner extends StatelessWidget {
               Expanded(
                 child: _AiActionChip(
                   icon: LucideIcons.image,
-                  label: 'Расм',
-                  onTap: () => _openWithPrompt(context, 'Лутфан барои ман расме эҷод кун: '),
+                  label: tr('k032'),
+                  onTap: () => _openWithPrompt(context, tr('k033')),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _AiActionChip(
                   icon: LucideIcons.music,
-                  label: 'Мусиқӣ',
-                  onTap: () => _openWithPrompt(context, 'Лутфан барои ман мусиқие эҷод кун: '),
+                  label: tr('k034'),
+                  onTap: () => _openWithPrompt(context, tr('k035')),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _AiActionChip(
                   icon: LucideIcons.video,
-                  label: 'Видео',
-                  onTap: () => _openWithPrompt(context, 'Лутфан барои ман видеое эҷод кун: '),
+                  label: tr('k036'),
+                  onTap: () => _openWithPrompt(context, tr('k037')),
                 ),
               ),
             ],

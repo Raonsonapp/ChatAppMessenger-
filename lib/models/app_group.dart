@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../l10n/l10n.dart';
 
 /// Ҳуҷҷати `groups/{id}` — гурӯҳи воқеии чат бо якчанд аъзо.
 class AppGroup {
@@ -29,7 +30,7 @@ class AppGroup {
     final rawNames = (data['memberNames'] as Map<String, dynamic>?) ?? {};
     return AppGroup(
       id: doc.id,
-      name: (data['name'] ?? 'Гурӯҳ') as String,
+      name: (data['name'] ?? tr('k005')) as String,
       members: List<String>.from(data['members'] as List? ?? []),
       memberNames: rawNames.map((k, v) => MapEntry(k, v as String)),
       admins: List<String>.from(data['admins'] as List? ?? []),

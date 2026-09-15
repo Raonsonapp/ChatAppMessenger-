@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../l10n/l10n.dart';
 
 /// Ҳуҷҷати `channels/{id}` — канали пахши WhatsApp/Telegram-тарз: танҳо
 /// соҳиб (ownerId) паём мефиристад, дигарон танҳо мехонанд/обуна мешаванд.
@@ -27,7 +28,7 @@ class AppChannel {
     final data = doc.data();
     return AppChannel(
       id: doc.id,
-      name: (data['name'] ?? 'Канал') as String,
+      name: (data['name'] ?? tr('k003')) as String,
       description: (data['description'] ?? '') as String,
       ownerId: (data['ownerId'] ?? '') as String,
       ownerName: (data['ownerName'] ?? '') as String,

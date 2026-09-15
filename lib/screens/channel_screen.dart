@@ -11,6 +11,7 @@ import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/attachment_sheet.dart';
+import '../l10n/l10n.dart';
 
 /// Тасмаи пахши канал — танҳо соҳиб (ownerId) паём мефиристад,
 /// обунашудагон танҳо мехонанд.
@@ -119,7 +120,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
                 return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
               }
               final data = channelSnap.data!.data()!;
-              final name = (data['name'] ?? 'Канал') as String;
+              final name = (data['name'] ?? tr('k003')) as String;
               final ownerId = (data['ownerId'] ?? '') as String;
               final followers = List<String>.from(data['followers'] as List? ?? []);
               final isOwner = ownerId == _currentUid;
@@ -139,7 +140,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
                         if (docs.isEmpty) {
                           return Center(
                             child: Text(
-                              isOwner ? 'Аввалин паёмро дар канали худ нашр кунед' : 'Ин канал ҳанӯз паём нашр накардааст',
+                              isOwner ? tr('k021') : tr('k022'),
                               textAlign: TextAlign.center,
                               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                             ),
@@ -193,7 +194,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(name, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
-                  Text('$followerCount обунашуда', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                  Text(trf('k023', [followerCount]), style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
                 ],
               ),
             ),
@@ -216,7 +217,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
           child: Text(
-            isFollowing ? 'Бекор кардани обуна' : 'Обуна шудан',
+            isFollowing ? tr('k024') : tr('k025'),
             style: TextStyle(color: isFollowing ? Colors.redAccent : AppColors.neonEmerald, fontWeight: FontWeight.w700),
           ),
         ),
@@ -243,7 +244,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
                       maxLines: 4,
                       minLines: 1,
                       decoration: InputDecoration(
-                        hintText: 'Паёми нашрӣ',
+                        hintText: tr('k026'),
                         hintStyle: TextStyle(color: AppColors.textSecondary),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 10),

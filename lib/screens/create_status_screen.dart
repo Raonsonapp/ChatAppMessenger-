@@ -10,6 +10,7 @@ import '../models/app_status.dart';
 import '../services/media_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
+import '../l10n/l10n.dart';
 
 /// Сохтани навсозии воқеӣ (матн ё расм) — дар Firestore
 /// `statuses/{uid}/items/{id}` бо мӯҳлати 24-соата сабт мешавад.
@@ -49,7 +50,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
         imageUrl = await MediaService.uploadImage(_pickedImage!, 'statuses/$uid');
       }
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final myName = (userDoc.data()?['name'] as String?) ?? 'Ман';
+      final myName = (userDoc.data()?['name'] as String?) ?? tr('k015');
 
       final status = AppStatus(id: '', ownerId: uid, ownerName: myName, text: text.isEmpty ? null : text, imageUrl: imageUrl);
       await FirebaseFirestore.instance.collection('statuses').doc(uid).collection('items').add(status.toMap());
@@ -63,7 +64,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
       Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Хатои интишор: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k105', [e]))));
       }
     } finally {
       if (mounted) setState(() => _isPosting = false);
@@ -88,7 +89,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                       icon: Icon(LucideIcons.x, color: AppColors.textPrimary, size: 22),
                     ),
                     Text(
-                      'Навсозии нав',
+                      tr('k106'),
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
                     ),
                   ],
@@ -115,7 +116,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                           padding: const EdgeInsets.all(20),
                           alignment: Alignment.center,
                           child: Text(
-                            _textController.text.isEmpty ? 'Матни навсозии худро нависед' : _textController.text,
+                            _textController.text.isEmpty ? tr('k107') : _textController.text,
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 22),
                           ),
@@ -131,7 +132,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                           style: TextStyle(color: AppColors.textPrimary),
                           onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
-                            hintText: 'Матн илова кунед (ихтиёрӣ)',
+                            hintText: tr('k108'),
                             hintStyle: TextStyle(color: AppColors.textSecondary),
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -145,7 +146,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                             child: OutlinedButton.icon(
                               onPressed: () => _pick(false),
                               icon: Icon(LucideIcons.image, size: 18, color: AppColors.neonCyan),
-                              label: Text('Галерея', style: TextStyle(color: AppColors.textPrimary)),
+                              label: Text(tr('k109'), style: TextStyle(color: AppColors.textPrimary)),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(color: AppColors.glassBorder),
                                 padding: const EdgeInsets.symmetric(vertical: 13),
@@ -158,7 +159,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                             child: OutlinedButton.icon(
                               onPressed: () => _pick(true),
                               icon: Icon(LucideIcons.camera, size: 18, color: AppColors.neonCyan),
-                              label: Text('Камера', style: TextStyle(color: AppColors.textPrimary)),
+                              label: Text(tr('k043'), style: TextStyle(color: AppColors.textPrimary)),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(color: AppColors.glassBorder),
                                 padding: const EdgeInsets.symmetric(vertical: 13),
@@ -186,7 +187,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                     onPressed: _isPosting ? null : _post,
                     child: _isPosting
                         ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
-                        : const Text('Интишор кардан', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        : Text(tr('k110'), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ),
               ),

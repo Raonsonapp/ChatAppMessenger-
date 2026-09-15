@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
+import '../../l10n/l10n.dart';
 
 /// Танзимоти воқеии махфият — ҳар тағйирот фавран дар
 /// `users/{uid}` (майдони `settings`) сабт мешавад ва пас аз
@@ -71,7 +72,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                       icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     Text(
-                      'Махфият',
+                      tr('k174'),
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
                   ],
@@ -89,8 +90,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                             child: Column(
                               children: [
                                 _switchRow(
-                                  'Дидашавии "Дар шабака буд"',
-                                  'Дигарон вақти охирини онлайн будани шуморо мебинанд',
+                                  tr('k175'),
+                                  tr('k176'),
                                   _lastSeenVisible,
                                   (v) {
                                     setState(() => _lastSeenVisible = v);
@@ -99,8 +100,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                                 ),
                                 Divider(color: AppColors.glassBorder, height: 1),
                                 _switchRow(
-                                  'Ҳолати онлайн',
-                                  'Дигарон мебинанд, ки шумо ҳозир онлайн ҳастед',
+                                  tr('k177'),
+                                  tr('k178'),
                                   _onlineVisible,
                                   (v) {
                                     setState(() => _onlineVisible = v);
@@ -109,8 +110,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                                 ),
                                 Divider(color: AppColors.glassBorder, height: 1),
                                 _switchRow(
-                                  'Тасдиқи хониш (✓✓)',
-                                  'Ҳамсӯҳбат мефаҳмад, ки паёмашро хондед',
+                                  tr('k179'),
+                                  tr('k180'),
                                   _readReceipts,
                                   (v) {
                                     setState(() => _readReceipts = v);

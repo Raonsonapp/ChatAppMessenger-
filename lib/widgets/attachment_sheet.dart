@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../services/media_service.dart';
+import '../l10n/l10n.dart';
 
 /// Феҳристи замима ба тарзи WhatsApp. Танҳо имконоти воқеан коркунанда
 /// нишон дода мешаванд (Галерея, Камера, Контакт) — Ҳуҷҷат/Аудио/
@@ -72,19 +73,19 @@ class AttachmentSheet extends StatelessWidget {
                 _item(
                   icon: LucideIcons.image,
                   color: const Color(0xFFBF59CF),
-                  label: 'Галерея',
+                  label: tr('k109'),
                   onTap: () => _pickGallery(context),
                 ),
                 _item(
                   icon: LucideIcons.camera,
                   color: const Color(0xFFE0567C),
-                  label: 'Камера',
+                  label: tr('k043'),
                   onTap: () => _pickCamera(context),
                 ),
                 _item(
                   icon: LucideIcons.user,
                   color: const Color(0xFF4B7BEC),
-                  label: 'Контакт',
+                  label: tr('k232'),
                   onTap: () {
                     Navigator.pop(context);
                     onContactTap();
@@ -101,7 +102,7 @@ class AttachmentSheet extends StatelessWidget {
                   _item(
                     icon: LucideIcons.sticker,
                     color: const Color(0xFFE0A429),
-                    label: 'Стикер',
+                    label: tr('k233'),
                     onTap: () {
                       Navigator.pop(context);
                       onStickerTap!();

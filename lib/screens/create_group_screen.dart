@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import 'group_chat_screen.dart';
+import '../l10n/l10n.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({super.key});
@@ -49,7 +50,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       return phone.contains(q) || name.toLowerCase().contains(ql);
     }).map((doc) {
       final data = doc.data();
-      return {'uid': doc.id, 'name': (data['name'] ?? 'Корбар') as String, 'phone': (data['phone'] ?? '') as String};
+      return {'uid': doc.id, 'name': (data['name'] ?? tr('k002')) as String, 'phone': (data['phone'] ?? '') as String};
     }).toList();
     if (!mounted) return;
     setState(() {
@@ -71,11 +72,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   Future<void> _createGroup() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Номи гурӯҳро ворид кунед');
+      setState(() => _error = tr('k101'));
       return;
     }
     if (_selected.length < 2) {
-      setState(() => _error = 'Ҳадди ақал 2 корбар интихоб кунед');
+      setState(() => _error = tr('k102'));
       return;
     }
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
@@ -87,7 +88,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     });
 
     final currentUserDoc = await FirebaseFirestore.instance.collection('users').doc(currentUid).get();
-    final myName = (currentUserDoc.data()?['name'] as String?) ?? 'Ман';
+    final myName = (currentUserDoc.data()?['name'] as String?) ?? tr('k015');
 
     final members = [currentUid, ..._selected.keys];
     final memberNames = {currentUid: myName, ..._selected};
@@ -130,7 +131,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       onPressed: () => Navigator.pop(context),
                       icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    Text('Гурӯҳи нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
+                    Text(tr('k083'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
                   ],
                 ),
               ),
@@ -143,7 +144,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     controller: _nameController,
                     style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Номи гурӯҳ',
+                      hintText: tr('k103'),
                       hintStyle: TextStyle(color: AppColors.textSecondary),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(vertical: 12),
@@ -179,7 +180,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     style: TextStyle(color: AppColors.textPrimary),
                     onSubmitted: _search,
                     decoration: InputDecoration(
-                      hintText: 'Ҷустуҷӯи корбар барои илова...',
+                      hintText: tr('k099'),
                       hintStyle: TextStyle(color: AppColors.textSecondary),
                       border: InputBorder.none,
                       prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
@@ -249,7 +250,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     onPressed: _isCreating ? null : _createGroup,
                     child: _isCreating
                         ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
-                        : const Text('Сохтани гурӯҳ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        : Text(tr('k104'), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ),
               ),

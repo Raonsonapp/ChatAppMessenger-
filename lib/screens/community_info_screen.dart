@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
+import '../l10n/l10n.dart';
 
 /// Маълумоти воқеии ҷамъият — сохти монанд ба GroupInfoScreen.
 class CommunityInfoScreen extends StatelessWidget {
@@ -77,7 +78,7 @@ class CommunityInfoScreen extends StatelessWidget {
                   size: 20,
                 ),
                 title: Text(
-                  isAdmin ? 'Хориҷ аз admin' : 'Таъин ба admin',
+                  isAdmin ? tr('k052') : tr('k053'),
                   style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
                 ),
                 onTap: () {
@@ -87,7 +88,7 @@ class CommunityInfoScreen extends StatelessWidget {
               ),
               ListTile(
                 leading: const Icon(LucideIcons.user_minus, color: Colors.redAccent, size: 20),
-                title: const Text('Хориҷ аз ҷамъият', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
+                title: Text(tr('k054'), style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600)),
                 onTap: () {
                   Navigator.pop(context);
                   _removeMember(uid);
@@ -115,7 +116,7 @@ class CommunityInfoScreen extends StatelessWidget {
                 return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
               }
               final data = snapshot.data!.data()!;
-              final name = (data['name'] ?? 'Ҷамъият') as String;
+              final name = (data['name'] ?? tr('k004')) as String;
               final description = (data['description'] ?? '') as String;
               final members = List<String>.from(data['members'] as List? ?? []);
               final admins = List<String>.from(data['admins'] as List? ?? []);
@@ -134,7 +135,7 @@ class CommunityInfoScreen extends StatelessWidget {
                           icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 18),
                         ),
                         Text(
-                          'Маълумоти ҷамъият',
+                          tr('k055'),
                           style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
                         ),
                       ],
@@ -166,14 +167,14 @@ class CommunityInfoScreen extends StatelessWidget {
                           ),
                         ],
                         Center(
-                          child: Text('${members.length} аъзо', style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                          child: Text(trf('k051', [members.length]), style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
                         ),
                         const SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'АЪЗОЁН',
+                              tr('k056'),
                               style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5, letterSpacing: 1.2, fontWeight: FontWeight.w600),
                             ),
                             if (amIAdmin)
@@ -190,7 +191,7 @@ class CommunityInfoScreen extends StatelessWidget {
                           child: Column(
                             children: members.map((uid) {
                               final isAdmin = admins.contains(uid);
-                              final memberName = memberNames[uid] ?? 'Корбар';
+                              final memberName = memberNames[uid] ?? tr('k002');
                               return ListTile(
                                 leading: Container(
                                   width: 40,
@@ -208,7 +209,7 @@ class CommunityInfoScreen extends StatelessWidget {
                                   ),
                                 ),
                                 title: Text(
-                                  uid == currentUid ? '$memberName (Шумо)' : memberName,
+                                  uid == currentUid ? trf('k057', [memberName]) : memberName,
                                   style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
                                 ),
                                 trailing: isAdmin
@@ -229,7 +230,7 @@ class CommunityInfoScreen extends StatelessWidget {
                           child: OutlinedButton.icon(
                             onPressed: () => _leaveCommunity(context),
                             icon: const Icon(LucideIcons.log_out, color: Colors.redAccent, size: 18),
-                            label: const Text('Баромадан аз ҷамъият', style: TextStyle(color: Colors.redAccent)),
+                            label: Text(tr('k058'), style: TextStyle(color: Colors.redAccent)),
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Colors.redAccent),
                               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -287,7 +288,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
       return phone.contains(q) || name.toLowerCase().contains(ql);
     }).map((doc) {
       final data = doc.data();
-      return {'uid': doc.id, 'name': (data['name'] ?? 'Корбар') as String, 'phone': (data['phone'] ?? '') as String};
+      return {'uid': doc.id, 'name': (data['name'] ?? tr('k002')) as String, 'phone': (data['phone'] ?? '') as String};
     }).toList();
     if (!mounted) return;
     setState(() {
@@ -307,7 +308,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Илова кардани аъзо', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+            Text(tr('k059'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(

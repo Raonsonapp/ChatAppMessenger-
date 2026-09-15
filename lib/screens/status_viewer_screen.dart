@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_theme.dart';
 import '../models/app_status.dart';
+import '../l10n/l10n.dart';
 
 /// Намоиши пурраи навсозиҳо (мисли Stories) — гузариши худкор, progress bar
 /// дар боло, ва сабти воқеии viewedBy дар Firestore.
@@ -162,7 +163,7 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
                     if (widget.isOwn)
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: Text('${status.viewedBy.length} дида', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                        child: Text(trf('k196', [status.viewedBy.length]), style: const TextStyle(color: Colors.white70, fontSize: 12)),
                       ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),

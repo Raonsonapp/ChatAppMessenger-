@@ -8,6 +8,7 @@ import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../models/app_call.dart';
 import 'call_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Маълумоти воқеии контакт — mute/манъ/тоза кардани чат ҳама воқеан
 /// дар Firestore сабт мешаванд.
@@ -38,7 +39,7 @@ class ContactInfoScreen extends StatelessWidget {
     }, SetOptions(merge: true));
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(currentlyBlocked ? 'Манъ бекор шуд' : '$otherUserName манъ карда шуд')),
+        SnackBar(content: Text(currentlyBlocked ? tr('k069') : trf('k070', [otherUserName]))),
       );
     }
   }
@@ -52,7 +53,7 @@ class ContactInfoScreen extends StatelessWidget {
     }
     await batch.commit();
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Чат тоза шуд')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k071'))));
     }
   }
 
@@ -75,7 +76,7 @@ class ContactInfoScreen extends StatelessWidget {
                       icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     Text(
-                      'Маълумоти контакт',
+                      tr('k072'),
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
                     ),
                   ],
@@ -128,7 +129,7 @@ class ContactInfoScreen extends StatelessWidget {
                                 _callButton(
                                   context,
                                   icon: LucideIcons.phone,
-                                  label: 'Занг',
+                                  label: tr('k041'),
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -140,7 +141,7 @@ class ContactInfoScreen extends StatelessWidget {
                                 _callButton(
                                   context,
                                   icon: LucideIcons.video,
-                                  label: 'Видео',
+                                  label: tr('k036'),
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -161,7 +162,7 @@ class ContactInfoScreen extends StatelessWidget {
                                     onChanged: (_) => _toggleMute(isMuted),
                                     activeThumbColor: AppColors.neonEmerald,
                                     title: Text(
-                                      'Хомӯш кардани огоҳиномаҳо',
+                                      tr('k073'),
                                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
                                     ),
                                   ),
@@ -169,7 +170,7 @@ class ContactInfoScreen extends StatelessWidget {
                                   ListTile(
                                     leading: Icon(LucideIcons.trash, color: AppColors.neonCyan, size: 20),
                                     title: Text(
-                                      'Тоза кардани чат',
+                                      tr('k074'),
                                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
                                     ),
                                     onTap: () => _clearChat(context),
@@ -178,7 +179,7 @@ class ContactInfoScreen extends StatelessWidget {
                                   ListTile(
                                     leading: Icon(LucideIcons.slash, color: isBlocked ? AppColors.neonEmerald : Colors.redAccent, size: 20),
                                     title: Text(
-                                      isBlocked ? 'Бекор кардани манъ' : 'Манъ кардани корбар',
+                                      isBlocked ? tr('k075') : tr('k076'),
                                       style: TextStyle(
                                         color: isBlocked ? AppColors.neonEmerald : Colors.redAccent,
                                         fontWeight: FontWeight.w600,

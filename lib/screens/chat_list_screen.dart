@@ -18,6 +18,7 @@ import 'tabs/chats_tab.dart';
 import 'tabs/status_tab.dart';
 import 'tabs/communities_tab.dart';
 import 'tabs/calls_tab.dart';
+import '../l10n/l10n.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -134,7 +135,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
           Row(
             children: [
-              _iconButton(LucideIcons.camera, onTap: () => showComingSoonSnack(context, 'Камера')),
+              _iconButton(LucideIcons.camera, onTap: () => showComingSoonSnack(context, tr('k043'))),
               const SizedBox(width: 8),
               _iconButton(LucideIcons.search, onTap: _openSearch),
               const SizedBox(width: 8),
@@ -178,11 +179,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
               unselectedItemColor: AppColors.textSecondary,
               selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5),
               unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11.5),
-              items: const [
-                BottomNavigationBarItem(icon: Icon(LucideIcons.message_circle), label: 'Чатҳо'),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.circle), label: 'Статусҳо'),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.users), label: 'Ҷамъиятҳо'),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.phone), label: 'Зангҳо'),
+              items: [
+                BottomNavigationBarItem(icon: Icon(LucideIcons.message_circle), label: tr('k044')),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.circle), label: tr('k045')),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.users), label: tr('k046')),
+                BottomNavigationBarItem(icon: Icon(LucideIcons.phone), label: tr('k047')),
               ],
             ),
           ),

@@ -16,6 +16,7 @@ import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
 import 'group_info_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -157,7 +158,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Хатои боркунии расм: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k049', [e]))));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -224,7 +225,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         child: Padding(
                           padding: const EdgeInsets.all(20),
                           child: Text(
-                            'Хатои Firestore: ${snapshot.error}',
+                            trf('k029', [snapshot.error]),
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                           ),
@@ -238,7 +239,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     if (docs.isEmpty) {
                       return Center(
                         child: Text(
-                          'Оғози сӯҳбат дар "${widget.groupName}" кунед',
+                          trf('k050', [widget.groupName]),
                           style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                         ),
                       );
@@ -342,7 +343,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
                           ),
-                          Text('${widget.memberNames.length} аъзо', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                          Text(trf('k051', [widget.memberNames.length]), style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
                         ],
                       ),
                     ),
@@ -351,7 +352,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ),
             ),
             IconButton(
-              onPressed: () => showComingSoonSnack(context, 'Занги видео'),
+              onPressed: () => showComingSoonSnack(context, tr('k040')),
               icon: Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
             ),
           ],
@@ -387,7 +388,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       maxLines: 4,
                       minLines: 1,
                       decoration: InputDecoration(
-                        hintText: 'Паём',
+                        hintText: tr('k042'),
                         hintStyle: TextStyle(color: AppColors.textSecondary),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 10),

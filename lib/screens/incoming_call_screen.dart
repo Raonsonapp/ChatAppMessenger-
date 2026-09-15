@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../models/app_call.dart';
 import '../widgets/neon_backdrop.dart';
 import 'call_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Экрани занги воридотӣ — намоён мешавад вақте ки корбари дигар занг
 /// мезанад (тавассути IncomingCallListener). Қабул → CallScreen (ба ҳамон
@@ -63,7 +64,7 @@ class IncomingCallScreen extends StatelessWidget {
                 Text(callerName, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 22)),
                 const SizedBox(height: 8),
                 Text(
-                  isVideo ? 'Занги видеоии воридотӣ...' : 'Занги воридотӣ...',
+                  isVideo ? tr('k121') : tr('k122'),
                   style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.85), fontSize: 14.5),
                 ),
                 const Spacer(),
@@ -75,13 +76,13 @@ class IncomingCallScreen extends StatelessWidget {
                       _actionButton(
                         icon: LucideIcons.phone_off,
                         color: Colors.redAccent,
-                        label: 'Рад кардан',
+                        label: tr('k123'),
                         onTap: () => _decline(context),
                       ),
                       _actionButton(
                         icon: isVideo ? LucideIcons.video : LucideIcons.phone,
                         color: AppColors.neonEmerald,
-                        label: 'Қабул',
+                        label: tr('k124'),
                         onTap: () => _accept(context),
                       ),
                     ],

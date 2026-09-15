@@ -9,6 +9,7 @@ import '../models/app_conversation.dart';
 import '../screens/user_chat_screen.dart';
 import '../screens/create_group_screen.dart';
 import '../screens/contact_picker_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Феҳристи ҷустуҷӯи корбарони воқеӣ + гузаргоҳ ба сохтани гурӯҳи нав.
 class NewChatSheet extends StatefulWidget {
@@ -55,7 +56,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
       final data = doc.data();
       return {
         'uid': doc.id,
-        'name': (data['name'] ?? 'Корбар') as String,
+        'name': (data['name'] ?? tr('k002')) as String,
         'phone': (data['phone'] ?? '') as String,
       };
     }).toList();
@@ -75,7 +76,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
     final conversationId = AppConversation.idFor(currentUid, otherUid);
 
     final currentUserDoc = await FirebaseFirestore.instance.collection('users').doc(currentUid).get();
-    final myName = (currentUserDoc.data()?['name'] as String?) ?? 'Корбар';
+    final myName = (currentUserDoc.data()?['name'] as String?) ?? tr('k002');
 
     await FirebaseFirestore.instance.collection('conversations').doc(conversationId).set({
       'participants': [currentUid, otherUid],
@@ -133,7 +134,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
                 decoration: BoxDecoration(color: AppColors.glassBorder, borderRadius: BorderRadius.circular(4)),
               ),
             ),
-            Text('Контакти нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+            Text(tr('k084'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 12),
             // Гурӯҳи нав — ҷои доимӣ дар боло, мисли WhatsApp
             ListTile(
@@ -144,7 +145,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
                 decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
                 child: Icon(LucideIcons.users, color: AppColors.background, size: 20),
               ),
-              title: Text('Гурӯҳи нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+              title: Text(tr('k083'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
               onTap: _openCreateGroup,
             ),
             ListTile(
@@ -155,7 +156,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
                 decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.surface, border: Border.all(color: AppColors.glassBorder)),
                 child: Icon(LucideIcons.smartphone, color: AppColors.neonCyan, size: 19),
               ),
-              title: Text('Контактҳои телефон', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+              title: Text(tr('k228'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
               onTap: _openDeviceContacts,
             ),
             Divider(color: AppColors.glassBorder, height: 4),
@@ -193,7 +194,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Text(
-                  'Ҳеҷ корбаре бо ин рақам/ном ёфт нашуд',
+                  tr('k229'),
                   style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
                 ),
               )

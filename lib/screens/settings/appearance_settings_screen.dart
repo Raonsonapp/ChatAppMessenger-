@@ -5,6 +5,7 @@ import '../../theme/app_theme.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
+import '../../l10n/l10n.dart';
 
 class AppearanceSettingsScreen extends StatefulWidget {
   const AppearanceSettingsScreen({super.key});
@@ -39,7 +40,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                       icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     Text(
-                      'Намуди зоҳирӣ',
+                      tr('k147'),
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
                   ],
@@ -52,7 +53,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                     Padding(
                       padding: const EdgeInsets.only(left: 4, bottom: 8),
                       child: Text(
-                        'МАВЗӮЪ',
+                        tr('k148'),
                         style: TextStyle(
                           color: AppColors.textSecondary.withValues(alpha: 0.7),
                           fontSize: 11,
@@ -68,16 +69,16 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                         children: [
                           _option(
                             icon: LucideIcons.moon,
-                            label: 'Торик',
-                            description: 'Заминаи торик бо рангҳои неон',
+                            label: tr('k149'),
+                            description: tr('k150'),
                             selected: isDark,
                             onTap: () => _select(true),
                           ),
                           Divider(color: AppColors.glassBorder, height: 1),
                           _option(
                             icon: LucideIcons.sun,
-                            label: 'Равшан',
-                            description: 'Заминаи равшан барои рӯзи офтобӣ',
+                            label: tr('k151'),
+                            description: tr('k152'),
                             selected: !isDark,
                             onTap: () => _select(false),
                           ),

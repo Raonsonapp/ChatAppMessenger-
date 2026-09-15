@@ -15,6 +15,7 @@ import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
 import 'community_info_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -155,7 +156,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Хатои боркунии расм: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k049', [e]))));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -222,7 +223,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                         child: Padding(
                           padding: const EdgeInsets.all(20),
                           child: Text(
-                            'Хатои Firestore: ${snapshot.error}',
+                            trf('k029', [snapshot.error]),
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                           ),
@@ -236,7 +237,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                     if (docs.isEmpty) {
                       return Center(
                         child: Text(
-                          'Оғози сӯҳбат дар "${widget.communityName}" кунед',
+                          trf('k050', [widget.communityName]),
                           style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                         ),
                       );
@@ -340,7 +341,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
                           ),
-                          Text('${widget.memberNames.length} аъзо', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                          Text(trf('k051', [widget.memberNames.length]), style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
                         ],
                       ),
                     ),
@@ -381,7 +382,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                       maxLines: 4,
                       minLines: 1,
                       decoration: InputDecoration(
-                        hintText: 'Паём',
+                        hintText: tr('k042'),
                         hintStyle: TextStyle(color: AppColors.textSecondary),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 10),

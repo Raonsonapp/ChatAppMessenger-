@@ -5,6 +5,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../widgets/app_logo.dart';
+import '../../l10n/l10n.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -30,7 +31,7 @@ class AboutScreen extends StatelessWidget {
                       icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     Text(
-                      'Дар бораи ChatApp',
+                      tr('k139'),
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
                   ],
@@ -52,7 +53,7 @@ class AboutScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Center(
                       child: Text(
-                        'Версияи $appVersion',
+                        trf('k140', [appVersion]),
                         style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.85), fontSize: 13),
                       ),
                     ),
@@ -64,20 +65,19 @@ class AboutScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Паёмрасони ройгон бо чатҳои шахсӣ, гурӯҳҳо, ҷамъиятҳо, каналҳо, '
-                            'статусҳо ва зангҳои садоӣ/видеоӣ.',
+                            tr('k141'),
                             style: TextStyle(color: AppColors.textPrimary, fontSize: 13.5, height: 1.5),
                           ),
                           const SizedBox(height: 16),
                           Divider(color: AppColors.glassBorder, height: 1),
                           const SizedBox(height: 16),
-                          _infoRow(LucideIcons.shield_check, 'Вуруд', 'Тасдиқи рақам тавассути боти Telegram'),
+                          _infoRow(LucideIcons.shield_check, tr('k142'), tr('k143')),
                           const SizedBox(height: 12),
-                          _infoRow(LucideIcons.database, 'Маълумот', 'Firebase (Firestore ва Storage)'),
+                          _infoRow(LucideIcons.database, tr('k144'), tr('k145')),
                           const SizedBox(height: 12),
-                          _infoRow(LucideIcons.video, 'Зангҳо', 'Agora RTC'),
+                          _infoRow(LucideIcons.video, tr('k047'), 'Agora RTC'),
                           const SizedBox(height: 12),
-                          _infoRow(LucideIcons.bell, 'Огоҳиномаҳо', 'Firebase Cloud Messaging'),
+                          _infoRow(LucideIcons.bell, tr('k146'), 'Firebase Cloud Messaging'),
                         ],
                       ),
                     ),

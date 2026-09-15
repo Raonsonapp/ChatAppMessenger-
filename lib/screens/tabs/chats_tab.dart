@@ -10,6 +10,7 @@ import '../../widgets/user_conversation_tile.dart';
 import '../../widgets/group_tile.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/doc_sort.dart';
+import '../../l10n/l10n.dart';
 
 class ChatsTab extends StatelessWidget {
   const ChatsTab({super.key});
@@ -35,7 +36,7 @@ class ChatsTab extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.all(12),
                   child: Text(
-                    'Хатои гурӯҳҳо (эҳтимол index лозим аст): ${snapshot.error}',
+                    trf('k200', [snapshot.error]),
                     style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
                   ),
                 );
@@ -64,7 +65,7 @@ class ChatsTab extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Хатои Firestore (эҳтимол index лозим аст): ${snapshot.error}',
+                    trf('k197', [snapshot.error]),
                     style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
                   ),
                 );
@@ -80,7 +81,7 @@ class ChatsTab extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Text(
-                    'Ҳанӯз чат надоред — тугмаи "+" -ро пахш карда корбарро ёбед',
+                    tr('k201'),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
                   ),

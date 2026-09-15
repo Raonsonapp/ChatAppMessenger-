@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
+import 'l10n/locale_controller.dart';
 import 'screens/auth_gate.dart';
 import 'services/notification_service.dart';
 
@@ -15,6 +16,7 @@ void main() async {
   await NotificationService.initialize();
   // Пеш аз аввалин кашидан, то мавзӯъ назди чашм наҷаҳад.
   await themeController.load();
+  await localeController.load();
   runApp(const ChatApp());
 }
 
@@ -24,7 +26,7 @@ class ChatApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: themeController,
+      animation: Listenable.merge([themeController, localeController]),
       builder: (context, _) {
         return MaterialApp(
           navigatorKey: navigatorKey,

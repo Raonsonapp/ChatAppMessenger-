@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config/otp_server_config.dart';
+import '../l10n/l10n.dart';
 
 class OtpVerifyException implements Exception {
   final String message;
@@ -32,7 +33,7 @@ class OtpBotService {
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     if (response.statusCode != 200) {
-      throw OtpVerifyException(body['error'] as String? ?? 'Хатои тасдиқ');
+      throw OtpVerifyException(body['error'] as String? ?? tr('k225'));
     }
     return body['token'] as String;
   }

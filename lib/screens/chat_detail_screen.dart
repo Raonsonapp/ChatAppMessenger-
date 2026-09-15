@@ -17,6 +17,7 @@ import '../widgets/typing_bubble.dart';
 import '../widgets/attachment_sheet.dart';
 import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
+import '../l10n/l10n.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final ChatConversation conversation;
@@ -99,7 +100,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => AttachmentSheet(
         onImagePicked: _sendImageMessage,
-        onContactTap: () => showComingSoonSnack(context, 'Мубодилаи контакт дар ChatAI'),
+        onContactTap: () => showComingSoonSnack(context, tr('k027')),
         onGifPicked: (file) => _sendImageMessage(file, mediaType: 'gif'),
         onStickerTap: _openStickerPicker,
       ),
@@ -149,7 +150,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Хатои боркунӣ: $e')),
+          SnackBar(content: Text(trf('k028', [e]))),
         );
       }
     } finally {
@@ -232,7 +233,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         child: Padding(
                           padding: const EdgeInsets.all(24),
                           child: Text(
-                            'Хатои Firestore: ${snapshot.error}',
+                            trf('k029', [snapshot.error]),
                             textAlign: TextAlign.center,
                             style: TextStyle(color: AppColors.textSecondary),
                           ),
@@ -322,12 +323,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Аз ChatAI бипурсед',
+              tr('k030'),
               style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16),
             ),
             const SizedBox(height: 6),
             Text(
-              'Савол диҳед, ё яке аз инҳоро озмоед',
+              tr('k031'),
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
             ),
@@ -335,15 +336,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _suggestionChip(LucideIcons.image, 'Расм', 'Лутфан барои ман расме эҷод кун: '),
+                  child: _suggestionChip(LucideIcons.image, tr('k032'), tr('k033')),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _suggestionChip(LucideIcons.music, 'Мусиқӣ', 'Лутфан барои ман мусиқие эҷод кун: '),
+                  child: _suggestionChip(LucideIcons.music, tr('k034'), tr('k035')),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _suggestionChip(LucideIcons.video, 'Видео', 'Лутфан барои ман видеое эҷод кун: '),
+                  child: _suggestionChip(LucideIcons.video, tr('k036'), tr('k037')),
                 ),
               ],
             ),
@@ -418,18 +419,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
                   ),
                   Text(
-                    convo.isAIChat ? 'Ҳамеша дастрас' : 'Firestore · вақти воқеӣ',
+                    convo.isAIChat ? tr('k038') : tr('k039'),
                     style: TextStyle(color: AppColors.neonEmerald, fontSize: 11),
                   ),
                 ],
               ),
             ),
             IconButton(
-              onPressed: () => showComingSoonSnack(context, 'Занги видео'),
+              onPressed: () => showComingSoonSnack(context, tr('k040')),
               icon: Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
             ),
             IconButton(
-              onPressed: () => showComingSoonSnack(context, 'Занг'),
+              onPressed: () => showComingSoonSnack(context, tr('k041')),
               icon: Icon(LucideIcons.phone, color: AppColors.textSecondary, size: 18),
             ),
           ],
@@ -466,7 +467,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       maxLines: 4,
                       minLines: 1,
                       decoration: InputDecoration(
-                        hintText: 'Паём',
+                        hintText: tr('k042'),
                         hintStyle: TextStyle(color: AppColors.textSecondary),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 10),

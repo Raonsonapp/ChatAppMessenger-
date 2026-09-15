@@ -3,6 +3,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
 import 'glass_container.dart';
+import '../l10n/l10n.dart';
 
 /// Панели интихоби emoji — рӯйхати эмоҷиҳои маъмул дар шакли grid.
 /// Панел кушода мемонад то корбар якчанд emoji интихоб кунад ва бо
@@ -45,7 +46,7 @@ class EmojiPickerSheet extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Эмоҷиҳо', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+                Text(tr('k237'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: Icon(LucideIcons.check, color: AppColors.neonEmerald, size: 20),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import 'glass_container.dart';
+import '../l10n/l10n.dart';
 
 /// Феҳристи стикерҳо. Азбаски дар лоиҳа расмҳои воқеии стикер (PNG/WebP)
 /// мавҷуд нестанд, стикерҳо ҳамчун эмоҷии калон (шабеҳи стикер, бе замина)
@@ -36,7 +37,7 @@ class StickerPickerSheet extends StatelessWidget {
             ),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text('Стикерҳо', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+              child: Text(tr('k243'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
             ),
             const SizedBox(height: 12),
             SizedBox(

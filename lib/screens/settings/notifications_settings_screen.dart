@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
+import '../../l10n/l10n.dart';
 
 class NotificationsSettingsScreen extends StatefulWidget {
   const NotificationsSettingsScreen({super.key});
@@ -70,7 +71,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                       icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     Text(
-                      'Огоҳиномаҳо',
+                      tr('k146'),
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
                   ],
@@ -87,22 +88,22 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             child: Column(
                               children: [
-                                _switchRow('Огоҳиномаи паёмҳо', _messageNotifications, (v) {
+                                _switchRow(tr('k170'), _messageNotifications, (v) {
                                   setState(() => _messageNotifications = v);
                                   _update('messageNotifications', v);
                                 }),
                                 Divider(color: AppColors.glassBorder, height: 1),
-                                _switchRow('Садо', _sound, (v) {
+                                _switchRow(tr('k171'), _sound, (v) {
                                   setState(() => _sound = v);
                                   _update('notificationSound', v);
                                 }),
                                 Divider(color: AppColors.glassBorder, height: 1),
-                                _switchRow('Ларзиш', _vibration, (v) {
+                                _switchRow(tr('k172'), _vibration, (v) {
                                   setState(() => _vibration = v);
                                   _update('notificationVibration', v);
                                 }),
                                 Divider(color: AppColors.glassBorder, height: 1),
-                                _switchRow('Намоиши мазмуни паём', _showPreview, (v) {
+                                _switchRow(tr('k173'), _showPreview, (v) {
                                   setState(() => _showPreview = v);
                                   _update('notificationPreview', v);
                                 }, showDivider: false),

@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../../models/app_call.dart';
 import '../../utils/doc_sort.dart';
 import '../call_screen.dart';
+import '../../l10n/l10n.dart';
 
 class CallsTab extends StatelessWidget {
   const CallsTab({super.key});
@@ -28,7 +29,7 @@ class CallsTab extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                'Хатои Firestore (эҳтимол index лозим аст): ${snapshot.error}',
+                trf('k197', [snapshot.error]),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
               ),
@@ -48,10 +49,10 @@ class CallsTab extends StatelessWidget {
                 children: [
                   Icon(LucideIcons.phone, color: AppColors.textSecondary.withValues(alpha: 0.5), size: 48),
                   const SizedBox(height: 16),
-                  Text('Ягон занг нест', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+                  Text(tr('k198'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 8),
                   Text(
-                    'Зангҳои шумо дар ин ҷо намоён мешаванд',
+                    tr('k199'),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 13),
                   ),

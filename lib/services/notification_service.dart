@@ -14,6 +14,7 @@ import '../models/chat_conversation.dart';
 import '../screens/user_chat_screen.dart';
 import '../screens/group_chat_screen.dart';
 import '../screens/community_chat_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Калиди Navigator-и глобалӣ — барои кушодани чат/занг аз push-огоҳинома,
 /// новобаста аз он ки корбар дар кадом экран аст.
@@ -34,22 +35,22 @@ int _notificationId(Map<String, dynamic> data) {
 /// Огоҳиномаи паём вақте ки барнома дар пешзамина/паснамо кушода аст ё
 /// пурра баста аст — дар ҳарду ҳолат тавассути ин функсия намоён мешавад.
 Future<void> _showMessageNotification(Map<String, dynamic> data) async {
-  final senderName = data['senderName'] as String? ?? 'Паёми нав';
+  final senderName = data['senderName'] as String? ?? tr('k217');
   final text = data['text'] as String? ?? '';
   final payload = jsonEncode(data);
 
-  const androidDetails = AndroidNotificationDetails(
+  final androidDetails = AndroidNotificationDetails(
     _messagesChannelId,
-    'Паёмҳо',
-    channelDescription: 'Огоҳиномаи паёмҳои нав',
+    tr('k218'),
+    channelDescription: tr('k219'),
     importance: Importance.high,
     priority: Priority.high,
     category: AndroidNotificationCategory.message,
     actions: [
       AndroidNotificationAction(
         'reply',
-        'Ҷавоб',
-        inputs: [AndroidNotificationActionInput(label: 'Паём нависед...')],
+        tr('k220'),
+        inputs: [AndroidNotificationActionInput(label: tr('k221'))],
       ),
     ],
   );
@@ -57,8 +58,8 @@ Future<void> _showMessageNotification(Map<String, dynamic> data) async {
   await _localNotifications.show(
     id: _notificationId(data),
     title: senderName,
-    body: text.isEmpty ? '📷 Расм' : text,
-    notificationDetails: const NotificationDetails(android: androidDetails, iOS: DarwinNotificationDetails()),
+    body: text.isEmpty ? tr('k222') : text,
+    notificationDetails: NotificationDetails(android: androidDetails, iOS: DarwinNotificationDetails()),
     payload: payload,
   );
 }
@@ -66,14 +67,14 @@ Future<void> _showMessageNotification(Map<String, dynamic> data) async {
 /// Огоҳиномаи занги воридотӣ — importance/priority максималӣ ва
 /// fullScreenIntent, то мисли WhatsApp болои экрани қулф намоён шавад.
 Future<void> _showIncomingCallNotification(Map<String, dynamic> data) async {
-  final callerName = data['callerName'] as String? ?? 'Занги воридотӣ';
+  final callerName = data['callerName'] as String? ?? tr('k223');
   final isVideo = data['callType'] == 'video';
   final payload = jsonEncode(data);
 
   final androidDetails = AndroidNotificationDetails(
     _callsChannelId,
-    'Зангҳо',
-    channelDescription: 'Огоҳиномаи занги воридотӣ',
+    tr('k047'),
+    channelDescription: tr('k224'),
     importance: Importance.max,
     priority: Priority.max,
     category: AndroidNotificationCategory.call,
@@ -81,15 +82,15 @@ Future<void> _showIncomingCallNotification(Map<String, dynamic> data) async {
     ongoing: true,
     timeoutAfter: 45000,
     actions: [
-      const AndroidNotificationAction('decline_call', 'Рад кардан', showsUserInterface: false, cancelNotification: true),
-      AndroidNotificationAction('accept_call', 'Қабул', showsUserInterface: true, cancelNotification: true),
+      AndroidNotificationAction('decline_call', tr('k123'), showsUserInterface: false, cancelNotification: true),
+      AndroidNotificationAction('accept_call', tr('k124'), showsUserInterface: true, cancelNotification: true),
     ],
   );
 
   await _localNotifications.show(
     id: _notificationId(data),
     title: callerName,
-    body: isVideo ? 'Занги видеоии воридотӣ...' : 'Занги воридотӣ...',
+    body: isVideo ? tr('k121') : tr('k122'),
     notificationDetails: NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
     payload: payload,
   );
@@ -147,7 +148,7 @@ void _navigateFromPayload(Map<String, dynamic> data) {
   if (type == 'incoming_call') {
     final callId = data['callId'] as String?;
     final callerId = data['callerId'] as String?;
-    final callerName = data['callerName'] as String? ?? 'Корбар';
+    final callerName = data['callerName'] as String? ?? tr('k002');
     final callType = data['callType'] == 'video' ? CallType.video : CallType.audio;
     if (callId == null || callerId == null) return;
     navigator.push(MaterialPageRoute(
@@ -159,7 +160,7 @@ void _navigateFromPayload(Map<String, dynamic> data) {
   if (type == 'chat_message') {
     final kind = data['kind'] as String?;
     final threadId = data['threadId'] as String?;
-    final senderName = data['senderName'] as String? ?? 'Корбар';
+    final senderName = data['senderName'] as String? ?? tr('k002');
     final threadName = data['threadName'] as String? ?? senderName;
     final senderId = data['senderId'] as String?;
     if (threadId == null) return;
@@ -234,16 +235,16 @@ class NotificationService {
     );
 
     final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    await androidPlugin?.createNotificationChannel(const AndroidNotificationChannel(
+    await androidPlugin?.createNotificationChannel(AndroidNotificationChannel(
       _messagesChannelId,
-      'Паёмҳо',
-      description: 'Огоҳиномаи паёмҳои нав',
+      tr('k218'),
+      description: tr('k219'),
       importance: Importance.high,
     ));
-    await androidPlugin?.createNotificationChannel(const AndroidNotificationChannel(
+    await androidPlugin?.createNotificationChannel(AndroidNotificationChannel(
       _callsChannelId,
-      'Зангҳо',
-      description: 'Огоҳиномаи занги воридотӣ',
+      tr('k047'),
+      description: tr('k224'),
       importance: Importance.max,
     ));
 

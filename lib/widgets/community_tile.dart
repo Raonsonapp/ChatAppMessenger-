@@ -4,6 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import '../theme/app_theme.dart';
 import '../models/app_community.dart';
 import '../screens/community_chat_screen.dart';
+import '../l10n/l10n.dart';
 
 class CommunityTile extends StatelessWidget {
   final AppCommunity community;
@@ -73,7 +74,7 @@ class CommunityTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      community.lastMessage.isEmpty ? '${community.members.length} аъзо' : community.lastMessage,
+                      community.lastMessage.isEmpty ? trf('k051', [community.members.length]) : community.lastMessage,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),

@@ -4,6 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
+import '../l10n/l10n.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -65,7 +66,7 @@ class MessageBubble extends StatelessWidget {
               _actionTile(
                 context,
                 icon: LucideIcons.corner_up_left,
-                label: 'Ҷавоб додан',
+                label: tr('k239'),
                 onTap: () {
                   Navigator.pop(context);
                   onReply?.call(message);
@@ -75,7 +76,7 @@ class MessageBubble extends StatelessWidget {
                 _actionTile(
                   context,
                   icon: LucideIcons.copy,
-                  label: 'Нусхабардорӣ',
+                  label: tr('k240'),
                   onTap: () {
                     Navigator.pop(context);
                     Clipboard.setData(ClipboardData(text: message.text));
@@ -85,7 +86,7 @@ class MessageBubble extends StatelessWidget {
                 _actionTile(
                   context,
                   icon: LucideIcons.trash,
-                  label: 'Нест кардан',
+                  label: tr('k241'),
                   color: Colors.redAccent,
                   onTap: () {
                     Navigator.pop(context);
@@ -230,7 +231,7 @@ class MessageBubble extends StatelessWidget {
                           Padding(
                             padding: hasImage ? const EdgeInsets.fromLTRB(8, 6, 8, 4) : EdgeInsets.zero,
                             child: Text(
-                              message.deleted ? 'Паём нест карда шуд' : message.text,
+                              message.deleted ? tr('k242') : message.text,
                               style: TextStyle(
                                 color: (isMe && !hasImage) ? AppColors.background : AppColors.textPrimary,
                                 fontSize: 14.5,

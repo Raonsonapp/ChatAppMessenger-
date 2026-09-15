@@ -10,6 +10,7 @@ import '../widgets/chat_tile.dart';
 import '../widgets/user_conversation_tile.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/glass_container.dart';
+import '../l10n/l10n.dart';
 
 /// Ҷустуҷӯи воқеӣ дар байни ChatAI ва сӯҳбатҳои воқеии корбар.
 class ChatSearchScreen extends StatefulWidget {
@@ -59,7 +60,7 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
                           style: TextStyle(color: AppColors.textPrimary),
                           onChanged: (v) => setState(() => _query = v),
                           decoration: InputDecoration(
-                            hintText: 'Ҷустуҷӯи чат...',
+                            hintText: tr('k048'),
                             hintStyle: TextStyle(color: AppColors.textSecondary),
                             border: InputBorder.none,
                             icon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),

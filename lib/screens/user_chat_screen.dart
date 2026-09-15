@@ -17,6 +17,7 @@ import '../widgets/sticker_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
 import 'contact_info_screen.dart';
 import 'call_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -176,7 +177,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Хатои боркунии расм: $e')),
+          SnackBar(content: Text(trf('k049', [e]))),
         );
       }
     } finally {
@@ -284,7 +285,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                             child: Padding(
                               padding: const EdgeInsets.all(20),
                               child: Text(
-                                'Хатои Firestore: ${snapshot.error}',
+                                trf('k029', [snapshot.error]),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                               ),
@@ -298,7 +299,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         if (docs.isEmpty) {
                           return Center(
                             child: Text(
-                              'Оғози сӯҳбат бо ${widget.otherUserName} кунед',
+                              trf('k213', [widget.otherUserName]),
                               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                             ),
                           );
@@ -349,7 +350,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Шумо ${widget.otherUserName}-ро манъ кардаед — паём фиристода наметавонед',
+                trf('k214', [widget.otherUserName]),
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
               ),
             ),
@@ -473,7 +474,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                       maxLines: 4,
                       minLines: 1,
                       decoration: InputDecoration(
-                        hintText: 'Паём',
+                        hintText: tr('k042'),
                         hintStyle: TextStyle(color: AppColors.textSecondary),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 10),

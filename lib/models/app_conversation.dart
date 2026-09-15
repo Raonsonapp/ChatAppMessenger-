@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../l10n/l10n.dart';
 
 /// Ҳуҷҷати `conversations/{id}` — сӯҳбати воқеӣ байни ду корбари
 /// бо телефон бақайдгирифташуда.
@@ -35,7 +36,7 @@ class AppConversation {
   /// Номи тарафи муқобил барои корбари ҷорӣ
   String otherName(String currentUid) {
     final uid = otherUid(currentUid);
-    return participantNames[uid] ?? 'Корбар';
+    return participantNames[uid] ?? tr('k002');
   }
 
   String otherUid(String currentUid) {

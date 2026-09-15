@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
+import '../l10n/l10n.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -56,7 +57,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (uid == null) return;
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      setState(() => _errorText = 'Номро ворид кунед');
+      setState(() => _errorText = tr('k060'));
       return;
     }
     setState(() {
@@ -74,13 +75,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _savedMessage = 'Профил сабт шуд';
+        _savedMessage = tr('k114');
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _errorText = 'Хатои сабт: $e';
+        _errorText = trf('k061', [e]);
       });
     }
   }
@@ -107,7 +108,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Профили ман',
+                            tr('k115'),
                             style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                           ),
                         ],
@@ -126,11 +127,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: Text(phone, style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
                       ),
                       const SizedBox(height: 26),
-                      _buildField('Ном', _nameController, hint: 'Масалан: Шаҳром'),
+                      _buildField(tr('k063'), _nameController, hint: tr('k064')),
                       const SizedBox(height: 14),
                       _buildField('Nickname', _nicknameController, hint: '@shahron'),
                       const SizedBox(height: 14),
-                      _buildField('Дар бораи ман', _aboutController, hint: 'Салом! Ман ChatApp истифода мебарам'),
+                      _buildField(tr('k116'), _aboutController, hint: tr('k067')),
                       if (_errorText != null) ...[
                         const SizedBox(height: 10),
                         Text(_errorText!, style: const TextStyle(color: Colors.redAccent, fontSize: 12.5)),
@@ -156,7 +157,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   height: 20,
                                   child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                                 )
-                              : const Text('Сабт кардан', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                              : Text(tr('k117'), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                         ),
                       ),
                     ],

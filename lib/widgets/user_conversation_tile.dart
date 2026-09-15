@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/app_conversation.dart';
 import '../screens/user_chat_screen.dart';
+import '../l10n/l10n.dart';
 
 class UserConversationTile extends StatelessWidget {
   final AppConversation conversation;
@@ -81,7 +82,7 @@ class UserConversationTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      conversation.lastMessage.isEmpty ? 'Оғози сӯҳбат кунед' : conversation.lastMessage,
+                      conversation.lastMessage.isEmpty ? tr('k236') : conversation.lastMessage,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
