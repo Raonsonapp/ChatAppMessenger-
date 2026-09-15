@@ -192,18 +192,18 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: const BackButton(color: AppColors.textPrimary),
+        leading: BackButton(color: AppColors.textPrimary),
         titleSpacing: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Интихоби контакт',
               style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 18),
             ),
             Text(
               '${_contacts.length} контакт',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
           ],
         ),
@@ -222,8 +222,8 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
-                      leading: const Icon(LucideIcons.refresh_cw, color: AppColors.textPrimary),
-                      title: const Text('Навсозии контактҳо', style: TextStyle(color: AppColors.textPrimary)),
+                      leading: Icon(LucideIcons.refresh_cw, color: AppColors.textPrimary),
+                      title: Text('Навсозии контактҳо', style: TextStyle(color: AppColors.textPrimary)),
                       onTap: () {
                         Navigator.pop(context);
                         _loadContacts();
@@ -258,11 +258,11 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
             child: TextField(
               controller: _searchController,
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Ҷустуҷӯ',
-                hintStyle: const TextStyle(color: AppColors.textSecondary),
-                prefixIcon: const Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
+                hintStyle: TextStyle(color: AppColors.textSecondary),
+                prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
                 filled: true,
                 fillColor: AppColors.surface,
                 border: OutlineInputBorder(
@@ -286,14 +286,14 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
         backgroundColor: AppColors.neonEmerald.withValues(alpha: 0.14),
         child: Icon(icon, color: AppColors.neonEmerald),
       ),
-      title: Text(title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+      title: Text(title, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
       onTap: onTap,
     );
   }
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
+      return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
     }
 
     if (_error != null) {
@@ -303,9 +303,9 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(LucideIcons.users, color: AppColors.textSecondary, size: 40),
+              Icon(LucideIcons.users, color: AppColors.textSecondary, size: 40),
               const SizedBox(height: 12),
-              Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSecondary)),
+              Text(_error!, textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 12),
               FilledButton(onPressed: _loadContacts, child: const Text('Аз нав')),
             ],
@@ -315,7 +315,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
     }
 
     if (_filtered.isEmpty) {
-      return const Center(
+      return Center(
         child: Text('Контакт ёфт нашуд', style: TextStyle(color: AppColors.textSecondary)),
       );
     }
@@ -323,7 +323,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
       itemCount: _filtered.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.glassBorder),
+      separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.glassBorder),
       itemBuilder: (context, index) {
         final contact = _filtered[index];
         final registered = contact.phones.any(
@@ -339,17 +339,17 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
             child: contact.photo == null
                 ? Text(
                     contact.displayName.isNotEmpty ? contact.displayName[0].toUpperCase() : '?',
-                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+                    style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
                   )
                 : null,
           ),
           title: Text(
             contact.displayName.isEmpty ? 'Бе ном' : contact.displayName,
-            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
           ),
           subtitle: Text(
             registered ? 'Дар ChatApp ҳаст' : (contact.phones.isNotEmpty ? contact.phones.first.number : ''),
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
           onTap: () => _selectContact(contact),
         );

@@ -47,7 +47,7 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                      icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
                     Expanded(
                       child: GlassContainer(
@@ -56,9 +56,9 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
                         child: TextField(
                           controller: _controller,
                           autofocus: true,
-                          style: const TextStyle(color: AppColors.textPrimary),
+                          style: TextStyle(color: AppColors.textPrimary),
                           onChanged: (v) => setState(() => _query = v),
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: 'Ҷустуҷӯи чат...',
                             hintStyle: TextStyle(color: AppColors.textSecondary),
                             border: InputBorder.none,

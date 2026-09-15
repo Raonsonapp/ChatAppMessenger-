@@ -30,13 +30,13 @@ class CallsTab extends StatelessWidget {
               child: Text(
                 'Хатои Firestore (эҳтимол index лозим аст): ${snapshot.error}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
               ),
             ),
           );
         }
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
+          return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
         }
         final calls = sortByTimeDesc(snapshot.data!.docs, 'createdAt').map(AppCall.fromDoc).toList();
         if (calls.isEmpty) {
@@ -48,7 +48,7 @@ class CallsTab extends StatelessWidget {
                 children: [
                   Icon(LucideIcons.phone, color: AppColors.textSecondary.withValues(alpha: 0.5), size: 48),
                   const SizedBox(height: 16),
-                  const Text('Ягон занг нест', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+                  Text('Ягон занг нест', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 8),
                   Text(
                     'Зангҳои шумо дар ин ҷо намоён мешаванд',
@@ -63,7 +63,7 @@ class CallsTab extends StatelessWidget {
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 100),
           itemCount: calls.length,
-          separatorBuilder: (_, __) => const Divider(color: AppColors.glassBorder, height: 1),
+          separatorBuilder: (_, __) => Divider(color: AppColors.glassBorder, height: 1),
           itemBuilder: (context, index) {
             final call = calls[index];
             final isOutgoing = call.isOutgoing(currentUid);
@@ -84,7 +84,7 @@ class CallsTab extends StatelessWidget {
                 child: Center(
                   child: Text(
                     otherName.isNotEmpty ? otherName[0].toUpperCase() : '?',
-                    style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 17),
+                    style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 17),
                   ),
                 ),
               ),
@@ -108,7 +108,7 @@ class CallsTab extends StatelessWidget {
                     call.createdAt == null
                         ? '...'
                         : '${call.createdAt!.day}/${call.createdAt!.month} · ${call.createdAt!.hour.toString().padLeft(2, '0')}:${call.createdAt!.minute.toString().padLeft(2, '0')}',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
                   ),
                 ],
               ),

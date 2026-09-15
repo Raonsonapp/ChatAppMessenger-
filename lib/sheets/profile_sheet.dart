@@ -40,8 +40,8 @@ class ProfileSheet extends StatelessWidget {
             Container(
               width: 64,
               height: 64,
-              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-              child: const Icon(LucideIcons.user, color: AppColors.background, size: 28),
+              decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+              child: Icon(LucideIcons.user, color: AppColors.background, size: 28),
             ),
             const SizedBox(height: 12),
             if (uid != null)
@@ -51,12 +51,12 @@ class ProfileSheet extends StatelessWidget {
                   final name = snapshot.data?.data()?['name'] as String?;
                   return Text(
                     (name == null || name.isEmpty) ? 'Корбар' : name,
-                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                    style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
                   );
                 },
               ),
             const SizedBox(height: 2),
-            Text(phone, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            Text(phone, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
             const SizedBox(height: 18),
             _menuRow(
               icon: LucideIcons.user,
@@ -80,10 +80,10 @@ class ProfileSheet extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () => _signOut(context),
-                icon: const Icon(LucideIcons.log_out, color: AppColors.neonCyan, size: 18),
-                label: const Text('Баромадан', style: TextStyle(color: AppColors.textPrimary)),
+                icon: Icon(LucideIcons.log_out, color: AppColors.neonCyan, size: 18),
+                label: Text('Баромадан', style: TextStyle(color: AppColors.textPrimary)),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.glassBorder),
+                  side: BorderSide(color: AppColors.glassBorder),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
@@ -108,7 +108,7 @@ class ProfileSheet extends StatelessWidget {
               Icon(icon, color: AppColors.neonCyan, size: 19),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+                child: Text(label, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
               ),
               Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 17),
             ],

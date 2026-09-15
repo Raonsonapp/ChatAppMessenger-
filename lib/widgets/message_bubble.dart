@@ -61,7 +61,7 @@ class MessageBubble extends StatelessWidget {
                   );
                 }).toList(),
               ),
-              const Divider(color: AppColors.glassBorder, height: 20),
+              Divider(color: AppColors.glassBorder, height: 20),
               _actionTile(
                 context,
                 icon: LucideIcons.corner_up_left,
@@ -104,11 +104,12 @@ class MessageBubble extends StatelessWidget {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-    Color color = AppColors.textPrimary,
+    Color? color,
   }) {
+    final tint = color ?? AppColors.textPrimary;
     return ListTile(
-      leading: Icon(icon, color: color, size: 20),
-      title: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 14)),
+      leading: Icon(icon, color: tint, size: 20),
+      title: Text(label, style: TextStyle(color: tint, fontWeight: FontWeight.w600, fontSize: 14)),
       onTap: onTap,
     );
   }
@@ -214,14 +215,14 @@ class MessageBubble extends StatelessWidget {
                                   width: 220,
                                   height: 220,
                                   alignment: Alignment.center,
-                                  child: const CircularProgressIndicator(color: AppColors.neonEmerald, strokeWidth: 2),
+                                  child: CircularProgressIndicator(color: AppColors.neonEmerald, strokeWidth: 2),
                                 );
                               },
                               errorBuilder: (context, error, stack) => Container(
                                 width: 220,
                                 height: 120,
                                 alignment: Alignment.center,
-                                child: const Icon(LucideIcons.triangle_alert, color: AppColors.textSecondary),
+                                child: Icon(LucideIcons.triangle_alert, color: AppColors.textSecondary),
                               ),
                             ),
                           ),

@@ -224,20 +224,20 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                           child: Text(
                             'Хатои Firestore: ${snapshot.error}',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                           ),
                         ),
                       );
                     }
                     if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
+                      return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
                     }
                     final docs = snapshot.data!.docs;
                     if (docs.isEmpty) {
                       return Center(
                         child: Text(
                           'Оғози сӯҳбат дар "${widget.communityName}" кунед',
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                         ),
                       );
                     }
@@ -288,12 +288,12 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                 _replyingTo!.text,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
               ),
             ),
             IconButton(
               onPressed: () => setState(() => _replyingTo = null),
-              icon: const Icon(LucideIcons.x, color: AppColors.textSecondary, size: 18),
+              icon: Icon(LucideIcons.x, color: AppColors.textSecondary, size: 18),
             ),
           ],
         ),
@@ -311,7 +311,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
           children: [
             IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 18),
+              icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 18),
             ),
             Expanded(
               child: InkWell(
@@ -327,7 +327,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                         color: AppColors.surface,
                         border: Border.all(color: AppColors.glassBorder),
                       ),
-                      child: const Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 18),
+                      child: Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 18),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -338,9 +338,9 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                           Text(
                             widget.communityName,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
                           ),
-                          Text('${widget.memberNames.length} аъзо', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                          Text('${widget.memberNames.length} аъзо', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
                         ],
                       ),
                     ),
@@ -368,19 +368,19 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                 children: [
                   IconButton(
                     onPressed: _openEmojiPicker,
-                    icon: const Icon(LucideIcons.face_slightly_smiling, color: AppColors.textSecondary, size: 21),
+                    icon: Icon(LucideIcons.face_slightly_smiling, color: AppColors.textSecondary, size: 21),
                   ),
                   IconButton(
                     onPressed: _openStickerPicker,
-                    icon: const Icon(LucideIcons.sticker, color: AppColors.textSecondary, size: 20),
+                    icon: Icon(LucideIcons.sticker, color: AppColors.textSecondary, size: 20),
                   ),
                   Expanded(
                     child: TextField(
                       controller: _controller,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: AppColors.textPrimary),
                       maxLines: 4,
                       minLines: 1,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Паём',
                         hintStyle: TextStyle(color: AppColors.textSecondary),
                         border: InputBorder.none,
@@ -391,7 +391,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                   ),
                   IconButton(
                     onPressed: _isUploading ? null : _openAttachmentSheet,
-                    icon: const Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
+                    icon: Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
                   ),
                   IconButton(
                     onPressed: _isUploading
@@ -400,7 +400,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                             final file = await MediaService.pickFromCamera();
                             if (file != null) _sendImageMessage(file);
                           },
-                    icon: const Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
+                    icon: Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
                   ),
                 ],
               ),
@@ -412,13 +412,13 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
             child: Container(
               width: 44,
               height: 44,
-              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+              decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
               child: _isUploading
-                  ? const Padding(
+                  ? Padding(
                       padding: EdgeInsets.all(11),
                       child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                     )
-                  : const Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
+                  : Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
             ),
           ),
         ],

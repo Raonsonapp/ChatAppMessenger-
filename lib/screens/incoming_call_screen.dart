@@ -51,16 +51,16 @@ class IncomingCallScreen extends StatelessWidget {
                 Container(
                   width: 120,
                   height: 120,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+                  decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
                   child: Center(
                     child: Text(
                       callerName.isNotEmpty ? callerName[0].toUpperCase() : '?',
-                      style: const TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 48),
+                      style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 48),
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text(callerName, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 22)),
+                Text(callerName, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 22)),
                 const SizedBox(height: 8),
                 Text(
                   isVideo ? 'Занги видеоии воридотӣ...' : 'Занги воридотӣ...',
@@ -110,7 +110,7 @@ class IncomingCallScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+        Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
       ],
     );
   }

@@ -30,13 +30,13 @@ class CommunitiesTab extends StatelessWidget {
               child: Text(
                 'Хатои Firestore (эҳтимол index лозим аст): ${snapshot.error}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
               ),
             ),
           );
         }
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
+          return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
         }
         final docs = sortByTimeDesc(snapshot.data!.docs, 'lastMessageTime');
         if (docs.isEmpty) {
@@ -48,7 +48,7 @@ class CommunitiesTab extends StatelessWidget {
                 children: [
                   Icon(LucideIcons.hash, color: AppColors.textSecondary.withValues(alpha: 0.5), size: 48),
                   const SizedBox(height: 16),
-                  const Text('Ягон ҷамъият нест', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+                  Text('Ягон ҷамъият нест', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 8),
                   Text(
                     'Ҷамъиятҳо якчанд гурӯҳро дар як ҷо ҷамъ мекунанд',
@@ -58,10 +58,10 @@ class CommunitiesTab extends StatelessWidget {
                   const SizedBox(height: 20),
                   OutlinedButton.icon(
                     onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCommunityScreen())),
-                    icon: const Icon(LucideIcons.plus, size: 16, color: AppColors.neonEmerald),
-                    label: const Text('Сохтани ҷамъият', style: TextStyle(color: AppColors.textPrimary)),
+                    icon: Icon(LucideIcons.plus, size: 16, color: AppColors.neonEmerald),
+                    label: Text('Сохтани ҷамъият', style: TextStyle(color: AppColors.textPrimary)),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.glassBorder),
+                      side: BorderSide(color: AppColors.glassBorder),
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),

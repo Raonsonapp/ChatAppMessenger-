@@ -128,9 +128,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                      icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    const Text('Гурӯҳи нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
+                    Text('Гурӯҳи нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
                   ],
                 ),
               ),
@@ -141,8 +141,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   child: TextField(
                     controller: _nameController,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: AppColors.textPrimary),
+                    decoration: InputDecoration(
                       hintText: 'Номи гурӯҳ',
                       hintStyle: TextStyle(color: AppColors.textSecondary),
                       border: InputBorder.none,
@@ -160,9 +160,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     runSpacing: 6,
                     children: _selected.entries.map((e) {
                       return Chip(
-                        label: Text(e.value, style: const TextStyle(color: AppColors.background, fontSize: 12)),
+                        label: Text(e.value, style: TextStyle(color: AppColors.background, fontSize: 12)),
                         backgroundColor: AppColors.neonEmerald,
-                        deleteIcon: const Icon(LucideIcons.x, size: 14, color: AppColors.background),
+                        deleteIcon: Icon(LucideIcons.x, size: 14, color: AppColors.background),
                         onDeleted: () => _toggleSelect(e.key, e.value),
                       );
                     }).toList(),
@@ -176,15 +176,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: TextField(
                     controller: _searchController,
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    style: TextStyle(color: AppColors.textPrimary),
                     onSubmitted: _search,
                     decoration: InputDecoration(
                       hintText: 'Ҷустуҷӯи корбар барои илова...',
-                      hintStyle: const TextStyle(color: AppColors.textSecondary),
+                      hintStyle: TextStyle(color: AppColors.textSecondary),
                       border: InputBorder.none,
-                      prefixIcon: const Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
+                      prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
                       suffixIcon: IconButton(
-                        icon: const Icon(LucideIcons.arrow_right, color: AppColors.neonEmerald, size: 19),
+                        icon: Icon(LucideIcons.arrow_right, color: AppColors.neonEmerald, size: 19),
                         onPressed: () => _search(_searchController.text),
                       ),
                     ),
@@ -198,7 +198,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 ),
               Expanded(
                 child: _isSearching
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald))
+                    ? Center(child: CircularProgressIndicator(color: AppColors.neonEmerald))
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
                         itemCount: _results.length,
@@ -219,12 +219,12 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                               child: Center(
                                 child: Text(
                                   name.isNotEmpty ? name[0].toUpperCase() : '?',
-                                  style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
+                                  style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
                                 ),
                               ),
                             ),
-                            title: Text(name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                            subtitle: Text(user['phone'] ?? '', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                            title: Text(name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                            subtitle: Text(user['phone'] ?? '', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                             trailing: Icon(
                               isSelected ? LucideIcons.circle_check : LucideIcons.circle,
                               color: isSelected ? AppColors.neonEmerald : AppColors.textSecondary,
@@ -248,7 +248,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     ),
                     onPressed: _isCreating ? null : _createGroup,
                     child: _isCreating
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
+                        ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
                         : const Text('Сохтани гурӯҳ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ),

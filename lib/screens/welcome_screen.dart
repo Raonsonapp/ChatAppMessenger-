@@ -21,7 +21,7 @@ class WelcomeScreen extends StatelessWidget {
               children: [
                 const AppLogo(size: 96),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Хуш омадед ба ChatApp',
                   textAlign: TextAlign.center,
                   style: TextStyle(

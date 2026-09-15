@@ -80,9 +80,9 @@ class _HelpScreenState extends State<HelpScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                      icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    const Text(
+                    Text(
                       'Кӯмак',
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
@@ -118,12 +118,12 @@ class _HelpScreenState extends State<HelpScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(LucideIcons.life_buoy, color: AppColors.neonCyan, size: 18),
+                                    Icon(LucideIcons.life_buoy, color: AppColors.neonCyan, size: 18),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
                                         faq.question,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: AppColors.textPrimary,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14,

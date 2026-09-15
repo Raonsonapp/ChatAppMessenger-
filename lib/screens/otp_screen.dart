@@ -135,10 +135,10 @@ class _OtpScreenState extends State<OtpScreen> {
               children: [
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                  icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Рамзи тасдиқро ворид кунед',
                   style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                 ),
@@ -156,13 +156,13 @@ class _OtpScreenState extends State<OtpScreen> {
                     keyboardType: TextInputType.number,
                     maxLength: 6,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 8,
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       counterText: '',
                       hintText: '______',
                       hintStyle: TextStyle(color: AppColors.textSecondary, letterSpacing: 8),
@@ -186,7 +186,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     ),
                     onPressed: _isVerifying ? null : _verifyCode,
                     child: _isVerifying
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
@@ -197,7 +197,7 @@ class _OtpScreenState extends State<OtpScreen> {
                 const SizedBox(height: 16),
                 Center(
                   child: _isResending
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.neonEmerald),

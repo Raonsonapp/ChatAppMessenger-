@@ -33,14 +33,14 @@ class DiscoverChannelsScreen extends StatelessWidget {
                       children: [
                         IconButton(
                           onPressed: () => Navigator.pop(context),
-                          icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                          icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                         ),
-                        const Text('Кашфи каналҳо', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18)),
+                        Text('Кашфи каналҳо', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18)),
                       ],
                     ),
                     IconButton(
                       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateChannelScreen())),
-                      icon: const Icon(LucideIcons.plus, color: AppColors.neonEmerald, size: 22),
+                      icon: Icon(LucideIcons.plus, color: AppColors.neonEmerald, size: 22),
                     ),
                   ],
                 ),
@@ -51,11 +51,11 @@ class DiscoverChannelsScreen extends StatelessWidget {
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return Center(
-                        child: Text('Хатои Firestore: ${snapshot.error}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                        child: Text('Хатои Firestore: ${snapshot.error}', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                       );
                     }
                     if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
+                      return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
                     }
                     final channels = snapshot.data!.docs.map(AppChannel.fromDoc).toList();
                     if (channels.isEmpty) {
@@ -82,10 +82,10 @@ class DiscoverChannelsScreen extends StatelessWidget {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.surface, border: Border.all(color: AppColors.glassBorder)),
-                            child: const Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 20),
+                            child: Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 20),
                           ),
-                          title: Text(channel.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
-                          subtitle: Text('${channel.followers.length} обунашуда', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                          title: Text(channel.name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
+                          subtitle: Text('${channel.followers.length} обунашуда', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                           trailing: OutlinedButton(
                             onPressed: () => FirebaseFirestore.instance.collection('channels').doc(channel.id).update({
                               'followers': isFollowing ? FieldValue.arrayRemove([currentUid]) : FieldValue.arrayUnion([currentUid]),

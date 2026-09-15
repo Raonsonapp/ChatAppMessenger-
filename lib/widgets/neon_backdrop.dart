@@ -13,7 +13,7 @@ class NeonBackdrop extends StatelessWidget {
       children: [
         Positioned.fill(
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [AppColors.background, AppColors.backgroundSecondary],
                 begin: Alignment.topCenter,

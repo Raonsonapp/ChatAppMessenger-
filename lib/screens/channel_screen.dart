@@ -116,7 +116,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
             stream: _channelRef.snapshots(),
             builder: (context, channelSnap) {
               if (!channelSnap.hasData || !channelSnap.data!.exists) {
-                return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
+                return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
               }
               final data = channelSnap.data!.data()!;
               final name = (data['name'] ?? 'Канал') as String;
@@ -133,7 +133,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
                       stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
-                          return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
+                          return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
                         }
                         final docs = snapshot.data!.docs;
                         if (docs.isEmpty) {
@@ -141,7 +141,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
                             child: Text(
                               isOwner ? 'Аввалин паёмро дар канали худ нашр кунед' : 'Ин канал ҳанӯз паём нашр накардааст',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                             ),
                           );
                         }
@@ -178,13 +178,13 @@ class _ChannelScreenState extends State<ChannelScreen> {
           children: [
             IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 18),
+              icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 18),
             ),
             Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.surface, border: Border.all(color: AppColors.glassBorder)),
-              child: const Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 18),
+              child: Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 18),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -192,8 +192,8 @@ class _ChannelScreenState extends State<ChannelScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(name, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
-                  Text('$followerCount обунашуда', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                  Text(name, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
+                  Text('$followerCount обунашуда', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
                 ],
               ),
             ),
@@ -239,10 +239,10 @@ class _ChannelScreenState extends State<ChannelScreen> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: AppColors.textPrimary),
                       maxLines: 4,
                       minLines: 1,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Паёми нашрӣ',
                         hintStyle: TextStyle(color: AppColors.textSecondary),
                         border: InputBorder.none,
@@ -252,7 +252,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
                   ),
                   IconButton(
                     onPressed: _isUploading ? null : _openAttachmentSheet,
-                    icon: const Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
+                    icon: Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
                   ),
                 ],
               ),
@@ -264,10 +264,10 @@ class _ChannelScreenState extends State<ChannelScreen> {
             child: Container(
               width: 44,
               height: 44,
-              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+              decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
               child: _isUploading
-                  ? const Padding(padding: EdgeInsets.all(11), child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
-                  : const Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
+                  ? Padding(padding: EdgeInsets.all(11), child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
+                  : Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
             ),
           ),
         ],

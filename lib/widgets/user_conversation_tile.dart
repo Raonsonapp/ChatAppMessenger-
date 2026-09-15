@@ -39,7 +39,7 @@ class UserConversationTile extends StatelessWidget {
         ),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: AppColors.glassBorder, width: 0.6)),
           ),
           child: Row(
@@ -55,7 +55,7 @@ class UserConversationTile extends StatelessWidget {
                 child: Center(
                   child: Text(
                     name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 18),
+                    style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 18),
                   ),
                 ),
               ),
@@ -70,7 +70,7 @@ class UserConversationTile extends StatelessWidget {
                           child: Text(
                             name,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15.5),
+                            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15.5),
                           ),
                         ),
                         Text(
@@ -84,7 +84,7 @@ class UserConversationTile extends StatelessWidget {
                       conversation.lastMessage.isEmpty ? 'Оғози сӯҳбат кунед' : conversation.lastMessage,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
                     ),
                   ],
                 ),

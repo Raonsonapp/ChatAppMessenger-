@@ -93,7 +93,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       body: NeonBackdrop(
         child: SafeArea(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald))
+              ? Center(child: CircularProgressIndicator(color: AppColors.neonEmerald))
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -103,10 +103,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         children: [
                           IconButton(
                             onPressed: () => Navigator.pop(context),
-                            icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                            icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                           ),
                           const SizedBox(width: 4),
-                          const Text(
+                          Text(
                             'Профили ман',
                             style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                           ),
@@ -117,13 +117,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: Container(
                           width: 84,
                           height: 84,
-                          decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                          child: const Icon(LucideIcons.user, color: AppColors.background, size: 38),
+                          decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+                          child: Icon(LucideIcons.user, color: AppColors.background, size: 38),
                         ),
                       ),
                       const SizedBox(height: 8),
                       Center(
-                        child: Text(phone, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                        child: Text(phone, style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
                       ),
                       const SizedBox(height: 26),
                       _buildField('Ном', _nameController, hint: 'Масалан: Шаҳром'),
@@ -137,7 +137,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ],
                       if (_savedMessage != null) ...[
                         const SizedBox(height: 10),
-                        Text(_savedMessage!, style: const TextStyle(color: AppColors.neonEmerald, fontSize: 12.5)),
+                        Text(_savedMessage!, style: TextStyle(color: AppColors.neonEmerald, fontSize: 12.5)),
                       ],
                       const SizedBox(height: 24),
                       SizedBox(
@@ -151,7 +151,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           onPressed: _isSaving ? null : _save,
                           child: _isSaving
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
@@ -171,17 +171,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
         GlassContainer(
           borderRadius: 14,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           child: TextField(
             controller: controller,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 15),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: AppColors.textSecondary),
+              hintStyle: TextStyle(color: AppColors.textSecondary),
               border: InputBorder.none,
             ),
           ),

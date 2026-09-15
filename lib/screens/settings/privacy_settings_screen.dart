@@ -68,9 +68,9 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                      icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    const Text(
+                    Text(
                       'Махфият',
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
@@ -79,7 +79,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
               ),
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald))
+                    ? Center(child: CircularProgressIndicator(color: AppColors.neonEmerald))
                     : ListView(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                         children: [
@@ -97,7 +97,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                                     _update('lastSeenVisible', v);
                                   },
                                 ),
-                                const Divider(color: AppColors.glassBorder, height: 1),
+                                Divider(color: AppColors.glassBorder, height: 1),
                                 _switchRow(
                                   'Ҳолати онлайн',
                                   'Дигарон мебинанд, ки шумо ҳозир онлайн ҳастед',
@@ -107,7 +107,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                                     _update('onlineVisible', v);
                                   },
                                 ),
-                                const Divider(color: AppColors.glassBorder, height: 1),
+                                Divider(color: AppColors.glassBorder, height: 1),
                                 _switchRow(
                                   'Тасдиқи хониш (✓✓)',
                                   'Ҳамсӯҳбат мефаҳмад, ки паёмашро хондед',
@@ -140,7 +140,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+                Text(title, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
                 const SizedBox(height: 2),
                 Text(subtitle, style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 11.5)),
               ],

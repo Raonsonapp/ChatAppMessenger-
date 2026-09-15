@@ -234,13 +234,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                           child: Text(
                             'Хатои Firestore: ${snapshot.error}',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.textSecondary),
+                            style: TextStyle(color: AppColors.textSecondary),
                           ),
                         ),
                       );
                     }
                     if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
+                      return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
                     }
                     final docs = snapshot.data!.docs;
 
@@ -294,12 +294,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 _replyingTo!.text,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
               ),
             ),
             IconButton(
               onPressed: () => setState(() => _replyingTo = null),
-              icon: const Icon(LucideIcons.x, color: AppColors.textSecondary, size: 17),
+              icon: Icon(LucideIcons.x, color: AppColors.textSecondary, size: 17),
             ),
           ],
         ),
@@ -317,11 +317,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             Container(
               width: 64,
               height: 64,
-              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-              child: const Icon(LucideIcons.zap, color: AppColors.background, size: 28),
+              decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+              child: Icon(LucideIcons.zap, color: AppColors.background, size: 28),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Аз ChatAI бипурсед',
               style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16),
             ),
@@ -370,7 +370,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             children: [
               Icon(icon, color: AppColors.neonCyan, size: 20),
               const SizedBox(height: 4),
-              Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 11.5, fontWeight: FontWeight.w600)),
+              Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 11.5, fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -389,7 +389,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           children: [
             IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+              icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
             ),
             Container(
               width: 40,
@@ -415,22 +415,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   Text(
                     convo.name,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                    style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
                   ),
                   Text(
                     convo.isAIChat ? 'Ҳамеша дастрас' : 'Firestore · вақти воқеӣ',
-                    style: const TextStyle(color: AppColors.neonEmerald, fontSize: 11),
+                    style: TextStyle(color: AppColors.neonEmerald, fontSize: 11),
                   ),
                 ],
               ),
             ),
             IconButton(
               onPressed: () => showComingSoonSnack(context, 'Занги видео'),
-              icon: const Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
+              icon: Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
             ),
             IconButton(
               onPressed: () => showComingSoonSnack(context, 'Занг'),
-              icon: const Icon(LucideIcons.phone, color: AppColors.textSecondary, size: 18),
+              icon: Icon(LucideIcons.phone, color: AppColors.textSecondary, size: 18),
             ),
           ],
         ),
@@ -453,19 +453,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 children: [
                   IconButton(
                     onPressed: _openEmojiPicker,
-                    icon: const Icon(LucideIcons.face_slightly_smiling, color: AppColors.textSecondary, size: 21),
+                    icon: Icon(LucideIcons.face_slightly_smiling, color: AppColors.textSecondary, size: 21),
                   ),
                   IconButton(
                     onPressed: _openStickerPicker,
-                    icon: const Icon(LucideIcons.sticker, color: AppColors.textSecondary, size: 20),
+                    icon: Icon(LucideIcons.sticker, color: AppColors.textSecondary, size: 20),
                   ),
                   Expanded(
                     child: TextField(
                       controller: _controller,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: AppColors.textPrimary),
                       maxLines: 4,
                       minLines: 1,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Паём',
                         hintStyle: TextStyle(color: AppColors.textSecondary),
                         border: InputBorder.none,
@@ -476,7 +476,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   ),
                   IconButton(
                     onPressed: _isUploading ? null : _openAttachmentSheet,
-                    icon: const Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
+                    icon: Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
                   ),
                   IconButton(
                     onPressed: _isUploading
@@ -485,7 +485,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                             final file = await MediaService.pickFromCamera();
                             if (file != null) _sendImageMessage(file);
                           },
-                    icon: const Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
+                    icon: Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
                   ),
                 ],
               ),
@@ -497,13 +497,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             child: Container(
               width: 44,
               height: 44,
-              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+              decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
               child: _isUploading
-                  ? const Padding(
+                  ? Padding(
                       padding: EdgeInsets.all(11),
                       child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                     )
-                  : const Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
+                  : Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
             ),
           ),
         ],

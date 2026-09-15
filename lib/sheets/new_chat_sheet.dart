@@ -133,7 +133,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
                 decoration: BoxDecoration(color: AppColors.glassBorder, borderRadius: BorderRadius.circular(4)),
               ),
             ),
-            const Text('Контакти нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+            Text('Контакти нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 12),
             // Гурӯҳи нав — ҷои доимӣ дар боло, мисли WhatsApp
             ListTile(
@@ -141,10 +141,10 @@ class _NewChatSheetState extends State<NewChatSheet> {
               leading: Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                child: const Icon(LucideIcons.users, color: AppColors.background, size: 20),
+                decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+                child: Icon(LucideIcons.users, color: AppColors.background, size: 20),
               ),
-              title: const Text('Гурӯҳи нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+              title: Text('Гурӯҳи нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
               onTap: _openCreateGroup,
             ),
             ListTile(
@@ -153,12 +153,12 @@ class _NewChatSheetState extends State<NewChatSheet> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.surface, border: Border.all(color: AppColors.glassBorder)),
-                child: const Icon(LucideIcons.smartphone, color: AppColors.neonCyan, size: 19),
+                child: Icon(LucideIcons.smartphone, color: AppColors.neonCyan, size: 19),
               ),
-              title: const Text('Контактҳои телефон', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+              title: Text('Контактҳои телефон', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
               onTap: _openDeviceContacts,
             ),
-            const Divider(color: AppColors.glassBorder, height: 4),
+            Divider(color: AppColors.glassBorder, height: 4),
             const SizedBox(height: 10),
             Container(
               decoration: BoxDecoration(
@@ -169,15 +169,15 @@ class _NewChatSheetState extends State<NewChatSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: TextField(
                 controller: _searchController,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 onSubmitted: _search,
                 decoration: InputDecoration(
                   hintText: '+992...',
-                  hintStyle: const TextStyle(color: AppColors.textSecondary),
+                  hintStyle: TextStyle(color: AppColors.textSecondary),
                   border: InputBorder.none,
-                  prefixIcon: const Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
+                  prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
                   suffixIcon: IconButton(
-                    icon: const Icon(LucideIcons.arrow_right, color: AppColors.neonEmerald, size: 19),
+                    icon: Icon(LucideIcons.arrow_right, color: AppColors.neonEmerald, size: 19),
                     onPressed: () => _search(_searchController.text),
                   ),
                 ),
@@ -185,7 +185,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
             ),
             const SizedBox(height: 10),
             if (_isSearching)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Center(child: CircularProgressIndicator(color: AppColors.neonEmerald)),
               )
@@ -219,12 +219,12 @@ class _NewChatSheetState extends State<NewChatSheet> {
                         child: Center(
                           child: Text(
                             name.isNotEmpty ? name[0].toUpperCase() : '?',
-                            style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
+                            style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
                           ),
                         ),
                       ),
-                      title: Text(name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                      subtitle: Text(user['phone'] as String, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                      title: Text(name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                      subtitle: Text(user['phone'] as String, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                       onTap: () => _openChatWith(user['uid'] as String, name),
                     );
                   },

@@ -60,8 +60,8 @@ class StatusTab extends StatelessWidget {
                         ),
                         padding: const EdgeInsets.all(2),
                         child: Container(
-                          decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.background),
-                          child: const Icon(LucideIcons.user, color: AppColors.textSecondary, size: 24),
+                          decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.background),
+                          child: Icon(LucideIcons.user, color: AppColors.textSecondary, size: 24),
                         ),
                       ),
                       Positioned(
@@ -70,8 +70,8 @@ class StatusTab extends StatelessWidget {
                         child: Container(
                           width: 20,
                           height: 20,
-                          decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                          child: const Icon(LucideIcons.plus, color: AppColors.background, size: 13),
+                          decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+                          child: Icon(LucideIcons.plus, color: AppColors.background, size: 13),
                         ),
                       ),
                     ],
@@ -81,7 +81,7 @@ class StatusTab extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Тарихи ман', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
+                        Text('Тарихи ман', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
                         Text(
                           hasStatus ? '${myItems.length} навсозӣ · барои дидан зер кунед' : 'Барои иловаи навсозӣ зер кунед',
                           style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
@@ -111,11 +111,11 @@ class StatusTab extends StatelessWidget {
             if (snapshot.hasError) {
               return Text(
                 'Хатои боркунӣ: ${snapshot.error}',
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
               );
             }
             if (!snapshot.hasData) {
-              return const Padding(
+              return Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Center(child: CircularProgressIndicator(color: AppColors.neonEmerald)),
               );
@@ -142,7 +142,7 @@ class StatusTab extends StatelessWidget {
             ),
             GestureDetector(
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DiscoverChannelsScreen())),
-              child: const Text('Кашф кардан', style: TextStyle(color: AppColors.neonEmerald, fontSize: 12.5, fontWeight: FontWeight.w700)),
+              child: Text('Кашф кардан', style: TextStyle(color: AppColors.neonEmerald, fontSize: 12.5, fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -173,19 +173,19 @@ class StatusTab extends StatelessWidget {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.surface, border: Border.all(color: AppColors.glassBorder)),
-                            child: const Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 20),
+                            child: Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 20),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(channel.name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
+                                Text(channel.name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
                                 Text(
                                   channel.lastMessage.isEmpty ? '${channel.followers.length} обунашуда' : channel.lastMessage,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
                                 ),
                               ],
                             ),
@@ -245,11 +245,11 @@ class _OtherStatusRow extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.all(2),
                     child: Container(
-                      decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.background),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.background),
                       child: Center(
                         child: Text(
                           ownerName.isNotEmpty ? ownerName[0].toUpperCase() : '?',
-                          style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 17),
+                          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 17),
                         ),
                       ),
                     ),
@@ -259,7 +259,7 @@ class _OtherStatusRow extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(ownerName, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
+                        Text(ownerName, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15)),
                         Text(
                           '${items.length} навсозӣ',
                           style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),

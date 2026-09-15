@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_controller.dart';
 import 'screens/auth_gate.dart';
 import 'services/notification_service.dart';
 
@@ -12,6 +13,8 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await NotificationService.initialize();
+  // Пеш аз аввалин кашидан, то мавзӯъ назди чашм наҷаҳад.
+  await themeController.load();
   runApp(const ChatApp());
 }
 
@@ -20,11 +23,16 @@ class ChatApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      home: const AuthGate(),
+    return AnimatedBuilder(
+      animation: themeController,
+      builder: (context, _) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          theme: themeController.isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
+          home: const AuthGate(),
+        );
+      },
     );
   }
 }

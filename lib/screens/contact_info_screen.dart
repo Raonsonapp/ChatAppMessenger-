@@ -72,9 +72,9 @@ class ContactInfoScreen extends StatelessWidget {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                      icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    const Text(
+                    Text(
                       'Маълумоти контакт',
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
                     ),
@@ -109,7 +109,7 @@ class ContactInfoScreen extends StatelessWidget {
                                 child: Center(
                                   child: Text(
                                     otherUserName.isNotEmpty ? otherUserName[0].toUpperCase() : '?',
-                                    style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 32),
+                                    style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 32),
                                   ),
                                 ),
                               ),
@@ -118,7 +118,7 @@ class ContactInfoScreen extends StatelessWidget {
                             Center(
                               child: Text(
                                 otherUserName,
-                                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
+                                style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
                               ),
                             ),
                             const SizedBox(height: 18),
@@ -160,21 +160,21 @@ class ContactInfoScreen extends StatelessWidget {
                                     value: isMuted,
                                     onChanged: (_) => _toggleMute(isMuted),
                                     activeThumbColor: AppColors.neonEmerald,
-                                    title: const Text(
+                                    title: Text(
                                       'Хомӯш кардани огоҳиномаҳо',
                                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
                                     ),
                                   ),
-                                  const Divider(color: AppColors.glassBorder, height: 1),
+                                  Divider(color: AppColors.glassBorder, height: 1),
                                   ListTile(
-                                    leading: const Icon(LucideIcons.trash, color: AppColors.neonCyan, size: 20),
-                                    title: const Text(
+                                    leading: Icon(LucideIcons.trash, color: AppColors.neonCyan, size: 20),
+                                    title: Text(
                                       'Тоза кардани чат',
                                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
                                     ),
                                     onTap: () => _clearChat(context),
                                   ),
-                                  const Divider(color: AppColors.glassBorder, height: 1),
+                                  Divider(color: AppColors.glassBorder, height: 1),
                                   ListTile(
                                     leading: Icon(LucideIcons.slash, color: isBlocked ? AppColors.neonEmerald : Colors.redAccent, size: 20),
                                     title: Text(
@@ -226,7 +226,7 @@ class ContactInfoScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5)),
+        Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5)),
       ],
     );
   }

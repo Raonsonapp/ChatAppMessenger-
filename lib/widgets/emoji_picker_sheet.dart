@@ -45,10 +45,10 @@ class EmojiPickerSheet extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Эмоҷиҳо', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+                Text('Эмоҷиҳо', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(LucideIcons.check, color: AppColors.neonEmerald, size: 20),
+                  icon: Icon(LucideIcons.check, color: AppColors.neonEmerald, size: 20),
                 ),
               ],
             ),

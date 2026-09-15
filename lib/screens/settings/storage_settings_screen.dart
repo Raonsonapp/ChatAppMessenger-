@@ -84,9 +84,9 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                      icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    const Text(
+                    Text(
                       'Захира ва маълумот',
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
@@ -113,16 +113,16 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                       borderRadius: 18,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       child: _loading
-                          ? const Padding(
+                          ? Padding(
                               padding: EdgeInsets.symmetric(vertical: 24),
                               child: Center(child: CircularProgressIndicator(color: AppColors.neonEmerald)),
                             )
                           : Column(
                               children: [
                                 _statRow(LucideIcons.message_circle, 'Чатҳои шахсӣ', _chats),
-                                const Divider(color: AppColors.glassBorder, height: 1),
+                                Divider(color: AppColors.glassBorder, height: 1),
                                 _statRow(LucideIcons.users, 'Гурӯҳҳо', _groups),
-                                const Divider(color: AppColors.glassBorder, height: 1),
+                                Divider(color: AppColors.glassBorder, height: 1),
                                 _statRow(LucideIcons.hash, 'Ҷамъиятҳо', _communities),
                               ],
                             ),
@@ -150,7 +150,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                             'Расмҳо дар хотира',
                             '${cache.currentSize} дона · ${_formatBytes(cache.currentSizeBytes)}',
                           ),
-                          const Divider(color: AppColors.glassBorder, height: 1),
+                          Divider(color: AppColors.glassBorder, height: 1),
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
@@ -205,7 +205,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
           Icon(icon, color: AppColors.neonCyan, size: 18),
           const SizedBox(width: 14),
           Expanded(
-            child: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+            child: Text(label, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
           ),
           Text(value, style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.9), fontSize: 13)),
         ],

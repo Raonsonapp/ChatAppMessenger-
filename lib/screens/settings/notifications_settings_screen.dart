@@ -67,9 +67,9 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                      icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    const Text(
+                    Text(
                       'Огоҳиномаҳо',
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
@@ -78,7 +78,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
               ),
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald))
+                    ? Center(child: CircularProgressIndicator(color: AppColors.neonEmerald))
                     : ListView(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                         children: [
@@ -91,17 +91,17 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                   setState(() => _messageNotifications = v);
                                   _update('messageNotifications', v);
                                 }),
-                                const Divider(color: AppColors.glassBorder, height: 1),
+                                Divider(color: AppColors.glassBorder, height: 1),
                                 _switchRow('Садо', _sound, (v) {
                                   setState(() => _sound = v);
                                   _update('notificationSound', v);
                                 }),
-                                const Divider(color: AppColors.glassBorder, height: 1),
+                                Divider(color: AppColors.glassBorder, height: 1),
                                 _switchRow('Ларзиш', _vibration, (v) {
                                   setState(() => _vibration = v);
                                   _update('notificationVibration', v);
                                 }),
-                                const Divider(color: AppColors.glassBorder, height: 1),
+                                Divider(color: AppColors.glassBorder, height: 1),
                                 _switchRow('Намоиши мазмуни паём', _showPreview, (v) {
                                   setState(() => _showPreview = v);
                                   _update('notificationPreview', v);
@@ -125,7 +125,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
       child: Row(
         children: [
           Expanded(
-            child: Text(title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+            child: Text(title, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
           ),
           Switch(value: value, onChanged: onChanged, activeThumbColor: AppColors.neonEmerald),
         ],

@@ -79,7 +79,7 @@ class GroupInfoScreen extends StatelessWidget {
                 ),
                 title: Text(
                   isAdmin ? 'Хориҷ аз admin' : 'Таъин ба admin',
-                  style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -113,7 +113,7 @@ class GroupInfoScreen extends StatelessWidget {
             stream: _groupRef.snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData || !snapshot.data!.exists) {
-                return const Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
+                return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
               }
               final data = snapshot.data!.data()!;
               final name = (data['name'] ?? 'Гурӯҳ') as String;
@@ -131,9 +131,9 @@ class GroupInfoScreen extends StatelessWidget {
                       children: [
                         IconButton(
                           onPressed: () => Navigator.pop(context),
-                          icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                          icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                         ),
-                        const Text(
+                        Text(
                           'Маълумоти гурӯҳ',
                           style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
                         ),
@@ -148,32 +148,32 @@ class GroupInfoScreen extends StatelessWidget {
                           child: Container(
                             width: 84,
                             height: 84,
-                            decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                            child: const Icon(LucideIcons.users, color: AppColors.background, size: 36),
+                            decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+                            child: Icon(LucideIcons.users, color: AppColors.background, size: 36),
                           ),
                         ),
                         const SizedBox(height: 12),
                         Center(
                           child: Text(
                             name,
-                            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
+                            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
                           ),
                         ),
                         Center(
-                          child: Text('${members.length} аъзо', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                          child: Text('${members.length} аъзо', style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
                         ),
                         const SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
+                            Text(
                               'АЪЗОЁН',
                               style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5, letterSpacing: 1.2, fontWeight: FontWeight.w600),
                             ),
                             if (amIAdmin)
                               GestureDetector(
                                 onTap: () => _addMember(context),
-                                child: const Icon(LucideIcons.user_plus, color: AppColors.neonEmerald, size: 19),
+                                child: Icon(LucideIcons.user_plus, color: AppColors.neonEmerald, size: 19),
                               ),
                           ],
                         ),
@@ -197,13 +197,13 @@ class GroupInfoScreen extends StatelessWidget {
                                   child: Center(
                                     child: Text(
                                       memberName.isNotEmpty ? memberName[0].toUpperCase() : '?',
-                                      style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
+                                      style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
                                     ),
                                   ),
                                 ),
                                 title: Text(
                                   uid == currentUid ? '$memberName (Шумо)' : memberName,
-                                  style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
+                                  style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
                                 ),
                                 trailing: isAdmin
                                     ? Container(
@@ -301,7 +301,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Илова кардани аъзо', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+            Text('Илова кардани аъзо', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
@@ -312,15 +312,15 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: TextField(
                 controller: _controller,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 onSubmitted: _search,
                 decoration: InputDecoration(
                   hintText: '+992...',
-                  hintStyle: const TextStyle(color: AppColors.textSecondary),
+                  hintStyle: TextStyle(color: AppColors.textSecondary),
                   border: InputBorder.none,
-                  prefixIcon: const Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
+                  prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
                   suffixIcon: IconButton(
-                    icon: const Icon(LucideIcons.arrow_right, color: AppColors.neonEmerald, size: 19),
+                    icon: Icon(LucideIcons.arrow_right, color: AppColors.neonEmerald, size: 19),
                     onPressed: () => _search(_controller.text),
                   ),
                 ),
@@ -328,7 +328,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
             ),
             const SizedBox(height: 10),
             if (_isSearching)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Center(child: CircularProgressIndicator(color: AppColors.neonEmerald)),
               )
@@ -354,11 +354,11 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
                         child: Center(
                           child: Text(
                             name.isNotEmpty ? name[0].toUpperCase() : '?',
-                            style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
+                            style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
                           ),
                         ),
                       ),
-                      title: Text(name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                      title: Text(name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                       onTap: () async {
                         Navigator.pop(context);
                         await widget.onSelected(user['uid']!, name);

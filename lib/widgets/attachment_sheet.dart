@@ -133,7 +133,7 @@ class AttachmentSheet extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 11.5)),
+        Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 11.5)),
       ],
     );
   }

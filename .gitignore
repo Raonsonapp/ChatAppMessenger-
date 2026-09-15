@@ -39,3 +39,9 @@ functions/.env
 functions/lib/
 firebase-debug.log
 .firebase/
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages

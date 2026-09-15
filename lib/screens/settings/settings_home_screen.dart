@@ -7,6 +7,7 @@ import '../../widgets/neon_backdrop.dart';
 import '../../utils/snackbar_utils.dart';
 import 'privacy_settings_screen.dart';
 import 'notifications_settings_screen.dart';
+import 'appearance_settings_screen.dart';
 import 'storage_settings_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
@@ -29,9 +30,9 @@ class SettingsHomeScreen extends StatelessWidget {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                      icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    const Text(
+                    Text(
                       'Танзимот',
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
@@ -68,7 +69,10 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.eye,
                         label: 'Намуди зоҳирӣ',
-                        onTap: () => showComingSoonSnack(context, 'Намуди зоҳирӣ'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const AppearanceSettingsScreen()),
+                        ),
                       ),
                       _row(
                         context,
@@ -147,7 +151,7 @@ class SettingsHomeScreen extends StatelessWidget {
                   Icon(icon, color: AppColors.neonCyan, size: 19),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text(label, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14.5)),
+                    child: Text(label, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14.5)),
                   ),
                   Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 17),
                 ],
@@ -155,7 +159,7 @@ class SettingsHomeScreen extends StatelessWidget {
             ),
           ),
         ),
-        if (showDivider) const Divider(color: AppColors.glassBorder, height: 1),
+        if (showDivider) Divider(color: AppColors.glassBorder, height: 1),
       ],
     );
   }

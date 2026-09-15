@@ -74,10 +74,10 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
               children: [
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                  icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Рақами телефони худро ворид кунед',
                   style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                 ),
@@ -92,7 +92,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   child: Row(
                     children: [
-                      const Text(
+                      Text(
                         '+',
                         style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
                       ),
@@ -101,7 +101,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                         child: TextField(
                           controller: _codeController,
                           keyboardType: TextInputType.number,
-                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
                           decoration: const InputDecoration(border: InputBorder.none),
                         ),
                       ),
@@ -115,8 +115,8 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                         child: TextField(
                           controller: _numberController,
                           keyboardType: TextInputType.phone,
-                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
-                          decoration: const InputDecoration(
+                          style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                          decoration: InputDecoration(
                             hintText: '90 123 45 67',
                             hintStyle: TextStyle(color: AppColors.textSecondary),
                             border: InputBorder.none,
@@ -142,7 +142,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                     ),
                     onPressed: _isOpeningBot ? null : _openBotAndContinue,
                     icon: _isOpeningBot
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),

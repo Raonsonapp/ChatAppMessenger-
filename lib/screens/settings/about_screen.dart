@@ -27,9 +27,9 @@ class AboutScreen extends StatelessWidget {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                      icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    const Text(
+                    Text(
                       'Дар бораи ChatApp',
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                     ),
@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     const Center(child: AppLogo(size: 72)),
                     const SizedBox(height: 14),
-                    const Center(
+                    Center(
                       child: Text(
                         'ChatApp',
                         style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 22),
@@ -63,13 +63,13 @@ class AboutScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Паёмрасони ройгон бо чатҳои шахсӣ, гурӯҳҳо, ҷамъиятҳо, каналҳо, '
                             'статусҳо ва зангҳои садоӣ/видеоӣ.',
                             style: TextStyle(color: AppColors.textPrimary, fontSize: 13.5, height: 1.5),
                           ),
                           const SizedBox(height: 16),
-                          const Divider(color: AppColors.glassBorder, height: 1),
+                          Divider(color: AppColors.glassBorder, height: 1),
                           const SizedBox(height: 16),
                           _infoRow(LucideIcons.shield_check, 'Вуруд', 'Тасдиқи рақам тавассути боти Telegram'),
                           const SizedBox(height: 12),
@@ -101,7 +101,7 @@ class AboutScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
+              Text(label, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 2),
               Text(value, style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.85), fontSize: 12.5)),
             ],

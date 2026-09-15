@@ -36,7 +36,7 @@ class CommunityTile extends StatelessWidget {
         ),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: AppColors.glassBorder, width: 0.6)),
           ),
           child: Row(
@@ -49,7 +49,7 @@ class CommunityTile extends StatelessWidget {
                   color: AppColors.surface,
                   border: Border.all(color: AppColors.glassBorder),
                 ),
-                child: const Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 22),
+                child: Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -62,7 +62,7 @@ class CommunityTile extends StatelessWidget {
                           child: Text(
                             community.name,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15.5),
+                            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15.5),
                           ),
                         ),
                         Text(
@@ -76,7 +76,7 @@ class CommunityTile extends StatelessWidget {
                       community.lastMessage.isEmpty ? '${community.members.length} аъзо' : community.lastMessage,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
                     ),
                   ],
                 ),

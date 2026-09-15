@@ -83,7 +83,7 @@ class _NewCallSheetState extends State<NewCallSheet> {
                 decoration: BoxDecoration(color: AppColors.glassBorder, borderRadius: BorderRadius.circular(4)),
               ),
             ),
-            const Text('Занги нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+            Text('Занги нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
@@ -94,15 +94,15 @@ class _NewCallSheetState extends State<NewCallSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: TextField(
                 controller: _controller,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 onSubmitted: _search,
                 decoration: InputDecoration(
                   hintText: '+992...',
-                  hintStyle: const TextStyle(color: AppColors.textSecondary),
+                  hintStyle: TextStyle(color: AppColors.textSecondary),
                   border: InputBorder.none,
-                  prefixIcon: const Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
+                  prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
                   suffixIcon: IconButton(
-                    icon: const Icon(LucideIcons.arrow_right, color: AppColors.neonEmerald, size: 19),
+                    icon: Icon(LucideIcons.arrow_right, color: AppColors.neonEmerald, size: 19),
                     onPressed: () => _search(_controller.text),
                   ),
                 ),
@@ -110,7 +110,7 @@ class _NewCallSheetState extends State<NewCallSheet> {
             ),
             const SizedBox(height: 10),
             if (_isSearching)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Center(child: CircularProgressIndicator(color: AppColors.neonEmerald)),
               )
@@ -145,22 +145,22 @@ class _NewCallSheetState extends State<NewCallSheet> {
                         child: Center(
                           child: Text(
                             name.isNotEmpty ? name[0].toUpperCase() : '?',
-                            style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
+                            style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
                           ),
                         ),
                       ),
-                      title: Text(name, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                      subtitle: Text(user['phone'] ?? '', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                      title: Text(name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                      subtitle: Text(user['phone'] ?? '', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
                             onPressed: () => _startCall(uid, name, CallType.audio),
-                            icon: const Icon(LucideIcons.phone, color: AppColors.neonEmerald, size: 19),
+                            icon: Icon(LucideIcons.phone, color: AppColors.neonEmerald, size: 19),
                           ),
                           IconButton(
                             onPressed: () => _startCall(uid, name, CallType.video),
-                            icon: const Icon(LucideIcons.video, color: AppColors.neonCyan, size: 19),
+                            icon: Icon(LucideIcons.video, color: AppColors.neonCyan, size: 19),
                           ),
                         ],
                       ),

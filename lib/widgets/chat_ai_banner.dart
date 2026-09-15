@@ -35,11 +35,11 @@ class ChatAIBanner extends StatelessWidget {
               Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                child: const Icon(LucideIcons.zap, color: AppColors.background, size: 22),
+                decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+                child: Icon(LucideIcons.zap, color: AppColors.background, size: 22),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -109,7 +109,7 @@ class _AiActionChip extends StatelessWidget {
             children: [
               Icon(icon, color: AppColors.neonCyan, size: 20),
               const SizedBox(height: 4),
-              Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 11.5, fontWeight: FontWeight.w600)),
+              Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 11.5, fontWeight: FontWeight.w600)),
             ],
           ),
         ),

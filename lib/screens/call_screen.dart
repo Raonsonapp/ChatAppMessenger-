@@ -255,11 +255,11 @@ class _CallScreenState extends State<CallScreen> {
                     Container(
                       width: 120,
                       height: 120,
-                      decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+                      decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
                       child: Center(
                         child: Text(
                           widget.otherUserName.isNotEmpty ? widget.otherUserName[0].toUpperCase() : '?',
-                          style: const TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 48),
+                          style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 48),
                         ),
                       ),
                     ),

@@ -9,7 +9,8 @@ class GlassContainer extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
   final bool glow;
-  final Color glowColor;
+  /// Холӣ бошад, ранги неони мавзӯи фаъол гирифта мешавад.
+  final Color? glowColor;
   final double blur;
 
   const GlassContainer({
@@ -19,7 +20,7 @@ class GlassContainer extends StatelessWidget {
     this.padding,
     this.margin,
     this.glow = false,
-    this.glowColor = AppColors.neonEmerald,
+    this.glowColor,
     this.blur = 16,
   });
 
@@ -32,7 +33,7 @@ class GlassContainer extends StatelessWidget {
         boxShadow: glow
             ? [
                 BoxShadow(
-                  color: glowColor.withValues(alpha: 0.35),
+                  color: (glowColor ?? AppColors.neonEmerald).withValues(alpha: 0.35),
                   blurRadius: 24,
                   spreadRadius: 1,
                 ),

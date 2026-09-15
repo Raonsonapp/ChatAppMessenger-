@@ -79,7 +79,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Профили худро пур кунед',
                   style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20),
                 ),
@@ -105,7 +105,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     ),
                     onPressed: _isSaving ? null : _saveProfile,
                     child: _isSaving
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
@@ -125,17 +125,17 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
         GlassContainer(
           borderRadius: 14,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           child: TextField(
             controller: controller,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 15),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: AppColors.textSecondary),
+              hintStyle: TextStyle(color: AppColors.textSecondary),
               border: InputBorder.none,
             ),
           ),

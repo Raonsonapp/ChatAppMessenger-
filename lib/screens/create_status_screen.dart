@@ -85,9 +85,9 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.x, color: AppColors.textPrimary, size: 22),
+                      icon: Icon(LucideIcons.x, color: AppColors.textPrimary, size: 22),
                     ),
-                    const Text(
+                    Text(
                       'Навсозии нав',
                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
                     ),
@@ -117,7 +117,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                           child: Text(
                             _textController.text.isEmpty ? 'Матни навсозии худро нависед' : _textController.text,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 22),
+                            style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 22),
                           ),
                         ),
                       const SizedBox(height: 16),
@@ -128,9 +128,9 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                           controller: _textController,
                           maxLines: 3,
                           minLines: 1,
-                          style: const TextStyle(color: AppColors.textPrimary),
+                          style: TextStyle(color: AppColors.textPrimary),
                           onChanged: (_) => setState(() {}),
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: 'Матн илова кунед (ихтиёрӣ)',
                             hintStyle: TextStyle(color: AppColors.textSecondary),
                             border: InputBorder.none,
@@ -144,10 +144,10 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: () => _pick(false),
-                              icon: const Icon(LucideIcons.image, size: 18, color: AppColors.neonCyan),
-                              label: const Text('Галерея', style: TextStyle(color: AppColors.textPrimary)),
+                              icon: Icon(LucideIcons.image, size: 18, color: AppColors.neonCyan),
+                              label: Text('Галерея', style: TextStyle(color: AppColors.textPrimary)),
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppColors.glassBorder),
+                                side: BorderSide(color: AppColors.glassBorder),
                                 padding: const EdgeInsets.symmetric(vertical: 13),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               ),
@@ -157,10 +157,10 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: () => _pick(true),
-                              icon: const Icon(LucideIcons.camera, size: 18, color: AppColors.neonCyan),
-                              label: const Text('Камера', style: TextStyle(color: AppColors.textPrimary)),
+                              icon: Icon(LucideIcons.camera, size: 18, color: AppColors.neonCyan),
+                              label: Text('Камера', style: TextStyle(color: AppColors.textPrimary)),
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppColors.glassBorder),
+                                side: BorderSide(color: AppColors.glassBorder),
                                 padding: const EdgeInsets.symmetric(vertical: 13),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               ),
@@ -185,7 +185,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                     ),
                     onPressed: _isPosting ? null : _post,
                     child: _isPosting
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
+                        ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
                         : const Text('Интишор кардан', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),
                 ),

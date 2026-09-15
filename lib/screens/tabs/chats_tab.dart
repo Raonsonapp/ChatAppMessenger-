@@ -36,7 +36,7 @@ class ChatsTab extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   child: Text(
                     'Хатои гурӯҳҳо (эҳтимол index лозим аст): ${snapshot.error}',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
                   ),
                 );
               }
@@ -65,12 +65,12 @@ class ChatsTab extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   child: Text(
                     'Хатои Firestore (эҳтимол index лозим аст): ${snapshot.error}',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
                   ),
                 );
               }
               if (!snapshot.hasData) {
-                return const Padding(
+                return Padding(
                   padding: EdgeInsets.all(20),
                   child: Center(child: CircularProgressIndicator(color: AppColors.neonEmerald)),
                 );

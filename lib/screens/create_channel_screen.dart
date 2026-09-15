@@ -76,9 +76,9 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+                      icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
                     ),
-                    const Text('Канали нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
+                    Text('Канали нав', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 20)),
                   ],
                 ),
               ),
@@ -91,8 +91,8 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       child: TextField(
                         controller: _nameController,
-                        style: const TextStyle(color: AppColors.textPrimary),
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: AppColors.textPrimary),
+                        decoration: InputDecoration(
                           hintText: 'Номи канал',
                           hintStyle: TextStyle(color: AppColors.textSecondary),
                           border: InputBorder.none,
@@ -107,8 +107,8 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                       child: TextField(
                         controller: _descController,
                         maxLines: 3,
-                        style: const TextStyle(color: AppColors.textPrimary),
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: AppColors.textPrimary),
+                        decoration: InputDecoration(
                           hintText: 'Тавсиф (ихтиёрӣ)',
                           hintStyle: TextStyle(color: AppColors.textSecondary),
                           border: InputBorder.none,
@@ -132,7 +132,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                         ),
                         onPressed: _isCreating ? null : _create,
                         child: _isCreating
-                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
+                            ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background))
                             : const Text('Сохтани канал', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                       ),
                     ),

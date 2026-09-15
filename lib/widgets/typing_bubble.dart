@@ -56,7 +56,7 @@ class _TypingBubbleState extends State<TypingBubble> with SingleTickerProviderSt
                     child: Container(
                       width: 7,
                       height: 7,
-                      decoration: const BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+                      decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
                     ),
                   ),
                 );
