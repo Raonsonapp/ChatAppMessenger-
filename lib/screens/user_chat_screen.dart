@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
@@ -12,6 +15,7 @@ import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/attachment_sheet.dart';
+import '../widgets/voice_recorder_bar.dart';
 import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
@@ -42,6 +46,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
   final ScrollController _scrollController = ScrollController();
   ChatMessage? _replyingTo;
   bool _isUploading = false;
+  bool _recording = false;
 
   DocumentReference<Map<String, dynamic>> get _conversationRef =>
       FirebaseFirestore.instance.collection('conversations').doc(widget.conversationId);
@@ -93,6 +98,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
         onImagePicked: _sendImageMessage,
         onContactTap: _openContactPicker,
         onGifPicked: (file) => _sendImageMessage(file, mediaType: 'gif'),
+        onVideoPicked: _sendVideoMessage,
+        onDocumentPicked: _sendDocumentMessage,
         onStickerTap: _openStickerPicker,
       ),
     );
@@ -183,6 +190,83 @@ class _UserChatScreenState extends State<UserChatScreen> {
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
+  }
+
+  /// Боркунӣ ва фиристодани ҳар навъи файл (овоз, видео, ҳуҷҷат).
+  Future<void> _sendFileMessage({
+    required File file,
+    required String name,
+    required String mediaType,
+    required String preview,
+    int? durationSeconds,
+    int? sizeBytes,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    setState(() => _isUploading = true);
+    try {
+      final url = await MediaService.uploadFile(file, name, 'conversations/${widget.conversationId}');
+      await _messagesRef.add({
+        'text': '',
+        'senderId': uid,
+        'isAI': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'read': false,
+        'mediaUrl': url,
+        'mediaType': mediaType,
+        if (durationSeconds != null) 'mediaDuration': durationSeconds,
+        if (sizeBytes != null) 'mediaSize': sizeBytes,
+        if (mediaType == 'document') 'mediaName': name,
+      });
+      await _conversationRef.set({
+        'lastMessage': preview,
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastSenderId': uid,
+      }, SetOptions(merge: true));
+      _scrollToBottom();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k247', [e]))));
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _sendVideoMessage(XFile file) {
+    return _sendFileMessage(
+      file: File(file.path),
+      name: file.name,
+      mediaType: 'video',
+      preview: '🎥 Видео',
+    );
+  }
+
+  Future<void> _sendDocumentMessage(PlatformFile picked) async {
+    final path = picked.path;
+    if (path == null) return;
+    final file = File(path);
+    // PlatformFile ҳаҷмро намедиҳад — онро аз худи файл мегирем.
+    final size = await file.length();
+    await _sendFileMessage(
+      file: file,
+      name: picked.name,
+      mediaType: 'document',
+      preview: '📄 ${picked.name}',
+      sizeBytes: size,
+    );
+  }
+
+  Future<void> _sendVoiceMessage(File file, Duration duration) async {
+    setState(() => _recording = false);
+    await _sendFileMessage(
+      file: file,
+      name: 'voice.m4a',
+      mediaType: 'audio',
+      preview: '🎤 Паёми овозӣ',
+      durationSeconds: duration.inSeconds,
+    );
+    await file.delete().catchError((_) => file);
   }
 
   Future<void> _handleSend() async {
@@ -448,6 +532,21 @@ class _UserChatScreenState extends State<UserChatScreen> {
   }
 
   Widget _buildInputBar() {
+    // Ҳангоми сабти овоз ба ҷои майдони матн панели сабт нишон дода мешавад.
+    if (_recording) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(10, 6, 10, 14),
+        child: GlassContainer(
+          borderRadius: 24,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: VoiceRecorderBar(
+            onRecorded: _sendVoiceMessage,
+            onCancel: () => setState(() => _recording = false),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 14),
       child: Row(
@@ -494,6 +593,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
                             if (file != null) _sendImageMessage(file);
                           },
                     icon: Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
+                  ),
+                  IconButton(
+                    onPressed: _isUploading ? null : () => setState(() => _recording = true),
+                    icon: Icon(LucideIcons.mic, color: AppColors.textSecondary, size: 20),
                   ),
                 ],
               ),

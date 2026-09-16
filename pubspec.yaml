@@ -46,6 +46,14 @@ dependencies:
   # Нигоҳ доштани интихоби мавзӯъ/забон дар худи дастгоҳ
   shared_preferences: ^2.5.5
 
+  # Паёмҳои овозӣ: сабт ва шунидан
+  record: ^7.1.1
+  audioplayers: ^6.8.1
+  path_provider: ^2.1.6
+
+  # Пахши видеои фиристодашуда
+  video_player: ^2.14.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

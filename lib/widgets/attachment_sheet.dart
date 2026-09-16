@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
@@ -7,20 +8,23 @@ import '../widgets/glass_container.dart';
 import '../services/media_service.dart';
 import '../l10n/l10n.dart';
 
-/// Феҳристи замима ба тарзи WhatsApp. Танҳо имконоти воқеан коркунанда
-/// нишон дода мешаванд (Галерея, Камера, Контакт) — Ҳуҷҷат/Аудио/
-/// Ҷойгиршавӣ дар қадами навбатӣ илова мешаванд (бо пакетҳои иловагӣ).
+/// Феҳристи замима ба тарзи WhatsApp: Галерея, Камера, Видео, Ҳуҷҷат,
+/// Контакт, GIF ва Стикер.
 class AttachmentSheet extends StatelessWidget {
   final ValueChanged<XFile> onImagePicked;
   final VoidCallback onContactTap;
   final ValueChanged<XFile>? onGifPicked;
   final VoidCallback? onStickerTap;
+  final ValueChanged<XFile>? onVideoPicked;
+  final ValueChanged<PlatformFile>? onDocumentPicked;
   const AttachmentSheet({
     super.key,
     required this.onImagePicked,
     required this.onContactTap,
     this.onGifPicked,
     this.onStickerTap,
+    this.onVideoPicked,
+    this.onDocumentPicked,
   });
 
   Future<void> _pickGallery(BuildContext context) async {
@@ -38,6 +42,24 @@ class AttachmentSheet extends StatelessWidget {
     if (file != null) {
       Navigator.pop(context);
       onImagePicked(file);
+    }
+  }
+
+  Future<void> _pickVideo(BuildContext context) async {
+    final file = await MediaService.pickVideoFromGallery();
+    if (!context.mounted) return;
+    if (file != null) {
+      Navigator.pop(context);
+      onVideoPicked?.call(file);
+    }
+  }
+
+  Future<void> _pickDocument(BuildContext context) async {
+    final file = await MediaService.pickDocument();
+    if (!context.mounted) return;
+    if (file != null) {
+      Navigator.pop(context);
+      onDocumentPicked?.call(file);
     }
   }
 
@@ -82,6 +104,20 @@ class AttachmentSheet extends StatelessWidget {
                   label: tr('k043'),
                   onTap: () => _pickCamera(context),
                 ),
+                if (onVideoPicked != null)
+                  _item(
+                    icon: LucideIcons.video,
+                    color: const Color(0xFFE879F9),
+                    label: tr('k036'),
+                    onTap: () => _pickVideo(context),
+                  ),
+                if (onDocumentPicked != null)
+                  _item(
+                    icon: LucideIcons.file_text,
+                    color: const Color(0xFF60A5FA),
+                    label: tr('k244'),
+                    onTap: () => _pickDocument(context),
+                  ),
                 _item(
                   icon: LucideIcons.user,
                   color: const Color(0xFF4B7BEC),

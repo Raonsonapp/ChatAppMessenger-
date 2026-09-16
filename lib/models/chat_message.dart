@@ -2,7 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Ҳар ҳуҷҷат дар `.../messages` ба ин сохтор мувофиқат мекунад:
 /// { text, senderId, isAI, createdAt, replyToText?, replyToSenderId?,
-///   deleted?, read?, mediaUrl?, mediaType? }
+///   deleted?, read?, mediaUrl?, mediaType?, mediaDuration?, mediaName?,
+///   mediaSize? }
+///
+/// mediaType: image | gif | sticker | audio | video | document
 class ChatMessage {
   final String id;
   final String text;
@@ -15,6 +18,16 @@ class ChatMessage {
   final bool read;
   final String? mediaUrl;
   final String? mediaType;
+
+  /// Давомнокӣ бо сония — барои `audio` ва `video`.
+  final int? mediaDuration;
+
+  /// Номи аслии файл — барои `document`.
+  final String? mediaName;
+
+  /// Ҳаҷми файл бо байт — барои `document`.
+  final int? mediaSize;
+
   final Map<String, String> reactions;
 
   ChatMessage({
@@ -29,6 +42,9 @@ class ChatMessage {
     this.read = false,
     this.mediaUrl,
     this.mediaType,
+    this.mediaDuration,
+    this.mediaName,
+    this.mediaSize,
     this.reactions = const {},
   });
 
@@ -47,6 +63,9 @@ class ChatMessage {
       read: (data['read'] ?? false) as bool,
       mediaUrl: data['mediaUrl'] as String?,
       mediaType: data['mediaType'] as String?,
+      mediaDuration: (data['mediaDuration'] as num?)?.toInt(),
+      mediaName: data['mediaName'] as String?,
+      mediaSize: (data['mediaSize'] as num?)?.toInt(),
       reactions: rawReactions.map((k, v) => MapEntry(k, v as String)),
     );
   }

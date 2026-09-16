@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../theme/app_theme.dart';
+import '../services/media_service.dart';
+import 'audio_message_player.dart';
+import 'video_message_player.dart';
 import '../models/chat_message.dart';
 import '../l10n/l10n.dart';
 
@@ -115,11 +119,62 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
+  /// Ҳуҷҷат: нишона, ном ва ҳаҷм. Пахш карда — дар браузер/барномаи мувофиқ.
+  Widget _documentTile(BuildContext context) {
+    final tint = isMe ? AppColors.background : AppColors.textPrimary;
+    final size = message.mediaSize;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () => launchUrl(Uri.parse(message.mediaUrl!), mode: LaunchMode.externalApplication),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(9),
+                color: tint.withValues(alpha: 0.16),
+              ),
+              child: Icon(LucideIcons.file_text, color: tint, size: 19),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    message.mediaName ?? 'file',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: tint, fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                  if (size != null)
+                    Text(
+                      MediaService.formatBytes(size),
+                      style: TextStyle(color: tint.withValues(alpha: 0.8), fontSize: 11.5),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAI = message.isAI;
     final isSticker = !message.deleted && message.mediaType == 'sticker';
-    final hasImage = !message.deleted && message.mediaUrl != null && (message.mediaType == 'image' || message.mediaType == 'gif');
+    final hasMedia = !message.deleted && message.mediaUrl != null;
+    final hasImage = hasMedia && (message.mediaType == 'image' || message.mediaType == 'gif');
+    final hasAudio = hasMedia && message.mediaType == 'audio';
+    final hasVideo = hasMedia && message.mediaType == 'video';
+    final hasDocument = hasMedia && message.mediaType == 'document';
     final distinctReactions = message.reactions.values.toSet().toList();
 
     return GestureDetector(
@@ -227,6 +282,22 @@ class MessageBubble extends StatelessWidget {
                               ),
                             ),
                           ),
+                        if (hasAudio)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
+                            child: AudioMessagePlayer(
+                              url: message.mediaUrl!,
+                              isMe: isMe,
+                              durationSeconds: message.mediaDuration,
+                            ),
+                          ),
+                        if (hasVideo)
+                          Padding(
+                            padding: const EdgeInsets.all(3),
+                            child: VideoMessagePlayer(url: message.mediaUrl!),
+                          ),
+                        if (hasDocument)
+                          _documentTile(context),
                         if (message.text.isNotEmpty || message.deleted)
                           Padding(
                             padding: hasImage ? const EdgeInsets.fromLTRB(8, 6, 8, 4) : EdgeInsets.zero,

@@ -243,4 +243,8 @@ const Map<String, String> stringsEn = {
   'k241': 'Delete',
   'k242': 'Message deleted',
   'k243': 'Stickers',
+  'k244': 'Document',
+  'k245': 'Voice message',
+  'k246': 'Video',
+  'k247': 'Sending error: {0}',
 };
