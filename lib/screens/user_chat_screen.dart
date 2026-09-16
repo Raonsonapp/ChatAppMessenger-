@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
 import '../models/app_call.dart';
 import '../services/media_service.dart';
+import '../services/push_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
@@ -180,6 +181,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         'lastMessageTime': FieldValue.serverTimestamp(),
         'lastSenderId': uid,
       }, SetOptions(merge: true));
+      _notifyOther('📷 Расм');
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
@@ -223,6 +225,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         'lastMessageTime': FieldValue.serverTimestamp(),
         'lastSenderId': uid,
       }, SetOptions(merge: true));
+      _notifyOther(preview);
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
@@ -294,7 +297,29 @@ class _UserChatScreenState extends State<UserChatScreen> {
       'lastSenderId': uid,
     }, SetOptions(merge: true));
 
+    _notifyOther(text);
     _scrollToBottom();
+  }
+
+  /// Ба ҳамсӯҳбат огоҳиномаи push мефиристад. Номи фиристанда аз ҳуҷҷати
+  /// сӯҳбат гирифта мешавад, то дар огоҳинома номи воқеӣ намоён шавад.
+  Future<void> _notifyOther(String preview) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final convo = await _conversationRef.get();
+    final names = (convo.data()?['participantNames'] as Map<String, dynamic>?) ?? {};
+    final myName = '${names[uid] ?? tr('k002')}';
+    await PushService.notify(
+      toUid: widget.otherUserId,
+      title: myName,
+      body: preview,
+      data: {
+        'type': 'message',
+        'conversationId': widget.conversationId,
+        'otherUserId': uid,
+        'otherUserName': myName,
+      },
+    );
   }
 
   Future<void> _deleteMessage(ChatMessage message) async {

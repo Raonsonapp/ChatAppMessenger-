@@ -7,6 +7,8 @@ const cors = require('cors');
 const { Telegraf, Markup } = require('telegraf');
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { getMessaging } = require('firebase-admin/messaging');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
 const PORT = process.env.PORT || 3000;
@@ -193,6 +195,55 @@ app.post('/api/otp/verify', async (req, res) => {
   const token = await getAuth().createCustomToken(uid, { phone: normalizedPhone });
 
   res.json({ token, uid, phone: normalizedPhone });
+});
+
+// ---------- Огоҳиномаҳои push ----------
+//
+// Cloud Functions барои триггери Firestore ба нақшаи Blaze ниёз дорад, бинобар
+// ин барнома пас аз фиристодани паём худаш ин эндпоинтро даъво мекунад ва мо
+// push мефиристем. Даъватгар бо ID token тасдиқ мешавад, то бегона ба ҳар кас
+// огоҳинома фиристода натавонад.
+app.post('/api/notify', async (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!idToken) return res.status(401).json({ error: 'Authorization lozim ast' });
+
+  let sender;
+  try {
+    sender = await getAuth().verifyIdToken(idToken);
+  } catch {
+    return res.status(401).json({ error: 'Token nodurust ast' });
+  }
+
+  const { toUid, title, body, data } = req.body ?? {};
+  if (!toUid || !body) return res.status(400).json({ error: 'toUid va body lozimand' });
+
+  // Ба худи худ огоҳинома намефиристем.
+  if (toUid === sender.uid) return res.json({ sent: false, reason: 'self' });
+
+  const doc = await getFirestore().collection('users').doc(toUid).get();
+  const fcmToken = doc.data()?.fcmToken;
+  if (!fcmToken) return res.json({ sent: false, reason: 'no-token' });
+
+  try {
+    await getMessaging().send({
+      token: fcmToken,
+      notification: { title: title || 'ChatApp', body },
+      data: Object.fromEntries(
+        Object.entries({ ...(data || {}), senderUid: sender.uid }).map(([k, v]) => [k, String(v)]),
+      ),
+      android: { priority: 'high' },
+    });
+    res.json({ sent: true });
+  } catch (err) {
+    // Токени кӯҳна/бекоршуда — онро тоза мекунем, то бори дигар кӯшиш нашавад.
+    if (err?.code === 'messaging/registration-token-not-registered') {
+      await doc.ref.update({ fcmToken: FieldValue.delete() }).catch(() => {});
+      return res.json({ sent: false, reason: 'stale-token' });
+    }
+    console.error('Хатои фиристодани push:', err?.message ?? err);
+    res.status(500).json({ error: 'push firistoda nashud' });
+  }
 });
 
 async function start() {
