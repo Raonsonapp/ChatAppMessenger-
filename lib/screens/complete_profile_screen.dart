@@ -53,7 +53,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         'nickname': _nicknameController.text.trim().isEmpty ? name : _nicknameController.text.trim(),
         'about': _aboutController.text.trim(),
         'createdAt': FieldValue.serverTimestamp(),
-      });
+        // merge: вагарна ин навиштан fcmToken-и аллакай сабтшударо нест
+        // мекунад ва огоҳиномаҳо то навсозии навбатии токен намеоянд.
+      }, SetOptions(merge: true));
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const ChatListScreen()),

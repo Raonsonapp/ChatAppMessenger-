@@ -92,10 +92,22 @@ class _OtpScreenState extends State<OtpScreen> {
       final uid = userCredential.user?.uid;
       if (uid == null) throw Exception(tr('k127'));
 
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      // Рақамро ҳозир сабт мекунем, на дар экрани профил. Сервер онро аллакай
+      // тасдиқ кардааст, ва маҳз ҳамин майдон аст, ки дигарон ҳангоми ҷустуҷӯи
+      // контакт бо он корбарро меёбанд — агар он набошад, корбар барои ҳама
+      // ноаён мемонад.
+      final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+      await userRef.set({'phone': widget.phoneNumber}, SetOptions(merge: true));
+
+      final userDoc = await userRef.get();
       if (!mounted) return;
 
-      if (userDoc.exists) {
+      // "Корбари кӯҳна" маънои "ҳуҷҷат ҳаст"-ро надорад: NotificationService
+      // ҳангоми вуруд fcmToken навишта, ҳуҷҷатро худаш месозад. Бидуни ин
+      // санҷиш корбари нав экрани профилро мегузарад ва бе ном мемонад.
+      final hasProfile = (userDoc.data()?['name'] as String?)?.trim().isNotEmpty ?? false;
+
+      if (hasProfile) {
         // Корбари мавҷуда — мустақим ба Home
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const ChatListScreen()),

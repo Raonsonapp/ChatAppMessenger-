@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/incoming_call_listener.dart';
 import '../services/notification_service.dart';
 import 'chat_list_screen.dart';
+import 'complete_profile_screen.dart';
 import 'welcome_screen.dart';
 
 /// Гардиши воридшавӣ: агар корбар аллакай бо телефон ворид шуда бошад,
@@ -41,9 +43,45 @@ class _AuthGateState extends State<AuthGate> {
             _tokenRegisteredForUid = user.uid;
             NotificationService.registerTokenForCurrentUser();
           }
-          return const IncomingCallListener(child: ChatListScreen());
+          // Ворид шудан кофӣ нест: корбар метавонад бе ном монда бошад
+          // (масалан вуруд буриданашуда). Бе ном ӯро дигарон ҳангоми
+          // ҷустуҷӯи контакт ёфта наметавонанд, бинобар ин ӯро боз ба
+          // экрани профил мефиристем.
+          return _ProfileGate(uid: user.uid);
         }
         return const WelcomeScreen();
+      },
+    );
+  }
+}
+
+/// Пеш аз нишон додани чатҳо тафтиш мекунад, ки профил пур карда шудааст.
+class _ProfileGate extends StatelessWidget {
+  final String uid;
+  const _ProfileGate({required this.uid});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: NeonBackdrop(
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.neonEmerald),
+              ),
+            ),
+          );
+        }
+        final data = snapshot.data!.data();
+        final name = (data?['name'] as String?)?.trim() ?? '';
+        if (name.isEmpty) {
+          final phone = (data?['phone'] as String?) ?? '';
+          return CompleteProfileScreen(phoneNumber: phone);
+        }
+        return const IncomingCallListener(child: ChatListScreen());
       },
     );
   }
