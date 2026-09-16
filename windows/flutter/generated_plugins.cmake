@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   agora_rtc_engine
+  audioplayers_windows
   cloud_firestore
   file_selector_windows
   firebase_auth
@@ -11,11 +12,13 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_storage
   iris_method_channel
   permission_handler_windows
+  record_windows
   url_launcher_windows
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
   flutter_local_notifications_windows
+  jni
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)
