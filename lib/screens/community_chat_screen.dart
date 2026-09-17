@@ -28,6 +28,7 @@ import '../models/app_conversation.dart';
 import 'user_chat_screen.dart';
 import '../widgets/pinned_message_bar.dart';
 import 'dart:async';
+import '../widgets/user_avatar.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -360,6 +361,73 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     );
   }
 
+  /// Ҳангоми навиштани `@` рӯйхати аъзоён кушода мешавад — мисли WhatsApp.
+  void _onInputChanged(String value) {
+    if (!value.endsWith('@')) return;
+    _showMentionPicker();
+  }
+
+  void _showMentionPicker() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final members = widget.memberNames.entries.where((e) => e.key != uid).toList();
+    if (members.isEmpty) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+                child: Text(
+                  tr('k310'),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5, fontWeight: FontWeight.w700),
+                ),
+              ),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: members.map((entry) {
+                    return ListTile(
+                      leading: UserAvatar(name: entry.value, uid: entry.key, size: 36),
+                      title: Text(
+                        entry.value,
+                        style: TextStyle(color: AppColors.textPrimary, fontSize: 14.5),
+                      ),
+                      onTap: () {
+                        Navigator.pop(sheetContext);
+                        _insertMention(entry.value);
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Ном ба ҷои `@`-и навишташуда гузошта мешавад.
+  void _insertMention(String name) {
+    final text = _controller.text;
+    final withoutAt = text.endsWith('@') ? text.substring(0, text.length - 1) : text;
+    _controller.text = '$withoutAt@$name ';
+    _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
+  }
+
   /// Пин кардани паём дар болои чат — барои ҳамаи аъзоён як хел.
   Future<void> _pinMessage(ChatMessage message) async {
     final preview = message.text.trim().isNotEmpty ? message.text.trim() : tr('k286');
@@ -610,6 +678,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 10),
                       ),
+                      onChanged: _onInputChanged,
                       onSubmitted: (_) => _handleSend(),
                     ),
                   ),

@@ -309,4 +309,5 @@ const Map<String, String> stringsEn = {
   'k307': 'Pin message',
   'k308': 'Pinned message',
   'k309': 'Unpin',
+  'k310': 'MENTION',
 };
