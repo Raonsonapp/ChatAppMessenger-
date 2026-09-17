@@ -28,6 +28,9 @@ class ChatMessage {
   /// Ҳаҷми файл бо байт — барои `document`.
   final int? mediaSize;
 
+  /// Паём аз чати дигар нусхабардорӣ шудааст.
+  final bool forwarded;
+
   final Map<String, String> reactions;
 
   ChatMessage({
@@ -45,6 +48,7 @@ class ChatMessage {
     this.mediaDuration,
     this.mediaName,
     this.mediaSize,
+    this.forwarded = false,
     this.reactions = const {},
   });
 
@@ -66,6 +70,7 @@ class ChatMessage {
       mediaDuration: (data['mediaDuration'] as num?)?.toInt(),
       mediaName: data['mediaName'] as String?,
       mediaSize: (data['mediaSize'] as num?)?.toInt(),
+      forwarded: (data['forwarded'] ?? false) as bool,
       reactions: rawReactions.map((k, v) => MapEntry(k, v as String)),
     );
   }

@@ -253,4 +253,8 @@ const Map<String, String> stringsEn = {
   'k251': '{0} h ago',
   'k252': 'yesterday',
   'k253': '{0} days ago',
+  'k254': 'Forward to',
+  'k255': 'Forwarded',
+  'k256': 'Forward',
+  'k257': 'Forwarded',
 };

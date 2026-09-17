@@ -9,6 +9,7 @@ import 'audio_message_player.dart';
 import 'video_message_player.dart';
 import '../models/chat_message.dart';
 import '../l10n/l10n.dart';
+import '../sheets/forward_sheet.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -74,6 +75,20 @@ class MessageBubble extends StatelessWidget {
                 onTap: () {
                   Navigator.pop(context);
                   onReply?.call(message);
+                },
+              ),
+              _actionTile(
+                context,
+                icon: LucideIcons.corner_up_right,
+                label: tr('k256'),
+                onTap: () {
+                  Navigator.pop(context);
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.transparent,
+                    isScrollControlled: true,
+                    builder: (_) => ForwardSheet(message: message),
+                  );
                 },
               ),
               if (message.mediaUrl == null)
@@ -280,6 +295,31 @@ class MessageBubble extends StatelessWidget {
                                 alignment: Alignment.center,
                                 child: Icon(LucideIcons.triangle_alert, color: AppColors.textSecondary),
                               ),
+                            ),
+                          ),
+                        if (message.forwarded && !message.deleted)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  LucideIcons.corner_up_right,
+                                  size: 11,
+                                  color: (isMe && !hasImage ? AppColors.background : AppColors.textSecondary)
+                                      .withValues(alpha: 0.75),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  tr('k257'),
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontStyle: FontStyle.italic,
+                                    color: (isMe && !hasImage ? AppColors.background : AppColors.textSecondary)
+                                        .withValues(alpha: 0.75),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         if (hasAudio)
