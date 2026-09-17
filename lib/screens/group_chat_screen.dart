@@ -29,6 +29,8 @@ import 'group_call_screen.dart';
 import '../services/push_service.dart';
 import '../models/app_conversation.dart';
 import 'user_chat_screen.dart';
+import '../widgets/pinned_message_bar.dart';
+import 'dart:async';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -53,6 +55,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   ChatMessage? _replyingTo;
   bool _isUploading = false;
   bool _recording = false;
+
+  /// Матни паёми пиншуда (холӣ — пин нест).
+  String _pinnedText = '';
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _pinSub;
 
   DocumentReference<Map<String, dynamic>> get _groupRef =>
       FirebaseFirestore.instance.collection('groups').doc(widget.groupId);
@@ -118,10 +124,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   void initState() {
     super.initState();
     _clearMyUnread();
+    _pinSub = _groupRef.snapshots().listen((snap) {
+      final pinned = (snap.data()?['pinnedText'] as String?) ?? '';
+      if (pinned != _pinnedText && mounted) setState(() => _pinnedText = pinned);
+    }, onError: (_) {});
   }
 
   @override
   void dispose() {
+    _pinSub?.cancel();
     _clearMyUnread();
     _controller.dispose();
     _scrollController.dispose();
@@ -354,6 +365,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
+  /// Пин кардани паём дар болои чат — барои ҳамаи аъзоён як хел.
+  Future<void> _pinMessage(ChatMessage message) async {
+    final preview = message.text.trim().isNotEmpty ? message.text.trim() : tr('k286');
+    await _groupRef.set({
+      'pinnedText': preview,
+      'pinnedMessageId': message.id,
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> _unpinMessage() async {
+    await _groupRef.set({'pinnedText': '', 'pinnedMessageId': ''}, SetOptions(merge: true));
+  }
+
   Future<void> _editMessage(ChatMessage message, String newText) async {
     await _messagesRef.doc(message.id).update({'text': newText, 'edited': true});
   }
@@ -390,6 +414,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           child: Column(
             children: [
               _buildHeader(),
+              if (_pinnedText.isNotEmpty)
+                PinnedMessageBar(text: _pinnedText, onUnpin: _unpinMessage),
               Expanded(
                 child: ChatWallpaper(
                     child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -442,6 +468,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           onReact: _reactToMessage,
                           onEdit: _editMessage,
                           onReplyPrivately: _replyPrivately,
+                          onPin: _pinMessage,
                           onDeleteForMe: _deleteForMe,
                           messageRef: _messagesRef.doc(message.id),
                           chatTitle: widget.groupName,

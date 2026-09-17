@@ -306,4 +306,7 @@ const Map<String, String> stringsEn = {
   'k304': 'Reply privately',
   'k305': 'Group name',
   'k306': 'Community name',
+  'k307': 'Pin message',
+  'k308': 'Pinned message',
+  'k309': 'Unpin',
 };

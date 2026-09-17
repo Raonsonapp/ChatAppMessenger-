@@ -29,6 +29,7 @@ import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/chat_wallpaper.dart';
 import '../services/location_service.dart';
+import '../widgets/pinned_message_bar.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -58,6 +59,9 @@ class _UserChatScreenState extends State<UserChatScreen> {
   /// Мӯҳлати нопадид шудани паёмҳо бо сония (0 — хомӯш). Аз ҳуҷҷати сӯҳбат
   /// хонда мешавад, то ҳангоми фиристодан фавран дастрас бошад.
   int _disappearIn = 0;
+
+  /// Матни паёми пиншуда (холӣ — пин нест).
+  String _pinnedText = '';
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _convoSub;
 
   /// «Менависад…» — таймери хомӯшкунӣ пас аз таваққуфи чоп.
@@ -113,6 +117,23 @@ class _UserChatScreenState extends State<UserChatScreen> {
       });
     }
     return true;
+  }
+
+  /// Пин кардани паём — матни он дар ҳуҷҷати сӯҳбат нигоҳ дошта мешавад, то
+  /// барои ҳар ду тараф як хел бошад.
+  Future<void> _pinMessage(ChatMessage message) async {
+    final preview = message.text.trim().isNotEmpty ? message.text.trim() : tr('k286');
+    await _conversationRef.set({
+      'pinnedText': preview,
+      'pinnedMessageId': message.id,
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> _unpinMessage() async {
+    await _conversationRef.set({
+      'pinnedText': '',
+      'pinnedMessageId': '',
+    }, SetOptions(merge: true));
   }
 
   /// Майдони мӯҳлат барои паёми нав — агар паёмҳои муваққатӣ фаъол бошанд.
@@ -172,8 +193,16 @@ class _UserChatScreenState extends State<UserChatScreen> {
   void initState() {
     super.initState();
     _convoSub = _conversationRef.snapshots().listen((snap) {
-      final value = (snap.data()?['disappearIn'] as num?)?.toInt() ?? 0;
-      if (value != _disappearIn && mounted) setState(() => _disappearIn = value);
+      final data = snap.data();
+      final value = (data?['disappearIn'] as num?)?.toInt() ?? 0;
+      final pinned = (data?['pinnedText'] as String?) ?? '';
+      if (!mounted) return;
+      if (value != _disappearIn || pinned != _pinnedText) {
+        setState(() {
+          _disappearIn = value;
+          _pinnedText = pinned;
+        });
+      }
     }, onError: (_) {});
   }
 
@@ -535,6 +564,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
               return Column(
                 children: [
                   _searching ? _buildSearchHeader() : _buildHeader(),
+                  if (_pinnedText.isNotEmpty)
+                    PinnedMessageBar(text: _pinnedText, onUnpin: _unpinMessage),
                   Expanded(
                     child: ChatWallpaper(
                         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -611,6 +642,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                               onReact: _reactToMessage,
                               onEdit: _editMessage,
                               onDeleteForMe: _deleteForMe,
+                              onPin: _pinMessage,
                               messageRef: _messagesRef.doc(message.id),
                               chatTitle: widget.otherUserName,
                             );

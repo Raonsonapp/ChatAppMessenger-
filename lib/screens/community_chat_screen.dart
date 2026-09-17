@@ -26,6 +26,8 @@ import '../services/location_service.dart';
 import '../services/push_service.dart';
 import '../models/app_conversation.dart';
 import 'user_chat_screen.dart';
+import '../widgets/pinned_message_bar.dart';
+import 'dart:async';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -50,6 +52,10 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
   ChatMessage? _replyingTo;
   bool _isUploading = false;
   bool _recording = false;
+
+  /// Матни паёми пиншуда (холӣ — пин нест).
+  String _pinnedText = '';
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _pinSub;
 
   DocumentReference<Map<String, dynamic>> get _communityRef =>
       FirebaseFirestore.instance.collection('communities').doc(widget.communityId);
@@ -113,10 +119,15 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
   void initState() {
     super.initState();
     _clearMyUnread();
+    _pinSub = _communityRef.snapshots().listen((snap) {
+      final pinned = (snap.data()?['pinnedText'] as String?) ?? '';
+      if (pinned != _pinnedText && mounted) setState(() => _pinnedText = pinned);
+    }, onError: (_) {});
   }
 
   @override
   void dispose() {
+    _pinSub?.cancel();
     _clearMyUnread();
     _controller.dispose();
     _scrollController.dispose();
@@ -349,6 +360,19 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     );
   }
 
+  /// Пин кардани паём дар болои чат — барои ҳамаи аъзоён як хел.
+  Future<void> _pinMessage(ChatMessage message) async {
+    final preview = message.text.trim().isNotEmpty ? message.text.trim() : tr('k286');
+    await _communityRef.set({
+      'pinnedText': preview,
+      'pinnedMessageId': message.id,
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> _unpinMessage() async {
+    await _communityRef.set({'pinnedText': '', 'pinnedMessageId': ''}, SetOptions(merge: true));
+  }
+
   Future<void> _editMessage(ChatMessage message, String newText) async {
     await _messagesRef.doc(message.id).update({'text': newText, 'edited': true});
   }
@@ -385,6 +409,8 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
           child: Column(
             children: [
               _buildHeader(),
+              if (_pinnedText.isNotEmpty)
+                PinnedMessageBar(text: _pinnedText, onUnpin: _unpinMessage),
               Expanded(
                 child: ChatWallpaper(
                     child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -437,6 +463,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                           onReact: _reactToMessage,
                           onEdit: _editMessage,
                           onReplyPrivately: _replyPrivately,
+                          onPin: _pinMessage,
                           onDeleteForMe: _deleteForMe,
                           messageRef: _messagesRef.doc(message.id),
                           chatTitle: widget.communityName,
