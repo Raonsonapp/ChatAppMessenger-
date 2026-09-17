@@ -21,6 +21,42 @@ class GroupInfoScreen extends StatelessWidget {
   DocumentReference<Map<String, dynamic>> get _groupRef =>
       FirebaseFirestore.instance.collection('groups').doc(groupId);
 
+  /// Номи гурӯҳро иваз мекунад — танҳо администратор.
+  void _renameGroup(BuildContext context, String current) {
+    final controller = TextEditingController(text: current);
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(tr('k305'), style: TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: TextStyle(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(tr('k277'), style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              final value = controller.text.trim();
+              Navigator.pop(dialogContext);
+              if (value.isNotEmpty && value != current) {
+                _groupRef.set({'name': value}, SetOptions(merge: true));
+              }
+            },
+            child: Text(tr('k117'), style: TextStyle(color: AppColors.neonEmerald)),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Акси гурӯҳ — танҳо администратор онро иваз карда метавонад.
   Future<void> _pickPhoto(BuildContext context) async {
     final file = await MediaService.pickFromGallery();
@@ -185,9 +221,31 @@ class GroupInfoScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         Center(
-                          child: Text(
-                            name,
-                            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
+                          child: InkWell(
+                            onTap: amIAdmin ? () => _renameGroup(context, name) : null,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      name,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                                  ),
+                                  if (amIAdmin) ...[
+                                    const SizedBox(width: 6),
+                                    Icon(LucideIcons.pencil, color: AppColors.textSecondary, size: 15),
+                                  ],
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                         Center(

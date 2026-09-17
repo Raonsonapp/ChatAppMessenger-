@@ -304,4 +304,6 @@ const Map<String, String> stringsEn = {
   'k302': '90 days',
   'k303': 'Off',
   'k304': 'Reply privately',
+  'k305': 'Group name',
+  'k306': 'Community name',
 };
