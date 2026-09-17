@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_theme.dart';
 import '../models/app_status.dart';
+import '../models/app_conversation.dart';
+import '../services/push_service.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 
@@ -23,6 +25,8 @@ class StatusViewerScreen extends StatefulWidget {
 class _StatusViewerScreenState extends State<StatusViewerScreen> {
   int _index = 0;
   Timer? _timer;
+  final TextEditingController _replyController = TextEditingController();
+  bool _sendingReply = false;
   double _progress = 0;
   static const _duration = Duration(seconds: 5);
   static const _tick = Duration(milliseconds: 50);
@@ -120,7 +124,75 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _replyController.dispose();
     super.dispose();
+  }
+
+  /// Ҷавоб ба навсозӣ — ҳамчун паёми одӣ ба сӯҳбати шахсӣ бо соҳиб меравад,
+  /// бо иқтибоси кӯтоҳи худи навсозӣ (мисли WhatsApp).
+  Future<void> _sendReply() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final text = _replyController.text.trim();
+    if (uid == null || text.isEmpty || _sendingReply) return;
+
+    final status = widget.statuses[_index];
+    setState(() => _sendingReply = true);
+    try {
+      final db = FirebaseFirestore.instance;
+      final conversationId = AppConversation.idFor(uid, status.ownerId);
+      final myDoc = await db.collection('users').doc(uid).get();
+      final myName = (myDoc.data()?['name'] as String?) ?? tr('k002');
+      final convoRef = db.collection('conversations').doc(conversationId);
+
+      // Сӯҳбат метавонад ҳанӯз вуҷуд надошта бошад — онро месозем.
+      await convoRef.set({
+        'participants': [uid, status.ownerId],
+        'participantNames': {uid: myName, status.ownerId: status.ownerName},
+      }, SetOptions(merge: true));
+
+      final quoted = status.text?.trim().isNotEmpty == true ? status.text!.trim() : tr('k296');
+      await convoRef.collection('messages').add({
+        'text': text,
+        'senderId': uid,
+        'isAI': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'read': false,
+        'replyToText': quoted,
+        'replyToSenderId': status.ownerId,
+      });
+      await convoRef.set({
+        'lastMessage': text,
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastSenderId': uid,
+        'unread': {status.ownerId: FieldValue.increment(1)},
+        'archivedBy': FieldValue.arrayRemove([uid, status.ownerId]),
+        'deletedBy': FieldValue.arrayRemove([uid, status.ownerId]),
+      }, SetOptions(merge: true));
+
+      await PushService.notify(
+        toUid: status.ownerId,
+        title: myName,
+        body: text,
+        data: {
+          'type': 'chat_message',
+          'kind': 'direct',
+          'threadId': conversationId,
+          'threadName': myName,
+          'senderId': uid,
+          'senderName': myName,
+        },
+      );
+
+      _replyController.clear();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k297'))));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k049', [e]))));
+      }
+    } finally {
+      if (mounted) setState(() => _sendingReply = false);
+    }
   }
 
   @override
@@ -240,6 +312,60 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
                   ],
                 ),
               ),
+              // Ҷавоб ба навсозӣ — танҳо барои навсозии каси дигар.
+              if (!widget.isOwn)
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  bottom: 12,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: Colors.white24),
+                          ),
+                          child: TextField(
+                            controller: _replyController,
+                            style: const TextStyle(color: Colors.white, fontSize: 14.5),
+                            onTap: () => _timer?.cancel(),
+                            onSubmitted: (_) => _sendReply(),
+                            decoration: InputDecoration(
+                              hintText: tr('k298'),
+                              hintStyle: const TextStyle(color: Colors.white60, fontSize: 14),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: _sendingReply ? null : _sendReply,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.neonEmerald,
+                          ),
+                          child: _sendingReply
+                              ? Padding(
+                                  padding: const EdgeInsets.all(13),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.background,
+                                  ),
+                                )
+                              : Icon(LucideIcons.send, color: AppColors.background, size: 19),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
