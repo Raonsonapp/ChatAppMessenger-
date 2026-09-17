@@ -278,4 +278,5 @@ const Map<String, String> stringsEn = {
   'k276': 'Delete for everyone',
   'k277': 'Cancel',
   'k278': 'edited',
+  'k279': 'typing…',
 };

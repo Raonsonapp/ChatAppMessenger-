@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -52,6 +53,15 @@ class _UserChatScreenState extends State<UserChatScreen> {
   bool _isUploading = false;
   bool _recording = false;
 
+  /// «Менависад…» — таймери хомӯшкунӣ пас аз таваққуфи чоп.
+  Timer? _typingTimer;
+  bool _typingSent = false;
+
+  /// Барои он ки нишони «менависад…» пас аз мӯҳлат худаш ғайб занад, ҳатто
+  /// агар аз Firestore навсозии нав наояд (масалан барнома хомӯш шуд).
+  Timer? _typingExpiryTimer;
+  DateTime? _watchedTypingAt;
+
   /// Ҷустуҷӯ дар дохили ҳамин чат.
   final TextEditingController _searchController = TextEditingController();
   bool _searching = false;
@@ -78,6 +88,47 @@ class _UserChatScreenState extends State<UserChatScreen> {
     }, SetOptions(merge: true));
   }
 
+  /// `true` — агар ҳамсӯҳбат дар 8 сонияи охир чизе навишта бошад. Тамға
+  /// одатан худи барнома бардошта мешавад; ин мӯҳлат танҳо эҳтиёт аст, агар
+  /// барнома пеш аз тоза кардан баста шавад.
+  bool _otherIsTyping(Map<String, dynamic>? convoData) {
+    final typing = convoData?['typing'] as Map<String, dynamic>?;
+    final at = (typing?[widget.otherUserId] as Timestamp?)?.toDate();
+    if (at == null) return false;
+    final left = const Duration(seconds: 8) - DateTime.now().difference(at);
+    if (left <= Duration.zero) return false;
+    if (_watchedTypingAt != at) {
+      _watchedTypingAt = at;
+      _typingExpiryTimer?.cancel();
+      _typingExpiryTimer = Timer(left, () {
+        if (mounted) setState(() {});
+      });
+    }
+    return true;
+  }
+
+  /// Ба ҳамсӯҳбат хабар медиҳем, ки ман ҳозир менависам.
+  Future<void> _setTyping(bool typing) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    if (_typingSent == typing) return;
+    _typingSent = typing;
+    await _conversationRef.set({
+      'typing': {uid: typing ? Timestamp.now() : FieldValue.delete()},
+    }, SetOptions(merge: true)).catchError((_) {});
+  }
+
+  /// Ҳар тағйири матн нишонаро нав мекунад ва пас аз 4 сония онро мебардорад.
+  void _onTyping(String value) {
+    _typingTimer?.cancel();
+    if (value.trim().isEmpty) {
+      _setTyping(false);
+      return;
+    }
+    _setTyping(true);
+    _typingTimer = Timer(const Duration(seconds: 4), () => _setTyping(false));
+  }
+
   /// Ҳангоми кушодани чат ҳисоби нохондашудаи ман сифр мешавад.
   Future<void> _clearMyUnread(String currentUid) async {
     await _conversationRef.set({
@@ -87,6 +138,9 @@ class _UserChatScreenState extends State<UserChatScreen> {
 
   @override
   void dispose() {
+    _typingTimer?.cancel();
+    _typingExpiryTimer?.cancel();
+    _setTyping(false);
     _controller.dispose();
     _searchController.dispose();
     _scrollController.dispose();
@@ -279,6 +333,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
     if (uid == null) return;
     final replying = _replyingTo;
     _controller.clear();
+    _typingTimer?.cancel();
+    _setTyping(false);
     setState(() => _replyingTo = null);
 
     await _messagesRef.add({
@@ -623,22 +679,33 @@ class _UserChatScreenState extends State<UserChatScreen> {
                           // «дар шабака» / «2 соат пеш» — бо эҳтироми танзимоти
                           // махфияти худи ҳамсӯҳбат.
                           StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                            stream: FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(widget.otherUserId)
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              final label = PresenceService.describe(snapshot.data?.data());
-                              if (label == null) return const SizedBox.shrink();
-                              return Text(
-                                label.text,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: label.isOnline
-                                      ? AppColors.neonEmerald
-                                      : AppColors.textSecondary,
-                                  fontSize: 11.5,
-                                ),
+                            stream: _conversationRef.snapshots(),
+                            builder: (context, convoSnapshot) {
+                              if (_otherIsTyping(convoSnapshot.data?.data())) {
+                                return Text(
+                                  tr('k279'),
+                                  style: TextStyle(color: AppColors.neonEmerald, fontSize: 11.5),
+                                );
+                              }
+                              return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(widget.otherUserId)
+                                    .snapshots(),
+                                builder: (context, snapshot) {
+                                  final label = PresenceService.describe(snapshot.data?.data());
+                                  if (label == null) return const SizedBox.shrink();
+                                  return Text(
+                                    label.text,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: label.isOnline
+                                          ? AppColors.neonEmerald
+                                          : AppColors.textSecondary,
+                                      fontSize: 11.5,
+                                    ),
+                                  );
+                                },
                               );
                             },
                           ),
@@ -714,6 +781,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 10),
                       ),
+                      onChanged: _onTyping,
                       onSubmitted: (_) => _handleSend(),
                     ),
                   ),
