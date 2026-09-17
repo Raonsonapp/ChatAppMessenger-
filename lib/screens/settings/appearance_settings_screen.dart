@@ -3,6 +3,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../../theme/app_theme.dart';
 import '../../theme/theme_controller.dart';
+import '../../theme/wallpaper_controller.dart';
+import '../../services/media_service.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
@@ -17,6 +19,19 @@ class AppearanceSettingsScreen extends StatefulWidget {
 class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
   Future<void> _select(bool dark) async {
     await themeController.setDark(dark);
+    if (mounted) setState(() {});
+  }
+
+  /// Заминаи чат — акс аз галерея интихоб ва ба ҳофизаи дастгоҳ нусха мешавад.
+  Future<void> _pickWallpaper() async {
+    final file = await MediaService.pickFromGallery();
+    if (file == null) return;
+    await wallpaperController.setFromPath(file.path);
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _clearWallpaper() async {
+    await wallpaperController.clear();
     if (mounted) setState(() {});
   }
 
@@ -85,6 +100,58 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 22),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 8),
+                      child: Text(
+                        tr('k280'),
+                        style: TextStyle(
+                          color: AppColors.textSecondary.withValues(alpha: 0.7),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                    GlassContainer(
+                      borderRadius: 18,
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      child: Column(
+                        children: [
+                          _option(
+                            icon: LucideIcons.image,
+                            label: tr('k281'),
+                            description: tr('k282'),
+                            selected: false,
+                            onTap: _pickWallpaper,
+                            showMark: false,
+                          ),
+                          if (wallpaperController.path != null) ...[
+                            Divider(color: AppColors.glassBorder, height: 1),
+                            _option(
+                              icon: LucideIcons.trash,
+                              label: tr('k283'),
+                              description: tr('k284'),
+                              selected: false,
+                              onTap: _clearWallpaper,
+                              showMark: false,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (wallpaperController.file != null) ...[
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.file(
+                          wallpaperController.file!,
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -101,6 +168,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
     required String description,
     required bool selected,
     required VoidCallback onTap,
+    bool showMark = true,
   }) {
     return Material(
       color: Colors.transparent,
@@ -129,7 +197,9 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                   ],
                 ),
               ),
-              if (selected)
+              if (!showMark)
+                Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 18)
+              else if (selected)
                 Icon(LucideIcons.check, color: AppColors.neonEmerald, size: 20)
               else
                 Icon(

@@ -279,4 +279,9 @@ const Map<String, String> stringsEn = {
   'k277': 'Cancel',
   'k278': 'edited',
   'k279': 'typing…',
+  'k280': 'CHAT WALLPAPER',
+  'k281': 'Choose wallpaper',
+  'k282': 'Photo from gallery',
+  'k283': 'Remove wallpaper',
+  'k284': 'Back to the default look',
 };

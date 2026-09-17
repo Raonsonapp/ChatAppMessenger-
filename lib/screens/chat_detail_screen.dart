@@ -18,6 +18,7 @@ import '../widgets/attachment_sheet.dart';
 import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
 import '../l10n/l10n.dart';
+import '../widgets/chat_wallpaper.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final ChatConversation conversation;
@@ -225,7 +226,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             children: [
               _buildHeader(convo),
               Expanded(
-                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                child: ChatWallpaper(
+                    child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
@@ -269,7 +271,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       },
                     );
                   },
-                ),
+                )),
               ),
               if (_replyingTo != null) _buildReplyPreview(),
               _buildInputBar(),

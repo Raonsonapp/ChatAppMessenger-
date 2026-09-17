@@ -27,6 +27,7 @@ import 'contact_info_screen.dart';
 import 'call_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
+import '../widgets/chat_wallpaper.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -459,7 +460,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
                 children: [
                   _searching ? _buildSearchHeader() : _buildHeader(),
                   Expanded(
-                    child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    child: ChatWallpaper(
+                        child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                       stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                       builder: (context, snapshot) {
                         if (snapshot.hasError) {
@@ -533,7 +535,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                           },
                         );
                       },
-                    ),
+                    )),
                   ),
                   if (_replyingTo != null && !iBlockedThem) _buildReplyPreview(),
                   if (iBlockedThem) _buildBlockedBanner() else _buildInputBar(),

@@ -21,6 +21,7 @@ import '../widgets/sticker_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
 import 'community_info_screen.dart';
 import '../l10n/l10n.dart';
+import '../widgets/chat_wallpaper.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -283,7 +284,8 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
             children: [
               _buildHeader(),
               Expanded(
-                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                child: ChatWallpaper(
+                    child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
@@ -339,7 +341,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                       },
                     );
                   },
-                ),
+                )),
               ),
               if (_replyingTo != null) _buildReplyPreview(),
               _buildInputBar(),

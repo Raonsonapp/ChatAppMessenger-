@@ -22,6 +22,7 @@ import '../widgets/sticker_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
 import 'group_info_screen.dart';
 import '../l10n/l10n.dart';
+import '../widgets/chat_wallpaper.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -285,7 +286,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             children: [
               _buildHeader(),
               Expanded(
-                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                child: ChatWallpaper(
+                    child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
@@ -341,7 +343,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       },
                     );
                   },
-                ),
+                )),
               ),
               if (_replyingTo != null) _buildReplyPreview(),
               _buildInputBar(),
