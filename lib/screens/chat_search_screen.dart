@@ -6,13 +6,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../models/chat_conversation.dart';
 import '../models/app_conversation.dart';
+import '../models/app_group.dart';
 import '../widgets/chat_tile.dart';
 import '../widgets/user_conversation_tile.dart';
+import '../widgets/group_tile.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/glass_container.dart';
 import '../l10n/l10n.dart';
 
-/// Ҷустуҷӯи воқеӣ дар байни ChatAI ва сӯҳбатҳои воқеии корбар.
+/// Ҷустуҷӯи умумӣ: ChatAI, сӯҳбатҳои шахсӣ ва гурӯҳҳо — ҳам аз рӯи ном ва
+/// ҳам аз рӯи матни охирин паём.
 class ChatSearchScreen extends StatefulWidget {
   const ChatSearchScreen({super.key});
 
@@ -84,9 +87,14 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
                             .snapshots(),
                         builder: (context, snapshot) {
                           if (!snapshot.hasData) return const SizedBox.shrink();
+                          // Ҳам номи ҳамсӯҳбат ва ҳам матни охирин паём —
+                          // WhatsApp низ ҳар дуро меҷӯяд.
                           final matches = snapshot.data!.docs.where((doc) {
                             final convo = AppConversation.fromDoc(doc);
-                            return ql.isEmpty || convo.otherName(currentUid).toLowerCase().contains(ql);
+                            if (convo.isDeleted(currentUid)) return false;
+                            if (ql.isEmpty) return true;
+                            return convo.otherName(currentUid).toLowerCase().contains(ql) ||
+                                convo.lastMessage.toLowerCase().contains(ql);
                           }).toList();
                           if (matches.isEmpty) return const SizedBox.shrink();
                           return Column(
@@ -94,6 +102,31 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
                               final convo = AppConversation.fromDoc(doc);
                               return UserConversationTile(conversation: convo, currentUid: currentUid);
                             }).toList(),
+                          );
+                        },
+                      ),
+                    if (currentUid != null)
+                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        stream: FirebaseFirestore.instance
+                            .collection('groups')
+                            .where('members', arrayContains: currentUid)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) return const SizedBox.shrink();
+                          final matches = snapshot.data!.docs.where((doc) {
+                            final group = AppGroup.fromDoc(doc);
+                            if (ql.isEmpty) return true;
+                            return group.name.toLowerCase().contains(ql) ||
+                                group.lastMessage.toLowerCase().contains(ql);
+                          }).toList();
+                          if (matches.isEmpty) return const SizedBox.shrink();
+                          return Column(
+                            children: matches
+                                .map((doc) => GroupTile(
+                                      group: AppGroup.fromDoc(doc),
+                                      currentUid: currentUid,
+                                    ))
+                                .toList(),
                           );
                         },
                       ),
