@@ -22,6 +22,9 @@ class AppCall {
   final int durationSeconds;
   final List<String> participants;
 
+  /// Барои занги гурӯҳӣ — номи гурӯҳ; вагарна `null`.
+  final String? groupName;
+
   AppCall({
     required this.id,
     required this.callerId,
@@ -33,6 +36,7 @@ class AppCall {
     required this.participants,
     this.createdAt,
     this.durationSeconds = 0,
+    this.groupName,
   });
 
   factory AppCall.fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -51,6 +55,7 @@ class AppCall {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       durationSeconds: (data['durationSeconds'] ?? 0) as int,
       participants: List<String>.from(data['participants'] as List? ?? []),
+      groupName: data['groupName'] as String?,
     );
   }
 
@@ -99,7 +104,10 @@ class AppCall {
     };
   }
 
-  String otherName(String currentUid) => currentUid == callerId ? calleeName : callerName;
+  /// Дар таърихи зангҳо занги гурӯҳӣ бо номи гурӯҳ нишон дода мешавад,
+  /// на бо номи як иштирокчӣ.
+  String otherName(String currentUid) =>
+      groupName ?? (currentUid == callerId ? calleeName : callerName);
   String otherUid(String currentUid) => currentUid == callerId ? calleeId : callerId;
   bool isOutgoing(String currentUid) => currentUid == callerId;
 }

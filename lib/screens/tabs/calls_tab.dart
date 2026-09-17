@@ -9,6 +9,7 @@ import '../../utils/doc_sort.dart';
 import '../call_screen.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/user_avatar.dart';
+import '../../widgets/group_avatar.dart';
 
 class CallsTab extends StatelessWidget {
   const CallsTab({super.key});
@@ -72,10 +73,16 @@ class CallsTab extends StatelessWidget {
             final isMissed = call.outcome == CallOutcome.missed && !isOutgoing;
             final otherName = call.otherName(currentUid);
             final otherUid = call.otherUid(currentUid);
+            final isGroupCall = call.groupName != null;
 
             return ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: UserAvatar(name: otherName, uid: otherUid, size: 48),
+              // Занги гурӯҳӣ бо нишонаи гурӯҳ нишон дода мешавад; такрор
+              // задани он аз таърих маъно надорад, чун рӯйхати аъзоён ин ҷо
+              // нест — барои он ба худи гурӯҳ даромадан лозим аст.
+              leading: isGroupCall
+                  ? const GroupAvatar(size: 48)
+                  : UserAvatar(name: otherName, uid: otherUid, size: 48),
               title: Text(
                 otherName,
                 style: TextStyle(
@@ -101,13 +108,21 @@ class CallsTab extends StatelessWidget {
                 ],
               ),
               trailing: IconButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => CallScreen(otherUserId: otherUid, otherUserName: otherName, type: call.type)),
-                ),
+                onPressed: isGroupCall
+                    ? null
+                    : () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CallScreen(
+                              otherUserId: otherUid,
+                              otherUserName: otherName,
+                              type: call.type,
+                            ),
+                          ),
+                        ),
                 icon: Icon(
                   call.type == CallType.video ? LucideIcons.video : LucideIcons.phone,
-                  color: AppColors.neonEmerald,
+                  color: isGroupCall ? AppColors.textSecondary : AppColors.neonEmerald,
                   size: 19,
                 ),
               ),
