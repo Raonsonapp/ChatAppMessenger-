@@ -57,6 +57,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   bool _isUploading = false;
   bool _recording = false;
 
+  /// Номи аъзоён. Аз виҷет меояд, вале вақте чат аз огоҳинома кушода
+  /// мешавад, он холӣ аст — он гоҳ рӯйхат аз худи ҳуҷҷат хонда мешавад.
+  late Map<String, String> _memberNames = widget.memberNames;
+
   /// Матни паёми пиншуда (холӣ — пин нест).
   String _pinnedText = '';
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _pinSub;
@@ -72,7 +76,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Future<void> _notifyMembers(String preview) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    final myName = widget.memberNames[uid] ?? tr('k002');
+    final myName = _memberNames[uid] ?? tr('k002');
     await PushService.notifyMany(
       toUids: _others,
       title: widget.groupName,
@@ -92,7 +96,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final counters = <String, Object>{
-      for (final member in widget.memberNames.keys)
+      for (final member in _memberNames.keys)
         if (member != uid) member: FieldValue.increment(1),
     };
     await _groupRef.set({
@@ -107,7 +111,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// Ҳамаи аъзоён ба ғайр аз худам — барои ҳисоби нохондашуда.
   List<String> get _others {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    return widget.memberNames.keys.where((m) => m != uid).toList();
+    return _memberNames.keys.where((m) => m != uid).toList();
   }
 
   /// Ҳангоми кушодани гурӯҳ ҳисоби нохондашудаи ман сифр мешавад.
@@ -124,8 +128,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     super.initState();
     _clearMyUnread();
     _pinSub = _groupRef.snapshots().listen((snap) {
-      final pinned = (snap.data()?['pinnedText'] as String?) ?? '';
-      if (pinned != _pinnedText && mounted) setState(() => _pinnedText = pinned);
+      final data = snap.data();
+      final pinned = (data?['pinnedText'] as String?) ?? '';
+      final names = (data?['memberNames'] as Map<String, dynamic>? ?? {})
+          .map((k, v) => MapEntry(k, '$v'));
+      if (!mounted) return;
+      final namesChanged = names.length != _memberNames.length ||
+          names.entries.any((e) => _memberNames[e.key] != e.value);
+      if (pinned != _pinnedText || namesChanged) {
+        setState(() {
+          _pinnedText = pinned;
+          if (names.isNotEmpty) _memberNames = names;
+        });
+      }
     }, onError: (_) {});
   }
 
@@ -342,9 +357,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Future<void> _replyPrivately(ChatMessage message) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || message.senderId == uid) return;
-    final otherName = widget.memberNames[message.senderId] ?? tr('k002');
+    final otherName = _memberNames[message.senderId] ?? tr('k002');
     final conversationId = AppConversation.idFor(uid, message.senderId);
-    final myName = widget.memberNames[uid] ?? tr('k002');
+    final myName = _memberNames[uid] ?? tr('k002');
 
     await FirebaseFirestore.instance.collection('conversations').doc(conversationId).set({
       'participants': [uid, message.senderId],
@@ -372,7 +387,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   void _showMentionPicker() {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    final members = widget.memberNames.entries.where((e) => e.key != uid).toList();
+    final members = _memberNames.entries.where((e) => e.key != uid).toList();
     if (members.isEmpty) return;
 
     showModalBottomSheet<void>(
@@ -527,7 +542,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           message: message,
                           isMe: isMe,
                           currentUid: currentUid,
-                          senderLabel: isMe ? null : widget.memberNames[message.senderId],
+                          senderLabel: isMe ? null : _memberNames[message.senderId],
                           showReadReceipts: false,
                           onReply: (m) => setState(() => _replyingTo = m),
                           onDelete: _deleteMessage,
@@ -590,7 +605,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           groupId: widget.groupId,
           groupName: widget.groupName,
           type: type,
-          memberNames: widget.memberNames,
+          memberNames: _memberNames,
         ),
       ),
     );
@@ -635,7 +650,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
                           ),
-                          Text(trf('k051', [widget.memberNames.length]), style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                          Text(trf('k051', [_memberNames.length]), style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
                         ],
                       ),
                     ),
