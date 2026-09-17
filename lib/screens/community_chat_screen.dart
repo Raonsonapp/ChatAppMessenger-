@@ -1,16 +1,21 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
 import '../services/media_service.dart';
+import '../services/chat_media_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/attachment_sheet.dart';
+import '../widgets/voice_recorder_bar.dart';
 import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
@@ -39,6 +44,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
   final ScrollController _scrollController = ScrollController();
   ChatMessage? _replyingTo;
   bool _isUploading = false;
+  bool _recording = false;
 
   DocumentReference<Map<String, dynamic>> get _communityRef =>
       FirebaseFirestore.instance.collection('communities').doc(widget.communityId);
@@ -89,6 +95,8 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         onContactTap: _openContactPicker,
         onGifPicked: (file) => _sendImageMessage(file, mediaType: 'gif'),
         onStickerTap: _openStickerPicker,
+        onVideoPicked: _sendVideoMessage,
+        onDocumentPicked: _sendDocumentMessage,
       ),
     );
   }
@@ -161,6 +169,52 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
+  }
+
+  Future<void> _sendMedia(Future<bool> Function() send) async {
+    setState(() => _isUploading = true);
+    try {
+      if (await send()) _scrollToBottom();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k247', [e]))));
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  String get _storageFolder => 'communities/${widget.communityId}';
+
+  Future<void> _sendVideoMessage(XFile file) => _sendMedia(
+        () => ChatMediaService.sendVideo(
+          messagesRef: _messagesRef,
+          parentRef: _communityRef,
+          storageFolder: _storageFolder,
+          picked: file,
+        ),
+      );
+
+  Future<void> _sendDocumentMessage(PlatformFile picked) => _sendMedia(
+        () => ChatMediaService.sendDocument(
+          messagesRef: _messagesRef,
+          parentRef: _communityRef,
+          storageFolder: _storageFolder,
+          picked: picked,
+        ),
+      );
+
+  Future<void> _sendVoiceMessage(File file, Duration duration) {
+    setState(() => _recording = false);
+    return _sendMedia(
+      () => ChatMediaService.sendVoice(
+        messagesRef: _messagesRef,
+        parentRef: _communityRef,
+        storageFolder: _storageFolder,
+        file: file,
+        duration: duration,
+      ),
+    );
   }
 
   Future<void> _handleSend() async {
@@ -356,6 +410,21 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
   }
 
   Widget _buildInputBar() {
+    // Ҳангоми сабти овоз ба ҷои майдони матн панели сабт нишон дода мешавад.
+    if (_recording) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(10, 6, 10, 14),
+        child: GlassContainer(
+          borderRadius: 24,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: VoiceRecorderBar(
+            onRecorded: _sendVoiceMessage,
+            onCancel: () => setState(() => _recording = false),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 14),
       child: Row(
@@ -402,6 +471,10 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                             if (file != null) _sendImageMessage(file);
                           },
                     icon: Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
+                  ),
+                  IconButton(
+                    onPressed: _isUploading ? null : () => setState(() => _recording = true),
+                    icon: Icon(LucideIcons.mic, color: AppColors.textSecondary, size: 20),
                   ),
                 ],
               ),

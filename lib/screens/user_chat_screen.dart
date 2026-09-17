@@ -12,6 +12,7 @@ import '../models/chat_message.dart';
 import '../models/app_call.dart';
 import '../services/media_service.dart';
 import '../services/push_service.dart';
+import '../services/chat_media_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
@@ -195,38 +196,13 @@ class _UserChatScreenState extends State<UserChatScreen> {
   }
 
   /// Боркунӣ ва фиристодани ҳар навъи файл (овоз, видео, ҳуҷҷат).
-  Future<void> _sendFileMessage({
-    required File file,
-    required String name,
-    required String mediaType,
-    required String preview,
-    int? durationSeconds,
-    int? sizeBytes,
-  }) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+  Future<void> _sendMedia(Future<bool> Function() send, String preview) async {
     setState(() => _isUploading = true);
     try {
-      final url = await MediaService.uploadFile(file, name, 'conversations/${widget.conversationId}');
-      await _messagesRef.add({
-        'text': '',
-        'senderId': uid,
-        'isAI': false,
-        'createdAt': FieldValue.serverTimestamp(),
-        'read': false,
-        'mediaUrl': url,
-        'mediaType': mediaType,
-        if (durationSeconds != null) 'mediaDuration': durationSeconds,
-        if (sizeBytes != null) 'mediaSize': sizeBytes,
-        if (mediaType == 'document') 'mediaName': name,
-      });
-      await _conversationRef.set({
-        'lastMessage': preview,
-        'lastMessageTime': FieldValue.serverTimestamp(),
-        'lastSenderId': uid,
-      }, SetOptions(merge: true));
-      _notifyOther(preview);
-      _scrollToBottom();
+      if (await send()) {
+        _notifyOther(preview);
+        _scrollToBottom();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k247', [e]))));
@@ -236,40 +212,40 @@ class _UserChatScreenState extends State<UserChatScreen> {
     }
   }
 
-  Future<void> _sendVideoMessage(XFile file) {
-    return _sendFileMessage(
-      file: File(file.path),
-      name: file.name,
-      mediaType: 'video',
-      preview: '🎥 Видео',
-    );
-  }
+  String get _storageFolder => 'conversations/${widget.conversationId}';
 
-  Future<void> _sendDocumentMessage(PlatformFile picked) async {
-    final path = picked.path;
-    if (path == null) return;
-    final file = File(path);
-    // PlatformFile ҳаҷмро намедиҳад — онро аз худи файл мегирем.
-    final size = await file.length();
-    await _sendFileMessage(
-      file: file,
-      name: picked.name,
-      mediaType: 'document',
-      preview: '📄 ${picked.name}',
-      sizeBytes: size,
-    );
-  }
+  Future<void> _sendVideoMessage(XFile file) => _sendMedia(
+        () => ChatMediaService.sendVideo(
+          messagesRef: _messagesRef,
+          parentRef: _conversationRef,
+          storageFolder: _storageFolder,
+          picked: file,
+        ),
+        '🎥 Видео',
+      );
 
-  Future<void> _sendVoiceMessage(File file, Duration duration) async {
+  Future<void> _sendDocumentMessage(PlatformFile picked) => _sendMedia(
+        () => ChatMediaService.sendDocument(
+          messagesRef: _messagesRef,
+          parentRef: _conversationRef,
+          storageFolder: _storageFolder,
+          picked: picked,
+        ),
+        '📄 ${picked.name}',
+      );
+
+  Future<void> _sendVoiceMessage(File file, Duration duration) {
     setState(() => _recording = false);
-    await _sendFileMessage(
-      file: file,
-      name: 'voice.m4a',
-      mediaType: 'audio',
-      preview: '🎤 Паёми овозӣ',
-      durationSeconds: duration.inSeconds,
+    return _sendMedia(
+      () => ChatMediaService.sendVoice(
+        messagesRef: _messagesRef,
+        parentRef: _conversationRef,
+        storageFolder: _storageFolder,
+        file: file,
+        duration: duration,
+      ),
+      '🎤 Паёми овозӣ',
     );
-    await file.delete().catchError((_) => file);
   }
 
   Future<void> _handleSend() async {
