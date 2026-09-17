@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -11,6 +12,7 @@ import '../../widgets/group_tile.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/doc_sort.dart';
 import '../../l10n/l10n.dart';
+import '../archived_chats_screen.dart';
 
 class ChatsTab extends StatelessWidget {
   const ChatsTab({super.key});
@@ -76,8 +78,19 @@ class ChatsTab extends StatelessWidget {
                   child: Center(child: CircularProgressIndicator(color: AppColors.neonEmerald)),
                 );
               }
-              final docs = sortByTimeDesc(snapshot.data!.docs, 'lastMessageTime');
-              if (docs.isEmpty) {
+              final all = sortByTimeDesc(snapshot.data!.docs, 'lastMessageTime')
+                  .map(AppConversation.fromDoc)
+                  .toList();
+              final archived = all.where((c) => c.isArchived(currentUid)).toList();
+              // Чатҳои мустаҳкамшуда ҳамеша дар боло — мисли WhatsApp.
+              final visible = all.where((c) => !c.isArchived(currentUid)).toList()
+                ..sort((a, b) {
+                  final pa = a.isPinned(currentUid) ? 0 : 1;
+                  final pb = b.isPinned(currentUid) ? 0 : 1;
+                  return pa.compareTo(pb);
+                });
+
+              if (all.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Text(
@@ -88,18 +101,64 @@ class ChatsTab extends StatelessWidget {
                 );
               }
               return Column(
-                children: docs.map((doc) {
-                  final convo = AppConversation.fromDoc(doc);
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: UserConversationTile(conversation: convo, currentUid: currentUid),
-                  );
-                }).toList(),
+                children: [
+                  if (archived.isNotEmpty)
+                    _ArchivedRow(
+                      count: archived.length,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ArchivedChatsScreen()),
+                      ),
+                    ),
+                  ...visible.map((convo) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: UserConversationTile(conversation: convo, currentUid: currentUid),
+                    );
+                  }),
+                ],
               );
             },
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Сатри «Чатҳои бойгонӣ» дар болои рӯйхат.
+class _ArchivedRow extends StatelessWidget {
+  final int count;
+  final VoidCallback onTap;
+  const _ArchivedRow({required this.count, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.glassBorder, width: 0.6)),
+          ),
+          child: Row(
+            children: [
+              Icon(LucideIcons.archive, color: AppColors.textSecondary, size: 19),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  tr('k269'),
+                  style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14.5),
+                ),
+              ),
+              Text('$count', style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -56,6 +56,29 @@ class _UserChatScreenState extends State<UserChatScreen> {
 
   CollectionReference<Map<String, dynamic>> get _messagesRef => _conversationRef.collection('messages');
 
+  /// Пас аз ҳар паём сарлавҳаи сӯҳбат нав карда мешавад ва ҳисоби нохондашуда
+  /// барои тарафи муқобил як воҳид зиёд мешавад — рӯйхати чатҳо ҳамин ҳисобро
+  /// нишон медиҳад, бе он ки паёмҳоро аз нав ҳисоб кунад.
+  Future<void> _touchConversation(String preview) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await _conversationRef.set({
+      'lastMessage': preview,
+      'lastMessageTime': FieldValue.serverTimestamp(),
+      'lastSenderId': uid,
+      'unread': {widget.otherUserId: FieldValue.increment(1)},
+      // Паёми нав чатро аз бойгонии ҳар ду тараф бармегардонад — чун WhatsApp.
+      'archivedBy': FieldValue.arrayRemove([uid, widget.otherUserId]),
+    }, SetOptions(merge: true));
+  }
+
+  /// Ҳангоми кушодани чат ҳисоби нохондашудаи ман сифр мешавад.
+  Future<void> _clearMyUnread(String currentUid) async {
+    await _conversationRef.set({
+      'unread': {currentUid: 0},
+    }, SetOptions(merge: true)).catchError((_) {});
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -127,11 +150,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
       'read': false,
       'mediaType': 'sticker',
     });
-    await _conversationRef.set({
-      'lastMessage': '$sticker Стикер',
-      'lastMessageTime': FieldValue.serverTimestamp(),
-      'lastSenderId': uid,
-    }, SetOptions(merge: true));
+    await _touchConversation('$sticker Стикер');
+    _notifyOther('$sticker Стикер');
     _scrollToBottom();
   }
 
@@ -155,11 +175,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
       'createdAt': FieldValue.serverTimestamp(),
       'read': false,
     });
-    await _conversationRef.set({
-      'lastMessage': text,
-      'lastMessageTime': FieldValue.serverTimestamp(),
-      'lastSenderId': uid,
-    }, SetOptions(merge: true));
+    await _touchConversation(text);
+    _notifyOther(text);
     _scrollToBottom();
   }
 
@@ -178,11 +195,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         'mediaUrl': url,
         'mediaType': mediaType,
       });
-      await _conversationRef.set({
-        'lastMessage': '📷 Расм',
-        'lastMessageTime': FieldValue.serverTimestamp(),
-        'lastSenderId': uid,
-      }, SetOptions(merge: true));
+      await _touchConversation('📷 Расм');
       _notifyOther('📷 Расм');
       _scrollToBottom();
     } catch (e) {
@@ -221,6 +234,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
           parentRef: _conversationRef,
           storageFolder: _storageFolder,
           picked: file,
+          unreadFor: widget.otherUserId,
         ),
         '🎥 Видео',
       );
@@ -231,6 +245,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
           parentRef: _conversationRef,
           storageFolder: _storageFolder,
           picked: picked,
+          unreadFor: widget.otherUserId,
         ),
         '📄 ${picked.name}',
       );
@@ -244,6 +259,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         storageFolder: _storageFolder,
         file: file,
         duration: duration,
+        unreadFor: widget.otherUserId,
       ),
       '🎤 Паёми овозӣ',
     );
@@ -268,11 +284,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
       if (replying != null) 'replyToSenderId': replying.senderId,
     });
 
-    await _conversationRef.set({
-      'lastMessage': text,
-      'lastMessageTime': FieldValue.serverTimestamp(),
-      'lastSenderId': uid,
-    }, SetOptions(merge: true));
+    await _touchConversation(text);
 
     _notifyOther(text);
     _scrollToBottom();
@@ -284,6 +296,9 @@ class _UserChatScreenState extends State<UserChatScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final convo = await _conversationRef.get();
+    // Агар гиранда ин чатро хомӯш карда бошад, огоҳинома намефиристем.
+    final muted = List<String>.from(convo.data()?['mutedBy'] as List? ?? []);
+    if (muted.contains(widget.otherUserId)) return;
     final names = (convo.data()?['participantNames'] as Map<String, dynamic>?) ?? {};
     final myName = '${names[uid] ?? tr('k002')}';
     await PushService.notify(
@@ -314,11 +329,15 @@ class _UserChatScreenState extends State<UserChatScreen> {
       final data = d.data();
       return data['senderId'] != currentUid && (data['read'] != true);
     }).toList();
-    if (unread.isEmpty) return;
+    if (unread.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _clearMyUnread(currentUid));
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (final d in unread) {
         d.reference.update({'read': true});
       }
+      _clearMyUnread(currentUid);
     });
   }
 

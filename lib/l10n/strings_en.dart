@@ -262,4 +262,13 @@ const Map<String, String> stringsEn = {
   'k260': 'Starred messages',
   'k261': 'No starred messages yet',
   'k262': 'Added to starred',
+  'k263': 'Pin',
+  'k264': 'Unpin',
+  'k265': 'Archive',
+  'k266': 'Unarchive',
+  'k267': 'Mute',
+  'k268': 'Unmute',
+  'k269': 'Archived chats',
+  'k270': 'No archived chats',
+  'k271': 'Mark as read',
 };

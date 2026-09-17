@@ -24,6 +24,7 @@ class ChatMediaService {
     required String preview,
     int? durationSeconds,
     int? sizeBytes,
+    String? unreadFor,
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return false;
@@ -45,6 +46,8 @@ class ChatMediaService {
       'lastMessage': preview,
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
+      if (unreadFor != null) 'unread': {unreadFor: FieldValue.increment(1)},
+      if (unreadFor != null) 'archivedBy': FieldValue.arrayRemove([uid, unreadFor]),
     }, SetOptions(merge: true));
     return true;
   }
@@ -54,6 +57,7 @@ class ChatMediaService {
     required DocumentReference<Map<String, dynamic>> parentRef,
     required String storageFolder,
     required XFile picked,
+    String? unreadFor,
   }) {
     return sendFile(
       messagesRef: messagesRef,
@@ -63,6 +67,7 @@ class ChatMediaService {
       name: picked.name,
       mediaType: 'video',
       preview: '🎥 Видео',
+      unreadFor: unreadFor,
     );
   }
 
@@ -71,6 +76,7 @@ class ChatMediaService {
     required DocumentReference<Map<String, dynamic>> parentRef,
     required String storageFolder,
     required PlatformFile picked,
+    String? unreadFor,
   }) async {
     final path = picked.path;
     if (path == null) return false;
@@ -86,6 +92,7 @@ class ChatMediaService {
       mediaType: 'document',
       preview: '📄 ${picked.name}',
       sizeBytes: size,
+      unreadFor: unreadFor,
     );
   }
 
@@ -95,6 +102,7 @@ class ChatMediaService {
     required String storageFolder,
     required File file,
     required Duration duration,
+    String? unreadFor,
   }) async {
     final sent = await sendFile(
       messagesRef: messagesRef,
@@ -105,6 +113,7 @@ class ChatMediaService {
       mediaType: 'audio',
       preview: '🎤 Паёми овозӣ',
       durationSeconds: duration.inSeconds,
+      unreadFor: unreadFor,
     );
     // Файли муваққатӣ дигар лозим нест.
     await file.delete().catchError((_) => file);
