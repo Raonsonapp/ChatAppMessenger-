@@ -325,6 +325,20 @@ class _UserChatScreenState extends State<UserChatScreen> {
     await _messagesRef.doc(message.id).update({'deleted': true});
   }
 
+  Future<void> _editMessage(ChatMessage message, String newText) async {
+    await _messagesRef.doc(message.id).update({'text': newText, 'edited': true});
+  }
+
+  /// Нест кардан танҳо барои худам — ҳуҷҷат мемонад, вале дар рӯйхати ман
+  /// нишон дода намешавад.
+  Future<void> _deleteForMe(ChatMessage message) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await _messagesRef.doc(message.id).update({
+      'deletedFor': FieldValue.arrayUnion([uid]),
+    });
+  }
+
   Future<void> _reactToMessage(ChatMessage message, String emoji) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -407,7 +421,11 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         if (!snapshot.hasData) {
                           return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
                         }
-                        final allDocs = snapshot.data!.docs;
+                        // Паёмҳое, ки ман барои худам нест кардаам, намоён нестанд.
+                        final allDocs = snapshot.data!.docs.where((d) {
+                          final hidden = List<String>.from(d.data()['deletedFor'] as List? ?? []);
+                          return !hidden.contains(currentUid);
+                        }).toList();
                         if (allDocs.isEmpty) {
                           return Center(
                             child: Text(
@@ -451,6 +469,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
                               onReply: (m) => setState(() => _replyingTo = m),
                               onDelete: _deleteMessage,
                               onReact: _reactToMessage,
+                              onEdit: _editMessage,
+                              onDeleteForMe: _deleteForMe,
                               messageRef: _messagesRef.doc(message.id),
                               chatTitle: widget.otherUserName,
                             );

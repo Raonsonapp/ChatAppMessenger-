@@ -22,6 +22,12 @@ class MessageBubble extends StatelessWidget {
   final bool showReadReceipts;
   final ValueChanged<ChatMessage>? onReply;
   final ValueChanged<ChatMessage>? onDelete;
+
+  /// Нест кардан танҳо барои худам — паём дар тарафи ҳамсӯҳбат мемонад.
+  final ValueChanged<ChatMessage>? onDeleteForMe;
+
+  /// Тағйир додани матни паёми худам.
+  final void Function(ChatMessage message, String newText)? onEdit;
   final void Function(ChatMessage message, String emoji)? onReact;
 
   /// Ҳуҷҷати худи паём — барои ситорадор кардан лозим аст.
@@ -38,6 +44,8 @@ class MessageBubble extends StatelessWidget {
     this.showReadReceipts = true,
     this.onReply,
     this.onDelete,
+    this.onDeleteForMe,
+    this.onEdit,
     this.onReact,
     this.messageRef,
     this.chatTitle,
@@ -113,11 +121,31 @@ class MessageBubble extends StatelessWidget {
                     Clipboard.setData(ClipboardData(text: message.text));
                   },
                 ),
+              if (isMe && _canEdit)
+                _actionTile(
+                  context,
+                  icon: LucideIcons.pencil,
+                  label: tr('k274'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _promptEdit(context);
+                  },
+                ),
+              if (onDeleteForMe != null)
+                _actionTile(
+                  context,
+                  icon: LucideIcons.eye_off,
+                  label: tr('k275'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onDeleteForMe?.call(message);
+                  },
+                ),
               if (isMe)
                 _actionTile(
                   context,
                   icon: LucideIcons.trash,
-                  label: tr('k241'),
+                  label: onDeleteForMe == null ? tr('k241') : tr('k276'),
                   color: Colors.redAccent,
                   onTap: () {
                     Navigator.pop(context);
@@ -127,6 +155,50 @@ class MessageBubble extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Матнро танҳо дар 15 дақиқаи аввал тағйир додан мумкин аст — ҳамон
+  /// маҳдудияте, ки WhatsApp дорад.
+  bool get _canEdit {
+    if (onEdit == null || message.mediaUrl != null || message.text.isEmpty) return false;
+    final sentAt = message.timestamp;
+    if (sentAt == null) return true;
+    return DateTime.now().difference(sentAt) < const Duration(minutes: 15);
+  }
+
+  void _promptEdit(BuildContext context) {
+    final controller = TextEditingController(text: message.text);
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(tr('k274'), style: TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 5,
+          minLines: 1,
+          style: TextStyle(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(tr('k277'), style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              final text = controller.text.trim();
+              Navigator.pop(dialogContext);
+              if (text.isNotEmpty && text != message.text) onEdit?.call(message, text);
+            },
+            child: Text(tr('k117'), style: TextStyle(color: AppColors.neonEmerald)),
+          ),
+        ],
       ),
     );
   }
@@ -419,6 +491,13 @@ class MessageBubble extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (message.edited) ...[
+                      Text(
+                        tr('k278'),
+                        style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6), fontSize: 10),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
                     Text(
                       _formatTime(message.timestamp),
                       style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6), fontSize: 10),

@@ -273,4 +273,9 @@ const Map<String, String> stringsEn = {
   'k271': 'Mark as read',
   'k272': 'Search in chat',
   'k273': 'Nothing found',
+  'k274': 'Edit',
+  'k275': 'Delete for me',
+  'k276': 'Delete for everyone',
+  'k277': 'Cancel',
+  'k278': 'edited',
 };

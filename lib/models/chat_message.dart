@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Ҳар ҳуҷҷат дар `.../messages` ба ин сохтор мувофиқат мекунад:
 /// { text, senderId, isAI, createdAt, replyToText?, replyToSenderId?,
 ///   deleted?, read?, mediaUrl?, mediaType?, mediaDuration?, mediaName?,
-///   mediaSize? }
+///   mediaSize?, edited?, deletedFor? }
 ///
 /// mediaType: image | gif | sticker | audio | video | document
 class ChatMessage {
@@ -31,6 +31,12 @@ class ChatMessage {
   /// Паём аз чати дигар нусхабардорӣ шудааст.
   final bool forwarded;
 
+  /// Матни паём пас аз фиристодан тағйир дода шудааст.
+  final bool edited;
+
+  /// Корбароне, ки паёмро танҳо барои худ нест кардаанд.
+  final List<String> deletedFor;
+
   final Map<String, String> reactions;
 
   ChatMessage({
@@ -49,6 +55,8 @@ class ChatMessage {
     this.mediaName,
     this.mediaSize,
     this.forwarded = false,
+    this.edited = false,
+    this.deletedFor = const [],
     this.reactions = const {},
   });
 
@@ -71,6 +79,8 @@ class ChatMessage {
       mediaName: data['mediaName'] as String?,
       mediaSize: (data['mediaSize'] as num?)?.toInt(),
       forwarded: (data['forwarded'] ?? false) as bool,
+      edited: (data['edited'] ?? false) as bool,
+      deletedFor: List<String>.from(data['deletedFor'] as List? ?? []),
       reactions: rawReactions.map((k, v) => MapEntry(k, v as String)),
     );
   }
