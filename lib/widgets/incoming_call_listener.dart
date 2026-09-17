@@ -6,10 +6,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_call.dart';
 import '../screens/incoming_call_screen.dart';
 
-/// Дар паси саҳна занги воридотиро назорат мекунад (то барнома кушода
-/// бошад) ва IncomingCallScreen-ро худкор мекушояд. Огоҳии push (FCM)
-/// дар ин лоиҳа пайваст нашудааст — занг танҳо вақте ки барнома дар
-/// пешзамина кушода аст ошкор мешавад.
+/// Дар паси саҳна занги воридотиро назорат мекунад ва IncomingCallScreen-ро
+/// худкор мекушояд — ҳам барои занги шахсӣ ва ҳам барои занги гурӯҳӣ.
+/// Занг вақте ошкор мешавад, ки барнома дар пешзамина кушода бошад.
 class IncomingCallListener extends StatefulWidget {
   final Widget child;
   const IncomingCallListener({super.key, required this.child});
@@ -67,6 +66,9 @@ class _IncomingCallListenerState extends State<IncomingCallListener> {
               callerId: call.callerId,
               callerName: call.callerName,
               type: call.type,
+              channelId: data['channelId'] as String?,
+              groupId: data['groupId'] as String?,
+              groupName: data['groupName'] as String?,
             ),
           ),
         );

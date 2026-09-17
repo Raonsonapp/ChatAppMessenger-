@@ -8,7 +8,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
-import '../utils/snackbar_utils.dart';
 import '../models/chat_message.dart';
 import '../services/media_service.dart';
 import '../services/chat_media_service.dart';
@@ -25,6 +24,8 @@ import '../l10n/l10n.dart';
 import '../widgets/chat_wallpaper.dart';
 import '../services/location_service.dart';
 import '../widgets/group_avatar.dart';
+import '../models/app_call.dart';
+import 'group_call_screen.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -432,6 +433,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
+  /// Занги гурӯҳӣ — ҳама аъзоён занг мегиранд ва ба як канал ҳамроҳ мешаванд.
+  void _startGroupCall(CallType type) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GroupCallScreen(
+          groupId: widget.groupId,
+          groupName: widget.groupName,
+          type: type,
+          memberNames: widget.memberNames,
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(6, 10, 6, 10),
@@ -480,7 +496,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ),
             ),
             IconButton(
-              onPressed: () => showComingSoonSnack(context, tr('k040')),
+              onPressed: () => _startGroupCall(CallType.audio),
+              icon: Icon(LucideIcons.phone, color: AppColors.textSecondary, size: 18),
+            ),
+            IconButton(
+              onPressed: () => _startGroupCall(CallType.video),
               icon: Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
             ),
           ],

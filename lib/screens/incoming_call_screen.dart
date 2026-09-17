@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../models/app_call.dart';
 import '../widgets/neon_backdrop.dart';
 import 'call_screen.dart';
+import 'group_call_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 
@@ -17,13 +18,23 @@ class IncomingCallScreen extends StatelessWidget {
   final String callerId;
   final String callerName;
   final CallType type;
+
+  /// Барои занги гурӯҳӣ — канали умумӣ ва маълумоти гурӯҳ; вагарна `null`.
+  final String? channelId;
+  final String? groupId;
+  final String? groupName;
   const IncomingCallScreen({
     super.key,
     required this.callId,
     required this.callerId,
     required this.callerName,
     required this.type,
+    this.channelId,
+    this.groupId,
+    this.groupName,
   });
+
+  bool get isGroupCall => groupId != null && channelId != null;
 
   Future<void> _decline(BuildContext context) async {
     await FirebaseFirestore.instance.collection('calls').doc(callId).update({'outcome': 'declined'});
@@ -31,9 +42,26 @@ class IncomingCallScreen extends StatelessWidget {
   }
 
   void _accept(BuildContext context) {
+    // Занги гурӯҳӣ ба канали умумӣ мебарад, на ба ҳуҷҷати як занг.
+    FirebaseFirestore.instance.collection('calls').doc(callId).update({
+      'outcome': CallOutcome.completed.name,
+    }).catchError((_) {});
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => CallScreen(otherUserId: callerId, otherUserName: callerName, type: type, existingCallId: callId),
+        builder: (_) => isGroupCall
+            ? GroupCallScreen(
+                groupId: groupId!,
+                groupName: groupName ?? tr('k293'),
+                type: type,
+                joinChannelId: channelId,
+              )
+            : CallScreen(
+                otherUserId: callerId,
+                otherUserName: callerName,
+                type: type,
+                existingCallId: callId,
+              ),
       ),
     );
   }

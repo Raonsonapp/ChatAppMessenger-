@@ -290,4 +290,7 @@ const Map<String, String> stringsEn = {
   'k288': 'Could not get your location — check the permission and GPS',
   'k289': 'No one has viewed it yet',
   'k290': 'Delete chat',
+  'k291': '{0} in the call',
+  'k292': 'Connecting…',
+  'k293': 'Group call',
 };

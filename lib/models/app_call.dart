@@ -5,10 +5,11 @@ enum CallType { audio, video }
 
 enum CallOutcome { ringing, completed, missed, declined }
 
-/// Ҳуҷҷати `calls/{id}` — сабти воқеии таърихи занг байни ду корбар.
-/// Худи занг (садо/видео) шабеҳсозишуда аст (UI-и пурра), зеро занги
-/// воқеӣ ба хидмати WebRTC/сигналии беруна ниёз дорад — дар ин лоиҳа
-/// пайваст нашудааст.
+/// Ҳуҷҷати `calls/{id}` — сабти занг. Худи садо ва видео тавассути Agora RTC
+/// интиқол мешавад; ин ҳуҷҷат барои занг задан (ringing), таърих ва натиҷа аст.
+///
+/// Барои занги гурӯҳӣ барои ҳар узв як ҳуҷҷати алоҳида сохта мешавад, вале
+/// ҳамаашон як `channelId`-и умумӣ доранд — ҳама ба ҳамон канал ҳамроҳ мешаванд.
 class AppCall {
   final String id;
   final String callerId;
@@ -70,6 +71,31 @@ class AppCall {
       'createdAt': FieldValue.serverTimestamp(),
       'durationSeconds': 0,
       'participants': [callerId, calleeId],
+    };
+  }
+
+  /// Барои занги гурӯҳӣ — id ва номи гурӯҳ; барои занги шахсӣ `null`.
+  static Map<String, dynamic> newGroupCallMap({
+    required String callerId,
+    required String callerName,
+    required String calleeId,
+    required String calleeName,
+    required CallType type,
+    required String channelId,
+    required String groupId,
+    required String groupName,
+  }) {
+    return {
+      ...newCallMap(
+        callerId: callerId,
+        callerName: callerName,
+        calleeId: calleeId,
+        calleeName: calleeName,
+        type: type,
+      ),
+      'channelId': channelId,
+      'groupId': groupId,
+      'groupName': groupName,
     };
   }
 
