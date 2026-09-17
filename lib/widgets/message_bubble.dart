@@ -246,6 +246,49 @@ class MessageBubble extends StatelessWidget {
   }
 
   /// Ҳуҷҷат: нишона, ном ва ҳаҷм. Пахш карда — дар браузер/барномаи мувофиқ.
+  /// Корти ҷойгиршавӣ — бо зер кардан харита кушода мешавад.
+  Widget _locationTile(BuildContext context) {
+    final tint = isMe ? AppColors.background : AppColors.textPrimary;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () => launchUrl(Uri.parse(message.mediaUrl!), mode: LaunchMode.externalApplication),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(9),
+                color: tint.withValues(alpha: 0.16),
+              ),
+              child: Icon(LucideIcons.map_pin, color: tint, size: 19),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    tr('k285'),
+                    style: TextStyle(color: tint, fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                  Text(
+                    tr('k287'),
+                    style: TextStyle(color: tint.withValues(alpha: 0.8), fontSize: 11.5),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _documentTile(BuildContext context) {
     final tint = isMe ? AppColors.background : AppColors.textPrimary;
     final size = message.mediaSize;
@@ -301,6 +344,7 @@ class MessageBubble extends StatelessWidget {
     final hasAudio = hasMedia && message.mediaType == 'audio';
     final hasVideo = hasMedia && message.mediaType == 'video';
     final hasDocument = hasMedia && message.mediaType == 'document';
+    final hasLocation = hasMedia && message.mediaType == 'location';
     final distinctReactions = message.reactions.values.toSet().toList();
 
     return GestureDetector(
@@ -449,6 +493,8 @@ class MessageBubble extends StatelessWidget {
                           ),
                         if (hasDocument)
                           _documentTile(context),
+                        if (hasLocation)
+                          _locationTile(context),
                         if (message.text.isNotEmpty || message.deleted)
                           Padding(
                             padding: hasImage ? const EdgeInsets.fromLTRB(8, 6, 8, 4) : EdgeInsets.zero,

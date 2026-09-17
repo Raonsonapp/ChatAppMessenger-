@@ -59,6 +59,7 @@ class ForwardSheet extends StatelessWidget {
       'video' => '🎥 Видео',
       'document' => '📄 ${message.mediaName ?? ''}',
       'sticker' => '🙂 Стикер',
+      'location' => tr('k286'),
       _ => '',
     };
   }

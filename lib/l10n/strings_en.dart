@@ -284,4 +284,8 @@ const Map<String, String> stringsEn = {
   'k282': 'Photo from gallery',
   'k283': 'Remove wallpaper',
   'k284': 'Back to the default look',
+  'k285': 'Location',
+  'k286': '📍 Location',
+  'k287': 'Open in maps',
+  'k288': 'Could not get your location — check the permission and GPS',
 };

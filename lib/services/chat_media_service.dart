@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'location_service.dart';
 import 'media_service.dart';
 
 /// Фиристодани файл ба ҳар навъи сӯҳбат (шахсӣ, гурӯҳ, ҷамъият, канал).
@@ -98,6 +99,42 @@ class ChatMediaService {
       sizeBytes: size,
       unreadFor: unreadFor,
     );
+  }
+
+  /// Ҷойгиршавӣ ҳамчун паём бо навъи `location` фиристода мешавад — файл нест,
+  /// бинобар ин ба Storage чизе бор карда намешавад.
+  static Future<bool> sendLocation({
+    required CollectionReference<Map<String, dynamic>> messagesRef,
+    required DocumentReference<Map<String, dynamic>> parentRef,
+    required double latitude,
+    required double longitude,
+    required String preview,
+    List<String>? unreadFor,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return false;
+
+    await messagesRef.add({
+      'text': '',
+      'senderId': uid,
+      'isAI': false,
+      'createdAt': FieldValue.serverTimestamp(),
+      'read': false,
+      'mediaUrl': LocationService.mapsUrl(latitude, longitude),
+      'mediaType': 'location',
+      'latitude': latitude,
+      'longitude': longitude,
+    });
+    await parentRef.set({
+      'lastMessage': preview,
+      'lastMessageTime': FieldValue.serverTimestamp(),
+      'lastSenderId': uid,
+      if (unreadFor != null && unreadFor.isNotEmpty)
+        'unread': {for (final other in unreadFor) other: FieldValue.increment(1)},
+      if (unreadFor != null && unreadFor.isNotEmpty)
+        'archivedBy': FieldValue.arrayRemove([uid, ...unreadFor]),
+    }, SetOptions(merge: true));
+    return true;
   }
 
   static Future<bool> sendVoice({

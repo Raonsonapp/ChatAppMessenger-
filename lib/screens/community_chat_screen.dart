@@ -22,6 +22,7 @@ import '../sheets/contact_picker_sheet.dart';
 import 'community_info_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/chat_wallpaper.dart';
+import '../services/location_service.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -98,6 +99,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         onStickerTap: _openStickerPicker,
         onVideoPicked: _sendVideoMessage,
         onDocumentPicked: _sendDocumentMessage,
+        onLocationTap: _sendLocationMessage,
       ),
     );
   }
@@ -170,6 +172,27 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
+  }
+
+  /// Ҷойгиршавии ҳозираро ҳамчун паём мефиристад.
+  Future<void> _sendLocationMessage() async {
+    final position = await LocationService.current();
+    if (position == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k288'))));
+      }
+      return;
+    }
+    await _sendMedia(
+      () => ChatMediaService.sendLocation(
+        messagesRef: _messagesRef,
+        parentRef: _communityRef,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        preview: tr('k286'),
+        unreadFor: null,
+      ),
+    );
   }
 
   Future<void> _sendMedia(Future<bool> Function() send) async {

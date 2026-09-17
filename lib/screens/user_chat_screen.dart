@@ -28,6 +28,7 @@ import 'call_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/chat_wallpaper.dart';
+import '../services/location_service.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -188,6 +189,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         onGifPicked: (file) => _sendImageMessage(file, mediaType: 'gif'),
         onVideoPicked: _sendVideoMessage,
         onDocumentPicked: _sendDocumentMessage,
+        onLocationTap: _sendLocationMessage,
         onStickerTap: _openStickerPicker,
       ),
     );
@@ -272,6 +274,28 @@ class _UserChatScreenState extends State<UserChatScreen> {
   }
 
   /// Боркунӣ ва фиристодани ҳар навъи файл (овоз, видео, ҳуҷҷат).
+  /// Ҷойгиршавии ҳозираро ҳамчун паём мефиристад.
+  Future<void> _sendLocationMessage() async {
+    final position = await LocationService.current();
+    if (position == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k288'))));
+      }
+      return;
+    }
+    await _sendMedia(
+      () => ChatMediaService.sendLocation(
+        messagesRef: _messagesRef,
+        parentRef: _conversationRef,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        preview: tr('k286'),
+        unreadFor: [widget.otherUserId],
+      ),
+      tr('k286'),
+    );
+  }
+
   Future<void> _sendMedia(Future<bool> Function() send, String preview) async {
     setState(() => _isUploading = true);
     try {

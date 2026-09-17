@@ -23,6 +23,7 @@ import '../sheets/contact_picker_sheet.dart';
 import 'group_info_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/chat_wallpaper.dart';
+import '../services/location_service.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -138,6 +139,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         onStickerTap: _openStickerPicker,
         onVideoPicked: _sendVideoMessage,
         onDocumentPicked: _sendDocumentMessage,
+        onLocationTap: _sendLocationMessage,
       ),
     );
   }
@@ -199,6 +201,27 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
+  }
+
+  /// Ҷойгиршавии ҳозираро ҳамчун паём мефиристад.
+  Future<void> _sendLocationMessage() async {
+    final position = await LocationService.current();
+    if (position == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k288'))));
+      }
+      return;
+    }
+    await _sendMedia(
+      () => ChatMediaService.sendLocation(
+        messagesRef: _messagesRef,
+        parentRef: _groupRef,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        preview: tr('k286'),
+        unreadFor: _others,
+      ),
+    );
   }
 
   Future<void> _sendMedia(Future<bool> Function() send) async {
