@@ -9,6 +9,7 @@ import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
 import '../services/media_service.dart';
 import '../widgets/group_avatar.dart';
+import 'shared_media_screen.dart';
 
 /// Маълумоти воқеии гурӯҳ — аъзоён аз Firestore, амалҳои admin воқеан
 /// дар `groups/{id}` сабт мешаванд (на fake).
@@ -244,6 +245,28 @@ class GroupInfoScreen extends StatelessWidget {
                                 onTap: () => _showMemberActions(context, uid, memberName, isAdmin, amIAdmin, currentUid),
                               );
                             }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        GlassContainer(
+                          borderRadius: 16,
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          child: ListTile(
+                            leading: Icon(LucideIcons.images, color: AppColors.neonCyan, size: 20),
+                            title: Text(
+                              tr('k294'),
+                              style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
+                            ),
+                            trailing: Icon(LucideIcons.chevron_right, color: AppColors.textSecondary, size: 17),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SharedMediaScreen(
+                                  parentPath: 'groups/$groupId',
+                                  title: tr('k294'),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 24),

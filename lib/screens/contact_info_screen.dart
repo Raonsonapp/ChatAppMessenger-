@@ -10,6 +10,7 @@ import '../models/app_call.dart';
 import 'call_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
+import 'shared_media_screen.dart';
 
 /// Маълумоти воқеии контакт — mute/манъ/тоза кардани чат ҳама воқеан
 /// дар Firestore сабт мешаванд.
@@ -155,6 +156,24 @@ class ContactInfoScreen extends StatelessWidget {
                                     title: Text(
                                       tr('k073'),
                                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
+                                    ),
+                                  ),
+                                  Divider(color: AppColors.glassBorder, height: 1),
+                                  ListTile(
+                                    leading: Icon(LucideIcons.images, color: AppColors.neonCyan, size: 20),
+                                    title: Text(
+                                      tr('k294'),
+                                      style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
+                                    ),
+                                    trailing: Icon(LucideIcons.chevron_right, color: AppColors.textSecondary, size: 17),
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => SharedMediaScreen(
+                                          parentPath: 'conversations/$conversationId',
+                                          title: tr('k294'),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                   Divider(color: AppColors.glassBorder, height: 1),

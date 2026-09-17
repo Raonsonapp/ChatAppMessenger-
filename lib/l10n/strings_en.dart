@@ -293,4 +293,6 @@ const Map<String, String> stringsEn = {
   'k291': '{0} in the call',
   'k292': 'Connecting…',
   'k293': 'Group call',
+  'k294': 'Media and documents',
+  'k295': 'No shared files yet',
 };
