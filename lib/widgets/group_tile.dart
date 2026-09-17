@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
 import '../models/app_group.dart';
@@ -7,6 +6,7 @@ import '../screens/group_chat_screen.dart';
 import '../l10n/l10n.dart';
 import '../utils/time_format.dart';
 import 'unread_badge.dart';
+import 'group_avatar.dart';
 
 class GroupTile extends StatelessWidget {
   final AppGroup group;
@@ -40,16 +40,7 @@ class GroupTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.surface,
-                  border: Border.all(color: AppColors.glassBorder),
-                ),
-                child: Icon(LucideIcons.users, color: AppColors.textSecondary, size: 22),
-              ),
+              GroupAvatar(photoUrl: group.photoUrl, size: 52),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(

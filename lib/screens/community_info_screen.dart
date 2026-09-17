@@ -7,6 +7,8 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
+import '../services/media_service.dart';
+import '../widgets/group_avatar.dart';
 
 /// Маълумоти воқеии ҷамъият — сохти монанд ба GroupInfoScreen.
 class CommunityInfoScreen extends StatelessWidget {
@@ -15,6 +17,20 @@ class CommunityInfoScreen extends StatelessWidget {
 
   DocumentReference<Map<String, dynamic>> get _communityRef =>
       FirebaseFirestore.instance.collection('communities').doc(communityId);
+
+  /// Акси ҷамъият — танҳо администратор онро иваз карда метавонад.
+  Future<void> _pickPhoto(BuildContext context) async {
+    final file = await MediaService.pickFromGallery();
+    if (file == null) return;
+    try {
+      final url = await MediaService.uploadImage(file, 'communities/$communityId');
+      await _communityRef.set({'photoUrl': url}, SetOptions(merge: true));
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k049', [e]))));
+      }
+    }
+  }
 
   Future<void> _promote(String uid) => _communityRef.update({
         'admins': FieldValue.arrayUnion([uid]),
@@ -146,11 +162,27 @@ class CommunityInfoScreen extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                       children: [
                         Center(
-                          child: Container(
-                            width: 84,
-                            height: 84,
-                            decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                            child: Icon(LucideIcons.hash, color: AppColors.background, size: 36),
+                          child: GestureDetector(
+                            onTap: amIAdmin ? () => _pickPhoto(context) : null,
+                            child: Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                GroupAvatar(
+                                  photoUrl: data['photoUrl'] as String?,
+                                  size: 84,
+                                  icon: LucideIcons.hash,
+                                ),
+                                if (amIAdmin)
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: AppColors.neonEmerald,
+                                    ),
+                                    child: Icon(LucideIcons.camera, color: AppColors.background, size: 14),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),

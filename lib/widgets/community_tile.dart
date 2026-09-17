@@ -6,6 +6,7 @@ import '../models/app_community.dart';
 import '../screens/community_chat_screen.dart';
 import '../l10n/l10n.dart';
 import '../utils/time_format.dart';
+import 'group_avatar.dart';
 
 class CommunityTile extends StatelessWidget {
   final AppCommunity community;
@@ -34,16 +35,7 @@ class CommunityTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.surface,
-                  border: Border.all(color: AppColors.glassBorder),
-                ),
-                child: Icon(LucideIcons.hash, color: AppColors.textSecondary, size: 22),
-              ),
+              GroupAvatar(photoUrl: community.photoUrl, size: 52, icon: LucideIcons.hash),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(

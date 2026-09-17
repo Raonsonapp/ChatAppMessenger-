@@ -7,6 +7,8 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
+import '../services/media_service.dart';
+import '../widgets/group_avatar.dart';
 
 /// Маълумоти воқеии гурӯҳ — аъзоён аз Firestore, амалҳои admin воқеан
 /// дар `groups/{id}` сабт мешаванд (на fake).
@@ -16,6 +18,20 @@ class GroupInfoScreen extends StatelessWidget {
 
   DocumentReference<Map<String, dynamic>> get _groupRef =>
       FirebaseFirestore.instance.collection('groups').doc(groupId);
+
+  /// Акси гурӯҳ — танҳо администратор онро иваз карда метавонад.
+  Future<void> _pickPhoto(BuildContext context) async {
+    final file = await MediaService.pickFromGallery();
+    if (file == null) return;
+    try {
+      final url = await MediaService.uploadImage(file, 'groups/$groupId');
+      await _groupRef.set({'photoUrl': url}, SetOptions(merge: true));
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k049', [e]))));
+      }
+    }
+  }
 
   Future<void> _promote(String uid) => _groupRef.update({
         'admins': FieldValue.arrayUnion([uid]),
@@ -146,11 +162,23 @@ class GroupInfoScreen extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                       children: [
                         Center(
-                          child: Container(
-                            width: 84,
-                            height: 84,
-                            decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                            child: Icon(LucideIcons.users, color: AppColors.background, size: 36),
+                          child: GestureDetector(
+                            onTap: amIAdmin ? () => _pickPhoto(context) : null,
+                            child: Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                GroupAvatar(photoUrl: data['photoUrl'] as String?, size: 84),
+                                if (amIAdmin)
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: AppColors.neonEmerald,
+                                    ),
+                                    child: Icon(LucideIcons.camera, color: AppColors.background, size: 14),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),

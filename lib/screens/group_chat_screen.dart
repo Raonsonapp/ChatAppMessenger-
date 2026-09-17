@@ -24,6 +24,7 @@ import 'group_info_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/chat_wallpaper.dart';
 import '../services/location_service.dart';
+import '../widgets/group_avatar.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -449,15 +450,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 onTap: _openGroupInfo,
                 child: Row(
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.surface,
-                        border: Border.all(color: AppColors.glassBorder),
-                      ),
-                      child: Icon(LucideIcons.users, color: AppColors.textSecondary, size: 18),
+                    // Акси гурӯҳ метавонад дар вақти сӯҳбат иваз шавад.
+                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: _groupRef.snapshots(),
+                      builder: (context, snapshot) {
+                        return GroupAvatar(
+                          photoUrl: snapshot.data?.data()?['photoUrl'] as String?,
+                          size: 40,
+                        );
+                      },
                     ),
                     const SizedBox(width: 10),
                     Expanded(

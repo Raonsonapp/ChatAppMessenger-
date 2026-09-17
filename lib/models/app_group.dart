@@ -13,6 +13,9 @@ class AppGroup {
   final DateTime? lastMessageTime;
   final String? lastSenderId;
 
+  /// Акси гурӯҳ.
+  final String? photoUrl;
+
   /// Шумораи паёмҳои нохондашуда барои ҳар узв.
   final Map<String, int> unread;
 
@@ -26,6 +29,7 @@ class AppGroup {
     this.lastMessage = '',
     this.lastMessageTime,
     this.lastSenderId,
+    this.photoUrl,
     this.unread = const {},
   });
 
@@ -45,6 +49,7 @@ class AppGroup {
       lastMessage: (data['lastMessage'] ?? '') as String,
       lastMessageTime: (data['lastMessageTime'] as Timestamp?)?.toDate(),
       lastSenderId: data['lastSenderId'] as String?,
+      photoUrl: data['photoUrl'] as String?,
       unread: rawUnread.map((k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0)),
     );
   }

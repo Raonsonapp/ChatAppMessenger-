@@ -15,6 +15,9 @@ class AppCommunity {
   final DateTime? lastMessageTime;
   final String? lastSenderId;
 
+  /// Акси ҷамъият.
+  final String? photoUrl;
+
   AppCommunity({
     required this.id,
     required this.name,
@@ -26,6 +29,7 @@ class AppCommunity {
     this.lastMessage = '',
     this.lastMessageTime,
     this.lastSenderId,
+    this.photoUrl,
   });
 
   factory AppCommunity.fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -42,6 +46,7 @@ class AppCommunity {
       lastMessage: (data['lastMessage'] ?? '') as String,
       lastMessageTime: (data['lastMessageTime'] as Timestamp?)?.toDate(),
       lastSenderId: data['lastSenderId'] as String?,
+      photoUrl: data['photoUrl'] as String?,
     );
   }
 }
