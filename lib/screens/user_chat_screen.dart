@@ -394,11 +394,15 @@ class _UserChatScreenState extends State<UserChatScreen> {
       toUid: widget.otherUserId,
       title: myName,
       body: preview,
+      // Калидҳо бояд маҳз ҳамонҳое бошанд, ки NotificationService интизор
+      // аст — вагарна зер кардани огоҳинома ҳељ экранро намекушояд.
       data: {
-        'type': 'message',
-        'conversationId': widget.conversationId,
-        'otherUserId': uid,
-        'otherUserName': myName,
+        'type': 'chat_message',
+        'kind': 'direct',
+        'threadId': widget.conversationId,
+        'threadName': myName,
+        'senderId': uid,
+        'senderName': myName,
       },
     );
   }

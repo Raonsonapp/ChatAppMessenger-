@@ -26,6 +26,7 @@ import '../services/location_service.dart';
 import '../widgets/group_avatar.dart';
 import '../models/app_call.dart';
 import 'group_call_screen.dart';
+import '../services/push_service.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -57,6 +58,29 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   /// Сарлавҳаи гурӯҳро нав мекунад ва барои ҳар узв ба ғайр аз худам ҳисоби
   /// нохондашударо як воҳид зиёд мекунад.
+  /// Ба ҳамаи аъзоён огоҳинома мефиристад. Хатогӣ фиристодани паёмро вайрон
+  /// намекунад — паём аллакай дар Firestore аст.
+  Future<void> _notifyMembers(String preview) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final myName = widget.memberNames[uid] ?? tr('k002');
+    for (final member in _others) {
+      await PushService.notify(
+        toUid: member,
+        title: widget.groupName,
+        body: '$myName: $preview',
+        data: {
+          'type': 'chat_message',
+          'kind': 'group',
+          'threadId': widget.groupId,
+          'threadName': widget.groupName,
+          'senderId': uid,
+          'senderName': myName,
+        },
+      );
+    }
+  }
+
   Future<void> _touchGroup(String preview) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -70,6 +94,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       'lastSenderId': uid,
       if (counters.isNotEmpty) 'unread': counters,
     }, SetOptions(merge: true));
+    _notifyMembers(preview);
   }
 
   /// Ҳамаи аъзоён ба ғайр аз худам — барои ҳисоби нохондашуда.

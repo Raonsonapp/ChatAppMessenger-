@@ -23,6 +23,7 @@ import 'community_info_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/chat_wallpaper.dart';
 import '../services/location_service.dart';
+import '../services/push_service.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -59,6 +60,29 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
   }
 
   /// Сарлавҳаи ҷамъиятро нав мекунад ва ҳисоби нохондашударо зиёд мекунад.
+  /// Ба ҳамаи аъзоён огоҳинома мефиристад. Хатогӣ фиристодани паёмро вайрон
+  /// намекунад — паём аллакай дар Firestore аст.
+  Future<void> _notifyMembers(String preview) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final myName = widget.memberNames[uid] ?? tr('k002');
+    for (final member in _others) {
+      await PushService.notify(
+        toUid: member,
+        title: widget.communityName,
+        body: '$myName: $preview',
+        data: {
+          'type': 'chat_message',
+          'kind': 'community',
+          'threadId': widget.communityId,
+          'threadName': widget.communityName,
+          'senderId': uid,
+          'senderName': myName,
+        },
+      );
+    }
+  }
+
   Future<void> _touchCommunity(String preview) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -71,6 +95,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
       'lastSenderId': uid,
       if (counters.isNotEmpty) 'unread': counters,
     }, SetOptions(merge: true));
+    _notifyMembers(preview);
   }
 
   /// Ҳангоми кушодани ҷамъият ҳисоби нохондашудаи ман сифр мешавад.
