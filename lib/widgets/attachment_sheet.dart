@@ -12,7 +12,9 @@ import '../l10n/l10n.dart';
 /// Контакт, Ҷойгиршавӣ, GIF ва Стикер.
 class AttachmentSheet extends StatelessWidget {
   final ValueChanged<XFile> onImagePicked;
-  final VoidCallback onContactTap;
+  /// Агар дода нашавад, банди «Контакт» нишон дода намешавад (масалан дар
+  /// чати AI он маъно надорад).
+  final VoidCallback? onContactTap;
   final ValueChanged<XFile>? onGifPicked;
   final VoidCallback? onStickerTap;
   final ValueChanged<XFile>? onVideoPicked;
@@ -21,7 +23,7 @@ class AttachmentSheet extends StatelessWidget {
   const AttachmentSheet({
     super.key,
     required this.onImagePicked,
-    required this.onContactTap,
+    this.onContactTap,
     this.onGifPicked,
     this.onStickerTap,
     this.onVideoPicked,
@@ -120,15 +122,16 @@ class AttachmentSheet extends StatelessWidget {
                     label: tr('k244'),
                     onTap: () => _pickDocument(context),
                   ),
-                _item(
-                  icon: LucideIcons.user,
-                  color: const Color(0xFF4B7BEC),
-                  label: tr('k232'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    onContactTap();
-                  },
-                ),
+                if (onContactTap != null)
+                  _item(
+                    icon: LucideIcons.user,
+                    color: const Color(0xFF4B7BEC),
+                    label: tr('k232'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      onContactTap!();
+                    },
+                  ),
                 if (onLocationTap != null)
                   _item(
                     icon: LucideIcons.map_pin,

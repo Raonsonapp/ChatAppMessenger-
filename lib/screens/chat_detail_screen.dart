@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
-import '../utils/snackbar_utils.dart';
 import '../models/chat_message.dart';
 import '../models/chat_conversation.dart';
 import '../models/mock_ai_replies.dart';
@@ -99,9 +98,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      // Ба ChatAI контакт фиристодан ва ба он занг задан маъно надорад,
+      // бинобар ин он бандҳо умуман нишон дода намешаванд — ин аз «ба зудӣ»
+      // гуфтан ростқавлона аст.
       builder: (_) => AttachmentSheet(
         onImagePicked: _sendImageMessage,
-        onContactTap: () => showComingSoonSnack(context, tr('k027')),
         onGifPicked: (file) => _sendImageMessage(file, mediaType: 'gif'),
         onStickerTap: _openStickerPicker,
       ),
@@ -427,14 +428,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 ],
               ),
             ),
-            IconButton(
-              onPressed: () => showComingSoonSnack(context, tr('k040')),
-              icon: Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
-            ),
-            IconButton(
-              onPressed: () => showComingSoonSnack(context, tr('k041')),
-              icon: Icon(LucideIcons.phone, color: AppColors.textSecondary, size: 18),
-            ),
+
           ],
         ),
       ),
