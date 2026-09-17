@@ -8,6 +8,7 @@ import '../../models/app_call.dart';
 import '../../utils/doc_sort.dart';
 import '../call_screen.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/user_avatar.dart';
 
 class CallsTab extends StatelessWidget {
   const CallsTab({super.key});
@@ -74,21 +75,7 @@ class CallsTab extends StatelessWidget {
 
             return ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.surface,
-                  border: Border.all(color: AppColors.glassBorder),
-                ),
-                child: Center(
-                  child: Text(
-                    otherName.isNotEmpty ? otherName[0].toUpperCase() : '?',
-                    style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 17),
-                  ),
-                ),
-              ),
+              leading: UserAvatar(name: otherName, uid: otherUid, size: 48),
               title: Text(
                 otherName,
                 style: TextStyle(

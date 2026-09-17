@@ -25,6 +25,7 @@ import '../sheets/contact_picker_sheet.dart';
 import 'contact_info_screen.dart';
 import 'call_screen.dart';
 import '../l10n/l10n.dart';
+import '../widgets/user_avatar.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -587,21 +588,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                 onTap: _openContactInfo,
                 child: Row(
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.surface,
-                        border: Border.all(color: AppColors.glassBorder),
-                      ),
-                      child: Center(
-                        child: Text(
-                          widget.otherUserName.isNotEmpty ? widget.otherUserName[0].toUpperCase() : '?',
-                          style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 16),
-                        ),
-                      ),
-                    ),
+                    UserAvatar(name: widget.otherUserName, uid: widget.otherUserId, size: 40),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(

@@ -11,6 +11,7 @@ import '../status_viewer_screen.dart';
 import '../channel_screen.dart';
 import '../discover_channels_screen.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/user_avatar.dart';
 
 class StatusTab extends StatelessWidget {
   const StatusTab({super.key});
@@ -245,15 +246,7 @@ class _OtherStatusRow extends StatelessWidget {
                       color: hasUnseen ? null : AppColors.glassBorder,
                     ),
                     padding: const EdgeInsets.all(2),
-                    child: Container(
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.background),
-                      child: Center(
-                        child: Text(
-                          ownerName.isNotEmpty ? ownerName[0].toUpperCase() : '?',
-                          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 17),
-                        ),
-                      ),
-                    ),
+                    child: UserAvatar(name: ownerName, uid: ownerId, size: 48),
                   ),
                   const SizedBox(width: 14),
                   Expanded(

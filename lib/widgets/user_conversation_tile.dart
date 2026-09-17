@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../models/app_conversation.dart';
 import '../screens/user_chat_screen.dart';
 import '../services/conversation_actions.dart';
+import '../widgets/user_avatar.dart';
 import '../l10n/l10n.dart';
 import '../utils/time_format.dart';
 
@@ -111,21 +112,7 @@ class UserConversationTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.surface,
-                  border: Border.all(color: AppColors.glassBorder),
-                ),
-                child: Center(
-                  child: Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 18),
-                  ),
-                ),
-              ),
+              UserAvatar(name: name, uid: otherUid, size: 52),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(

@@ -10,6 +10,7 @@ import '../screens/user_chat_screen.dart';
 import '../screens/create_group_screen.dart';
 import '../screens/contact_picker_screen.dart';
 import '../l10n/l10n.dart';
+import '../widgets/user_avatar.dart';
 
 /// Феҳристи ҷустуҷӯи корбарони воқеӣ + гузаргоҳ ба сохтани гурӯҳи нав.
 class NewChatSheet extends StatefulWidget {
@@ -209,21 +210,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
                     final name = user['name'] as String;
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.surface,
-                          border: Border.all(color: AppColors.glassBorder),
-                        ),
-                        child: Center(
-                          child: Text(
-                            name.isNotEmpty ? name[0].toUpperCase() : '?',
-                            style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ),
+                      leading: UserAvatar(name: name, uid: user['uid'] as String, size: 44),
                       title: Text(name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                       subtitle: Text(user['phone'] as String, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                       onTap: () => _openChatWith(user['uid'] as String, name),

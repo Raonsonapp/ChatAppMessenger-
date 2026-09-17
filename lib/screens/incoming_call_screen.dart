@@ -7,6 +7,7 @@ import '../models/app_call.dart';
 import '../widgets/neon_backdrop.dart';
 import 'call_screen.dart';
 import '../l10n/l10n.dart';
+import '../widgets/user_avatar.dart';
 
 /// Экрани занги воридотӣ — намоён мешавад вақте ки корбари дигар занг
 /// мезанад (тавассути IncomingCallListener). Қабул → CallScreen (ба ҳамон
@@ -49,17 +50,7 @@ class IncomingCallScreen extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 50),
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                  child: Center(
-                    child: Text(
-                      callerName.isNotEmpty ? callerName[0].toUpperCase() : '?',
-                      style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 48),
-                    ),
-                  ),
-                ),
+                UserAvatar(name: callerName, uid: callerId, size: 120),
                 const SizedBox(height: 20),
                 Text(callerName, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 22)),
                 const SizedBox(height: 8),

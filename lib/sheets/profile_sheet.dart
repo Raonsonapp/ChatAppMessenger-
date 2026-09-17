@@ -9,6 +9,7 @@ import '../screens/edit_profile_screen.dart';
 import '../screens/settings/settings_home_screen.dart';
 import '../screens/starred_messages_screen.dart';
 import '../l10n/l10n.dart';
+import '../widgets/user_avatar.dart';
 
 class ProfileSheet extends StatelessWidget {
   const ProfileSheet({super.key});
@@ -39,21 +40,29 @@ class ProfileSheet extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(color: AppColors.glassBorder, borderRadius: BorderRadius.circular(4)),
             ),
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-              child: Icon(LucideIcons.user, color: AppColors.background, size: 28),
-            ),
-            const SizedBox(height: 12),
-            if (uid != null)
+            if (uid == null)
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+                child: Icon(LucideIcons.user, color: AppColors.background, size: 28),
+              )
+            else
               StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                 stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
                 builder: (context, snapshot) {
-                  final name = snapshot.data?.data()?['name'] as String?;
-                  return Text(
-                    (name == null || name.isEmpty) ? tr('k002') : name,
-                    style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                  final data = snapshot.data?.data();
+                  final name = data?['name'] as String?;
+                  final shown = (name == null || name.isEmpty) ? tr('k002') : name;
+                  return Column(
+                    children: [
+                      UserAvatar(name: shown, photoUrl: data?['photoUrl'] as String?, size: 64),
+                      const SizedBox(height: 12),
+                      Text(
+                        shown,
+                        style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                      ),
+                    ],
                   );
                 },
               ),

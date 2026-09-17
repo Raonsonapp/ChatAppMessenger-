@@ -3,8 +3,10 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../services/media_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
+import '../widgets/user_avatar.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
 
@@ -21,6 +23,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _aboutController = TextEditingController();
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isUploadingPhoto = false;
+  String? _photoUrl;
   String? _errorText;
   String? _savedMessage;
 
@@ -39,6 +43,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _nameController.text = (data['name'] ?? '') as String;
       _nicknameController.text = (data['nickname'] ?? '') as String;
       _aboutController.text = (data['about'] ?? '') as String;
+      _photoUrl = data['photoUrl'] as String?;
     }
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -50,6 +55,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nicknameController.dispose();
     _aboutController.dispose();
     super.dispose();
+  }
+
+  /// Гузоштани акси профил — фавран бор карда, дар профил сабт мешавад.
+  Future<void> _pickPhoto() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final file = await MediaService.pickFromGallery();
+    if (file == null) return;
+    setState(() => _isUploadingPhoto = true);
+    try {
+      final url = await MediaService.uploadImage(file, 'avatars/$uid');
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'photoUrl': url,
+      }, SetOptions(merge: true));
+      UserAvatar.updateCache(uid, url);
+      if (!mounted) return;
+      setState(() => _photoUrl = url);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorText = trf('k061', [e]));
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
   }
 
   Future<void> _save() async {
@@ -115,11 +143,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       const SizedBox(height: 20),
                       Center(
-                        child: Container(
-                          width: 84,
-                          height: 84,
-                          decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                          child: Icon(LucideIcons.user, color: AppColors.background, size: 38),
+                        child: GestureDetector(
+                          onTap: _isUploadingPhoto ? null : _pickPhoto,
+                          child: Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              UserAvatar(
+                                name: _nameController.text,
+                                photoUrl: _photoUrl,
+                                size: 84,
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.neonEmerald,
+                                ),
+                                child: _isUploadingPhoto
+                                    ? SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.background,
+                                        ),
+                                      )
+                                    : Icon(LucideIcons.camera, color: AppColors.background, size: 14),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),

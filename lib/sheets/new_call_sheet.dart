@@ -8,6 +8,7 @@ import '../widgets/glass_container.dart';
 import '../models/app_call.dart';
 import '../screens/call_screen.dart';
 import '../l10n/l10n.dart';
+import '../widgets/user_avatar.dart';
 
 /// Интихоби корбар барои сар кардани занги нав (садоӣ ё видеоӣ).
 class NewCallSheet extends StatefulWidget {
@@ -135,21 +136,7 @@ class _NewCallSheetState extends State<NewCallSheet> {
                     final name = user['name']!;
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.surface,
-                          border: Border.all(color: AppColors.glassBorder),
-                        ),
-                        child: Center(
-                          child: Text(
-                            name.isNotEmpty ? name[0].toUpperCase() : '?',
-                            style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ),
+                      leading: UserAvatar(name: name, uid: uid, size: 44),
                       title: Text(name, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                       subtitle: Text(user['phone'] ?? '', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                       trailing: Row(

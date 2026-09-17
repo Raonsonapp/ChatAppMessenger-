@@ -11,6 +11,7 @@ import '../models/app_call.dart';
 import '../services/agora_config.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
+import '../widgets/user_avatar.dart';
 
 enum _CallStage { connecting, ringing, connected, ended }
 
@@ -253,17 +254,7 @@ class _CallScreenState extends State<CallScreen> {
                 children: [
                   if (!(isVideo && connected)) ...[
                     const SizedBox(height: 40),
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                      child: Center(
-                        child: Text(
-                          widget.otherUserName.isNotEmpty ? widget.otherUserName[0].toUpperCase() : '?',
-                          style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 48),
-                        ),
-                      ),
-                    ),
+                    UserAvatar(name: widget.otherUserName, uid: widget.otherUserId, size: 120),
                     const SizedBox(height: 20),
                   ],
                   Text(

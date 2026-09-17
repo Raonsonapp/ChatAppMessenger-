@@ -9,6 +9,7 @@ import '../widgets/neon_backdrop.dart';
 import '../models/app_call.dart';
 import 'call_screen.dart';
 import '../l10n/l10n.dart';
+import '../widgets/user_avatar.dart';
 
 /// Маълумоти воқеии контакт — mute/манъ/тоза кардани чат ҳама воқеан
 /// дар Firestore сабт мешаванд.
@@ -99,20 +100,10 @@ class ContactInfoScreen extends StatelessWidget {
                           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                           children: [
                             Center(
-                              child: Container(
-                                width: 84,
-                                height: 84,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppColors.surface,
-                                  border: Border.all(color: AppColors.glassBorder),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    otherUserName.isNotEmpty ? otherUserName[0].toUpperCase() : '?',
-                                    style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w700, fontSize: 32),
-                                  ),
-                                ),
+                              child: UserAvatar(
+                                name: otherUserName,
+                                uid: otherUserId,
+                                size: 84,
                               ),
                             ),
                             const SizedBox(height: 12),
