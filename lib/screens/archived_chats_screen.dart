@@ -58,7 +58,7 @@ class ArchivedChatsScreen extends StatelessWidget {
                           }
                           final docs = sortByTimeDesc(snapshot.data?.docs ?? const [], 'lastMessageTime')
                               .map(AppConversation.fromDoc)
-                              .where((c) => c.isArchived(uid))
+                              .where((c) => c.isArchived(uid) && !c.isDeleted(uid))
                               .toList();
                           if (docs.isEmpty) {
                             return Center(

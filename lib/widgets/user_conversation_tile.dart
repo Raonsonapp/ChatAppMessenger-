@@ -61,6 +61,13 @@ class UserConversationTile extends StatelessWidget {
                   label: tr('k271'),
                   onTap: () => ConversationActions.markRead(conversation.id, currentUid),
                 ),
+              _actionTile(
+                sheetContext,
+                icon: LucideIcons.trash,
+                label: tr('k290'),
+                color: Colors.redAccent,
+                onTap: () => ConversationActions.deleteForMe(conversation.id, currentUid),
+              ),
             ],
           ),
         ),
@@ -73,10 +80,11 @@ class UserConversationTile extends StatelessWidget {
     required IconData icon,
     required String label,
     required Future<void> Function() onTap,
+    Color? color,
   }) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.neonCyan, size: 19),
-      title: Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 14.5)),
+      leading: Icon(icon, color: color ?? AppColors.neonCyan, size: 19),
+      title: Text(label, style: TextStyle(color: color ?? AppColors.textPrimary, fontSize: 14.5)),
       onTap: () {
         Navigator.pop(context);
         onTap();

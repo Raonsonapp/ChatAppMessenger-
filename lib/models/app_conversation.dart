@@ -23,6 +23,9 @@ class AppConversation {
   final List<String> archivedBy;
   final List<String> mutedBy;
 
+  /// Корбароне, ки чатро танҳо аз рӯйхати худ нест кардаанд.
+  final List<String> deletedBy;
+
   AppConversation({
     required this.id,
     required this.participants,
@@ -34,6 +37,7 @@ class AppConversation {
     this.pinnedBy = const [],
     this.archivedBy = const [],
     this.mutedBy = const [],
+    this.deletedBy = const [],
   });
 
   factory AppConversation.fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -51,6 +55,7 @@ class AppConversation {
       pinnedBy: List<String>.from(data['pinnedBy'] as List? ?? []),
       archivedBy: List<String>.from(data['archivedBy'] as List? ?? []),
       mutedBy: List<String>.from(data['mutedBy'] as List? ?? []),
+      deletedBy: List<String>.from(data['deletedBy'] as List? ?? []),
     );
   }
 
@@ -65,6 +70,7 @@ class AppConversation {
   bool isPinned(String currentUid) => pinnedBy.contains(currentUid);
   bool isArchived(String currentUid) => archivedBy.contains(currentUid);
   bool isMuted(String currentUid) => mutedBy.contains(currentUid);
+  bool isDeleted(String currentUid) => deletedBy.contains(currentUid);
 
   String otherUid(String currentUid) {
     return participants.firstWhere((p) => p != currentUid, orElse: () => '');

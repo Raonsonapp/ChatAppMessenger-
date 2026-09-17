@@ -81,16 +81,18 @@ class ChatsTab extends StatelessWidget {
               final all = sortByTimeDesc(snapshot.data!.docs, 'lastMessageTime')
                   .map(AppConversation.fromDoc)
                   .toList();
-              final archived = all.where((c) => c.isArchived(currentUid)).toList();
+              // Чатҳои несткардашуда умуман нишон дода намешаванд.
+              final visibleAll = all.where((c) => !c.isDeleted(currentUid)).toList();
+              final archived = visibleAll.where((c) => c.isArchived(currentUid)).toList();
               // Чатҳои мустаҳкамшуда ҳамеша дар боло — мисли WhatsApp.
-              final visible = all.where((c) => !c.isArchived(currentUid)).toList()
+              final visible = visibleAll.where((c) => !c.isArchived(currentUid)).toList()
                 ..sort((a, b) {
                   final pa = a.isPinned(currentUid) ? 0 : 1;
                   final pb = b.isPinned(currentUid) ? 0 : 1;
                   return pa.compareTo(pb);
                 });
 
-              if (all.isEmpty) {
+              if (visibleAll.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Text(

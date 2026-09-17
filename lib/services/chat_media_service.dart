@@ -53,6 +53,8 @@ class ChatMediaService {
         'unread': {for (final other in unreadFor) other: FieldValue.increment(1)},
       if (unreadFor != null && unreadFor.isNotEmpty)
         'archivedBy': FieldValue.arrayRemove([uid, ...unreadFor]),
+      if (unreadFor != null && unreadFor.isNotEmpty)
+        'deletedBy': FieldValue.arrayRemove([uid, ...unreadFor]),
     }, SetOptions(merge: true));
     return true;
   }
@@ -133,6 +135,8 @@ class ChatMediaService {
         'unread': {for (final other in unreadFor) other: FieldValue.increment(1)},
       if (unreadFor != null && unreadFor.isNotEmpty)
         'archivedBy': FieldValue.arrayRemove([uid, ...unreadFor]),
+      if (unreadFor != null && unreadFor.isNotEmpty)
+        'deletedBy': FieldValue.arrayRemove([uid, ...unreadFor]),
     }, SetOptions(merge: true));
     return true;
   }

@@ -27,6 +27,31 @@ class ConversationActions {
     }, SetOptions(merge: true));
   }
 
+  /// Чатро танҳо барои ҳамин корбар нест мекунад: он аз рӯйхат мебарояд ва
+  /// таърихи паёмҳо барои ӯ пинҳон мешавад. Тарафи муқобил чати худро пурра
+  /// мебинад — мисли WhatsApp. Паёми нав чатро дубора бармегардонад.
+  static Future<void> deleteForMe(String conversationId, String uid) async {
+    await _ref(conversationId).set({
+      'deletedBy': FieldValue.arrayUnion([uid]),
+      'unread': {uid: 0},
+    }, SetOptions(merge: true));
+
+    // Паёмҳо дар як дархост пинҳон карда мешаванд; ҳудуди як batch 500 амал
+    // аст, бинобар ин онҳоро ба қисмҳо тақсим мекунем.
+    final messages = await _ref(conversationId).collection('messages').get();
+    final db = FirebaseFirestore.instance;
+    const chunk = 400;
+    for (var i = 0; i < messages.docs.length; i += chunk) {
+      final batch = db.batch();
+      for (final doc in messages.docs.skip(i).take(chunk)) {
+        batch.update(doc.reference, {
+          'deletedFor': FieldValue.arrayUnion([uid]),
+        });
+      }
+      await batch.commit();
+    }
+  }
+
   static Future<void> markRead(String conversationId, String uid) {
     return _ref(conversationId).set({
       'unread': {uid: 0},

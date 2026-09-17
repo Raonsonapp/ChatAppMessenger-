@@ -87,6 +87,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
       'unread': {widget.otherUserId: FieldValue.increment(1)},
       // Паёми нав чатро аз бойгонии ҳар ду тараф бармегардонад — чун WhatsApp.
       'archivedBy': FieldValue.arrayRemove([uid, widget.otherUserId]),
+      'deletedBy': FieldValue.arrayRemove([uid, widget.otherUserId]),
     }, SetOptions(merge: true));
   }
 
