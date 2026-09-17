@@ -90,7 +90,19 @@ service cloud.firestore {
 
       match /items/{itemId} {
         allow read: if signedIn();
-        allow write: if signedIn() && uid() == userId;
+        allow create, delete: if signedIn() && uid() == userId;
+
+        // Ғайр аз соҳиб, бинанда низ бояд худашро ба `viewedBy` илова карда
+        // тавонад — вагарна «кӣ дид» ҳељ гоҳ кор намекунад. Иҷозат танҳо ба
+        // ҳамин як майдон ва танҳо барои илова кардани uid-и худаш аст.
+        allow update: if signedIn() && (
+          uid() == userId
+          || (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewedBy'])
+            && request.resource.data.viewedBy.hasAll(resource.data.viewedBy)
+            && request.resource.data.viewedBy.removeAll(resource.data.viewedBy).hasOnly([uid()])
+          )
+        );
       }
     }
 
