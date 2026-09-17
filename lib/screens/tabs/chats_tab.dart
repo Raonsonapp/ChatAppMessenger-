@@ -50,7 +50,7 @@ class ChatsTab extends StatelessWidget {
                 children: docs.map((doc) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 2),
-                    child: GroupTile(group: AppGroup.fromDoc(doc)),
+                    child: GroupTile(group: AppGroup.fromDoc(doc), currentUid: currentUid),
                   );
                 }).toList(),
               );

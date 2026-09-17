@@ -6,6 +6,7 @@ import '../models/app_conversation.dart';
 import '../screens/user_chat_screen.dart';
 import '../services/conversation_actions.dart';
 import '../widgets/user_avatar.dart';
+import '../widgets/unread_badge.dart';
 import '../l10n/l10n.dart';
 import '../utils/time_format.dart';
 
@@ -158,24 +159,7 @@ class UserConversationTile extends StatelessWidget {
                         ],
                         if (unread > 0) ...[
                           const SizedBox(width: 6),
-                          Container(
-                            constraints: const BoxConstraints(minWidth: 20),
-                            height: 20,
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.neonEmerald,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              unread > 99 ? '99+' : '$unread',
-                              style: TextStyle(
-                                color: AppColors.background,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
+                          UnreadBadge(count: unread),
                         ],
                       ],
                     ),

@@ -13,6 +13,9 @@ class AppGroup {
   final DateTime? lastMessageTime;
   final String? lastSenderId;
 
+  /// Шумораи паёмҳои нохондашуда барои ҳар узв.
+  final Map<String, int> unread;
+
   AppGroup({
     required this.id,
     required this.name,
@@ -23,11 +26,15 @@ class AppGroup {
     this.lastMessage = '',
     this.lastMessageTime,
     this.lastSenderId,
+    this.unread = const {},
   });
+
+  int unreadFor(String uid) => unread[uid] ?? 0;
 
   factory AppGroup.fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     final rawNames = (data['memberNames'] as Map<String, dynamic>?) ?? {};
+    final rawUnread = (data['unread'] as Map<String, dynamic>?) ?? {};
     return AppGroup(
       id: doc.id,
       name: (data['name'] ?? tr('k005')) as String,
@@ -38,6 +45,7 @@ class AppGroup {
       lastMessage: (data['lastMessage'] ?? '') as String,
       lastMessageTime: (data['lastMessageTime'] as Timestamp?)?.toDate(),
       lastSenderId: data['lastSenderId'] as String?,
+      unread: rawUnread.map((k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0)),
     );
   }
 }

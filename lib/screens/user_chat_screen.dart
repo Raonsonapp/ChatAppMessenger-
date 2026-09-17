@@ -296,7 +296,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
           parentRef: _conversationRef,
           storageFolder: _storageFolder,
           picked: file,
-          unreadFor: widget.otherUserId,
+          unreadFor: [widget.otherUserId],
         ),
         '🎥 Видео',
       );
@@ -307,7 +307,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
           parentRef: _conversationRef,
           storageFolder: _storageFolder,
           picked: picked,
-          unreadFor: widget.otherUserId,
+          unreadFor: [widget.otherUserId],
         ),
         '📄 ${picked.name}',
       );
@@ -321,7 +321,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         storageFolder: _storageFolder,
         file: file,
         duration: duration,
-        unreadFor: widget.otherUserId,
+        unreadFor: [widget.otherUserId],
       ),
       '🎤 Паёми овозӣ',
     );

@@ -6,13 +6,19 @@ import '../models/app_group.dart';
 import '../screens/group_chat_screen.dart';
 import '../l10n/l10n.dart';
 import '../utils/time_format.dart';
+import 'unread_badge.dart';
 
 class GroupTile extends StatelessWidget {
   final AppGroup group;
-  const GroupTile({super.key, required this.group});
+
+  /// Барои нишон додани шумораи нохондашуда маҳз барои ҳамин корбар.
+  final String? currentUid;
+  const GroupTile({super.key, required this.group, this.currentUid});
 
   @override
   Widget build(BuildContext context) {
+    final unread = currentUid == null ? 0 : group.unreadFor(currentUid!);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -60,16 +66,30 @@ class GroupTile extends StatelessWidget {
                         ),
                         Text(
                           formatChatTime(group.lastMessageTime),
-                          style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 11.5),
+                          style: TextStyle(
+                            color: unread > 0 ? AppColors.neonEmerald : AppColors.textSecondary.withValues(alpha: 0.7),
+                            fontSize: 11.5,
+                            fontWeight: unread > 0 ? FontWeight.w700 : FontWeight.w400,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 3),
-                    Text(
-                      group.lastMessage.isEmpty ? tr('k238') : group.lastMessage,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            group.lastMessage.isEmpty ? tr('k238') : group.lastMessage,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+                          ),
+                        ),
+                        if (unread > 0) ...[
+                          const SizedBox(width: 6),
+                          UnreadBadge(count: unread),
+                        ],
+                      ],
                     ),
                   ],
                 ),

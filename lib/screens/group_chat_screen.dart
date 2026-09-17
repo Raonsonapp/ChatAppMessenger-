@@ -52,8 +52,47 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       FirebaseFirestore.instance.collection('groups').doc(widget.groupId);
   CollectionReference<Map<String, dynamic>> get _messagesRef => _groupRef.collection('messages');
 
+  /// Сарлавҳаи гурӯҳро нав мекунад ва барои ҳар узв ба ғайр аз худам ҳисоби
+  /// нохондашударо як воҳид зиёд мекунад.
+  Future<void> _touchGroup(String preview) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final counters = <String, Object>{
+      for (final member in widget.memberNames.keys)
+        if (member != uid) member: FieldValue.increment(1),
+    };
+    await _groupRef.set({
+      'lastMessage': preview,
+      'lastMessageTime': FieldValue.serverTimestamp(),
+      'lastSenderId': uid,
+      if (counters.isNotEmpty) 'unread': counters,
+    }, SetOptions(merge: true));
+  }
+
+  /// Ҳамаи аъзоён ба ғайр аз худам — барои ҳисоби нохондашуда.
+  List<String> get _others {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    return widget.memberNames.keys.where((m) => m != uid).toList();
+  }
+
+  /// Ҳангоми кушодани гурӯҳ ҳисоби нохондашудаи ман сифр мешавад.
+  Future<void> _clearMyUnread() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await _groupRef.set({
+      'unread': {uid: 0},
+    }, SetOptions(merge: true)).catchError((_) {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _clearMyUnread();
+  }
+
   @override
   void dispose() {
+    _clearMyUnread();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -115,11 +154,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     await _messagesRef.add({'text': sticker, 'senderId': uid, 'isAI': false, 'createdAt': FieldValue.serverTimestamp(), 'mediaType': 'sticker'});
-    await _groupRef.set({
-      'lastMessage': '$sticker Стикер',
-      'lastMessageTime': FieldValue.serverTimestamp(),
-      'lastSenderId': uid,
-    }, SetOptions(merge: true));
+    await _touchGroup('$sticker Стикер');
     _scrollToBottom();
   }
 
@@ -134,11 +169,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           if (uid == null) return;
           final text = '👤 ${contact['name']}\n${contact['phone']}';
           await _messagesRef.add({'text': text, 'senderId': uid, 'isAI': false, 'createdAt': FieldValue.serverTimestamp()});
-          await _groupRef.set({
-            'lastMessage': text,
-            'lastMessageTime': FieldValue.serverTimestamp(),
-            'lastSenderId': uid,
-          }, SetOptions(merge: true));
+          await _touchGroup(text);
           _scrollToBottom();
         },
       ),
@@ -159,11 +190,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         'mediaUrl': url,
         'mediaType': mediaType,
       });
-      await _groupRef.set({
-        'lastMessage': '📷 Расм',
-        'lastMessageTime': FieldValue.serverTimestamp(),
-        'lastSenderId': uid,
-      }, SetOptions(merge: true));
+      await _touchGroup('📷 Расм');
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
@@ -195,6 +222,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           parentRef: _groupRef,
           storageFolder: _storageFolder,
           picked: file,
+          unreadFor: _others,
         ),
       );
 
@@ -204,6 +232,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           parentRef: _groupRef,
           storageFolder: _storageFolder,
           picked: picked,
+          unreadFor: _others,
         ),
       );
 
@@ -216,6 +245,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         storageFolder: _storageFolder,
         file: file,
         duration: duration,
+        unreadFor: _others,
       ),
     );
   }
@@ -237,11 +267,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       if (replying != null) 'replyToText': replying.text,
       if (replying != null) 'replyToSenderId': replying.senderId,
     });
-    await _groupRef.set({
-      'lastMessage': text,
-      'lastMessageTime': FieldValue.serverTimestamp(),
-      'lastSenderId': uid,
-    }, SetOptions(merge: true));
+    await _touchGroup(text);
     _scrollToBottom();
   }
 

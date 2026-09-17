@@ -13,7 +13,9 @@ import 'media_service.dart';
 /// папкаи Storage фарқ мекунанд, бинобар ин он дар ин ҷо ҷамъ карда шудааст —
 /// вагарна ҳар функсияи нави медиа бояд чор маротиба нусхабардорӣ шавад.
 class ChatMediaService {
-  /// `true` — агар фиристода шуд.
+  /// `true` — агар фиристода шуд. [unreadFor] — рӯйхати uid-ҳое, ки барояшон
+  /// ҳисоби нохондашуда бояд зиёд шавад (барои гурӯҳ — ҳамаи аъзоён ба ғайр аз
+  /// фиристанда).
   static Future<bool> sendFile({
     required CollectionReference<Map<String, dynamic>> messagesRef,
     required DocumentReference<Map<String, dynamic>> parentRef,
@@ -24,7 +26,7 @@ class ChatMediaService {
     required String preview,
     int? durationSeconds,
     int? sizeBytes,
-    String? unreadFor,
+    List<String>? unreadFor,
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return false;
@@ -46,8 +48,10 @@ class ChatMediaService {
       'lastMessage': preview,
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
-      if (unreadFor != null) 'unread': {unreadFor: FieldValue.increment(1)},
-      if (unreadFor != null) 'archivedBy': FieldValue.arrayRemove([uid, unreadFor]),
+      if (unreadFor != null && unreadFor.isNotEmpty)
+        'unread': {for (final other in unreadFor) other: FieldValue.increment(1)},
+      if (unreadFor != null && unreadFor.isNotEmpty)
+        'archivedBy': FieldValue.arrayRemove([uid, ...unreadFor]),
     }, SetOptions(merge: true));
     return true;
   }
@@ -57,7 +61,7 @@ class ChatMediaService {
     required DocumentReference<Map<String, dynamic>> parentRef,
     required String storageFolder,
     required XFile picked,
-    String? unreadFor,
+    List<String>? unreadFor,
   }) {
     return sendFile(
       messagesRef: messagesRef,
@@ -76,7 +80,7 @@ class ChatMediaService {
     required DocumentReference<Map<String, dynamic>> parentRef,
     required String storageFolder,
     required PlatformFile picked,
-    String? unreadFor,
+    List<String>? unreadFor,
   }) async {
     final path = picked.path;
     if (path == null) return false;
@@ -102,7 +106,7 @@ class ChatMediaService {
     required String storageFolder,
     required File file,
     required Duration duration,
-    String? unreadFor,
+    List<String>? unreadFor,
   }) async {
     final sent = await sendFile(
       messagesRef: messagesRef,
