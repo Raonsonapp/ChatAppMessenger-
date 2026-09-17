@@ -288,4 +288,5 @@ const Map<String, String> stringsEn = {
   'k286': '📍 Location',
   'k287': 'Open in maps',
   'k288': 'Could not get your location — check the permission and GPS',
+  'k289': 'No one has viewed it yet',
 };

@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../models/app_status.dart';
 import '../l10n/l10n.dart';
+import '../widgets/user_avatar.dart';
 
 /// Намоиши пурраи навсозиҳо (мисли Stories) — гузариши худкор, progress bar
 /// дар боло, ва сабти воқеии viewedBy дар Firestore.
@@ -39,6 +40,49 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
     _timer = Timer.periodic(_tick, (t) {
       setState(() => _progress += _tick.inMilliseconds / _duration.inMilliseconds);
       if (_progress >= 1) _next();
+    });
+  }
+
+  /// Рӯйхати онҳое, ки ин навсозиро дидаанд.
+  void _showViewers(List<String> viewers) {
+    _timer?.cancel();
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                trf('k196', [viewers.length]),
+                style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 15),
+              ),
+              const SizedBox(height: 10),
+              if (viewers.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  child: Text(tr('k289'), style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                )
+              else
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: viewers.length,
+                    itemBuilder: (context, i) => _ViewerRow(uid: viewers[i]),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    ).whenComplete(() {
+      if (mounted) _startTimer();
     });
   }
 
@@ -151,19 +195,43 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
                 right: 8,
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 16,
-                      backgroundColor: AppColors.surface,
-                      child: Text(status.ownerName.isNotEmpty ? status.ownerName[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontSize: 13)),
-                    ),
+                    UserAvatar(name: status.ownerName, uid: status.ownerId, size: 32),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(status.ownerName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
                     ),
+                    // Соҳиб шумораи дидаҳоро мебинад ва бо зер кардан рӯйхати
+                    // онҳоеро, ки дидаанд, мекушояд.
                     if (widget.isOwn)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Text(trf('k196', [status.viewedBy.length]), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                        stream: FirebaseFirestore.instance
+                            .collection('statuses')
+                            .doc(status.ownerId)
+                            .collection('items')
+                            .doc(status.id)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          final viewers = List<String>.from(
+                            snapshot.data?.data()?['viewedBy'] as List? ?? status.viewedBy,
+                          );
+                          return InkWell(
+                            onTap: () => _showViewers(viewers),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(LucideIcons.eye, color: Colors.white70, size: 15),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    trf('k196', [viewers.length]),
+                                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
@@ -176,6 +244,27 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Як сатр дар рӯйхати дидаҳо — ном аз ҳуҷҷати корбар гирифта мешавад.
+class _ViewerRow extends StatelessWidget {
+  final String uid;
+  const _ViewerRow({required this.uid});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
+      builder: (context, snapshot) {
+        final name = (snapshot.data?.data()?['name'] as String?) ?? tr('k002');
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: UserAvatar(name: name, uid: uid, size: 38),
+          title: Text(name, style: TextStyle(color: AppColors.textPrimary, fontSize: 14.5)),
+        );
+      },
     );
   }
 }
