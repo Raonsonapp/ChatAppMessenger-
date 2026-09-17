@@ -376,7 +376,27 @@ class MessageBubble extends StatelessWidget {
     final hasLocation = hasMedia && message.mediaType == 'location';
     final distinctReactions = message.reactions.values.toSet().toList();
 
-    return GestureDetector(
+    // Кашидан ба рост — ҷавоб додан, ҳамон ишораи WhatsApp. `confirmDismiss`
+    // ҳамеша `false` бармегардонад, бинобар ин паём нест намешавад — танҳо
+    // ба ҳолати аввал бармегардад.
+    return Dismissible(
+      key: ValueKey('swipe_${message.id}'),
+      direction: (onReply == null || message.deleted)
+          ? DismissDirection.none
+          : DismissDirection.startToEnd,
+      dismissThresholds: const {DismissDirection.startToEnd: 0.25},
+      confirmDismiss: (_) async {
+        onReply?.call(message);
+        return false;
+      },
+      background: Padding(
+        padding: const EdgeInsets.only(left: 12),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Icon(LucideIcons.corner_up_left, color: AppColors.textSecondary, size: 18),
+        ),
+      ),
+      child: GestureDetector(
       onLongPress: () => _showActions(context),
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -598,6 +618,7 @@ class MessageBubble extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
