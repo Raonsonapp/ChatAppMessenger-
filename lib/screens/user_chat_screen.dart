@@ -51,6 +51,11 @@ class _UserChatScreenState extends State<UserChatScreen> {
   bool _isUploading = false;
   bool _recording = false;
 
+  /// Ҷустуҷӯ дар дохили ҳамин чат.
+  final TextEditingController _searchController = TextEditingController();
+  bool _searching = false;
+  String _searchQuery = '';
+
   DocumentReference<Map<String, dynamic>> get _conversationRef =>
       FirebaseFirestore.instance.collection('conversations').doc(widget.conversationId);
 
@@ -82,6 +87,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -380,7 +386,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
 
               return Column(
                 children: [
-                  _buildHeader(),
+                  _searching ? _buildSearchHeader() : _buildHeader(),
                   Expanded(
                     child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                       stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
@@ -400,8 +406,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         if (!snapshot.hasData) {
                           return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
                         }
-                        final docs = snapshot.data!.docs;
-                        if (docs.isEmpty) {
+                        final allDocs = snapshot.data!.docs;
+                        if (allDocs.isEmpty) {
                           return Center(
                             child: Text(
                               trf('k213', [widget.otherUserName]),
@@ -410,9 +416,27 @@ class _UserChatScreenState extends State<UserChatScreen> {
                           );
                         }
                         if (currentUid.isNotEmpty) {
-                          _markIncomingAsRead(docs, currentUid);
+                          _markIncomingAsRead(allDocs, currentUid);
                         }
-                        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                        // Ҳангоми ҷустуҷӯ танҳо паёмҳои мувофиқ мемонанд.
+                        final docs = _searchQuery.isEmpty
+                            ? allDocs
+                            : allDocs.where((d) {
+                                final text = (d.data()['text'] as String?) ?? '';
+                                return text.toLowerCase().contains(_searchQuery);
+                              }).toList();
+                        if (docs.isEmpty) {
+                          return Center(
+                            child: Text(
+                              tr('k273'),
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                            ),
+                          );
+                        }
+                        // Ҳангоми ҷустуҷӯ ба поён намепарем — натиҷа гум мешавад.
+                        if (_searchQuery.isEmpty) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                        }
                         return ListView.builder(
                           controller: _scrollController,
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -495,6 +519,56 @@ class _UserChatScreenState extends State<UserChatScreen> {
     );
   }
 
+  void _openSearch() => setState(() => _searching = true);
+
+  void _closeSearch() {
+    _searchController.clear();
+    setState(() {
+      _searching = false;
+      _searchQuery = '';
+    });
+  }
+
+  /// Сарлавҳаи ҳолати ҷустуҷӯ — ба ҷои ном ва тугмаҳои занг.
+  Widget _buildSearchHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(6, 10, 6, 10),
+      child: GlassContainer(
+        borderRadius: 18,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: _closeSearch,
+              icon: Icon(LucideIcons.arrow_left, color: AppColors.textPrimary, size: 20),
+            ),
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 14.5),
+                onChanged: (value) => setState(() => _searchQuery = value.trim().toLowerCase()),
+                decoration: InputDecoration(
+                  hintText: tr('k272'),
+                  hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            if (_searchQuery.isNotEmpty)
+              IconButton(
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() => _searchQuery = '');
+                },
+                icon: Icon(LucideIcons.x, color: AppColors.textSecondary, size: 18),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(6, 10, 6, 10),
@@ -567,6 +641,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
                   ],
                 ),
               ),
+            ),
+            IconButton(
+              onPressed: _openSearch,
+              icon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),
             ),
             IconButton(
               onPressed: () => _startCall(CallType.video),

@@ -271,4 +271,6 @@ const Map<String, String> stringsEn = {
   'k269': 'Archived chats',
   'k270': 'No archived chats',
   'k271': 'Mark as read',
+  'k272': 'Search in chat',
+  'k273': 'Nothing found',
 };
