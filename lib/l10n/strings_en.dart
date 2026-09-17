@@ -247,4 +247,10 @@ const Map<String, String> stringsEn = {
   'k245': 'Voice message',
   'k246': 'Video',
   'k247': 'Sending error: {0}',
+  'k248': 'online',
+  'k249': 'just now',
+  'k250': '{0} min ago',
+  'k251': '{0} h ago',
+  'k252': 'yesterday',
+  'k253': '{0} days ago',
 };

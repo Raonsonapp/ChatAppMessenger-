@@ -13,6 +13,7 @@ import '../models/app_call.dart';
 import '../services/media_service.dart';
 import '../services/push_service.dart';
 import '../services/chat_media_service.dart';
+import '../services/presence_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
@@ -508,10 +509,38 @@ class _UserChatScreenState extends State<UserChatScreen> {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(
-                        widget.otherUserName,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            widget.otherUserName,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                          ),
+                          // «дар шабака» / «2 соат пеш» — бо эҳтироми танзимоти
+                          // махфияти худи ҳамсӯҳбат.
+                          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                            stream: FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(widget.otherUserId)
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              final label = PresenceService.describe(snapshot.data?.data());
+                              if (label == null) return const SizedBox.shrink();
+                              return Text(
+                                label.text,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: label.isOnline
+                                      ? AppColors.neonEmerald
+                                      : AppColors.textSecondary,
+                                  fontSize: 11.5,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ],

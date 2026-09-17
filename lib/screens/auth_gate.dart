@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/incoming_call_listener.dart';
 import '../services/notification_service.dart';
+import '../services/presence_service.dart';
 import 'chat_list_screen.dart';
 import 'complete_profile_screen.dart';
 import 'welcome_screen.dart';
@@ -42,6 +43,7 @@ class _AuthGateState extends State<AuthGate> {
           if (_tokenRegisteredForUid != user.uid) {
             _tokenRegisteredForUid = user.uid;
             NotificationService.registerTokenForCurrentUser();
+            PresenceService.instance.start();
           }
           // Ворид шудан кофӣ нест: корбар метавонад бе ном монда бошад
           // (масалан вуруд буриданашуда). Бе ном ӯро дигарон ҳангоми
