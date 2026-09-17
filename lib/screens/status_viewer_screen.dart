@@ -214,7 +214,11 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
             fit: StackFit.expand,
             children: [
               if (status.imageUrl != null)
-                Image.network(status.imageUrl!, fit: BoxFit.contain)
+                InteractiveViewer(
+                  minScale: 1,
+                  maxScale: 4,
+                  child: Image.network(status.imageUrl!, fit: BoxFit.contain),
+                )
               else
                 Container(
                   decoration: BoxDecoration(gradient: AppColors.neonGradient),

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/media_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/neon_backdrop.dart';
+import 'image_viewer_screen.dart';
 import '../l10n/l10n.dart';
 
 /// «Медиа, ҳуҷҷатҳо» — ҳамаи файлҳое, ки дар ҳамин чат мубодила шудаанд.
@@ -83,7 +84,14 @@ class SharedMediaScreen extends StatelessWidget {
                         final type = data['mediaType'] as String?;
                         final isImage = type == 'image' || type == 'gif' || type == 'sticker';
                         return InkWell(
-                          onTap: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+                          onTap: () => isImage
+                              ? Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ImageViewerScreen(url: url, title: title),
+                                  ),
+                                )
+                              : launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: isImage

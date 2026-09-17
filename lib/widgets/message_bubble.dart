@@ -13,6 +13,7 @@ import 'video_message_player.dart';
 import '../models/chat_message.dart';
 import '../l10n/l10n.dart';
 import '../sheets/forward_sheet.dart';
+import '../screens/image_viewer_screen.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -429,7 +430,17 @@ class MessageBubble extends StatelessWidget {
                             ),
                           ),
                         if (hasImage)
-                          ClipRRect(
+                          GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ImageViewerScreen(
+                                  url: message.mediaUrl!,
+                                  title: senderLabel ?? chatTitle,
+                                ),
+                              ),
+                            ),
+                            child: ClipRRect(
                             borderRadius: BorderRadius.circular(14),
                             child: Image.network(
                               message.mediaUrl!,
@@ -450,6 +461,7 @@ class MessageBubble extends StatelessWidget {
                                 alignment: Alignment.center,
                                 child: Icon(LucideIcons.triangle_alert, color: AppColors.textSecondary),
                               ),
+                            ),
                             ),
                           ),
                         if (message.forwarded && !message.deleted)
