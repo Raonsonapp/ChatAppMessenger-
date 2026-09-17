@@ -25,6 +25,59 @@ class ContactInfoScreen extends StatelessWidget {
     required this.otherUserName,
   });
 
+  /// Паёмҳои муваққатӣ — мӯҳлат дар ҳуҷҷати сӯҳбат нигоҳ дошта мешавад,
+  /// бинобар ин барои ҳар ду тараф яксон аст.
+  void _showDisappearOptions(BuildContext context, int current) {
+    const options = <int>[0, 86400, 604800, 7776000];
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: options.map((seconds) {
+              return ListTile(
+                leading: Icon(
+                  seconds == current ? LucideIcons.check : LucideIcons.timer,
+                  color: seconds == current ? AppColors.neonEmerald : AppColors.neonCyan,
+                  size: 19,
+                ),
+                title: Text(
+                  _disappearLabel(seconds),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 14.5),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  FirebaseFirestore.instance
+                      .collection('conversations')
+                      .doc(conversationId)
+                      .set({'disappearIn': seconds}, SetOptions(merge: true));
+                },
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _disappearLabel(int seconds) {
+    return switch (seconds) {
+      86400 => tr('k300'),
+      604800 => tr('k301'),
+      7776000 => tr('k302'),
+      _ => tr('k303'),
+    };
+  }
+
   Future<void> _toggleMute(bool currentlyMuted) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -156,6 +209,25 @@ class ContactInfoScreen extends StatelessWidget {
                                     title: Text(
                                       tr('k073'),
                                       style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
+                                    ),
+                                  ),
+                                  Divider(color: AppColors.glassBorder, height: 1),
+                                  ListTile(
+                                    leading: Icon(LucideIcons.timer, color: AppColors.neonCyan, size: 20),
+                                    title: Text(
+                                      tr('k299'),
+                                      style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
+                                    ),
+                                    subtitle: Text(
+                                      _disappearLabel(
+                                        (convoSnapshot.data?.data()?['disappearIn'] as num?)?.toInt() ?? 0,
+                                      ),
+                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                    ),
+                                    trailing: Icon(LucideIcons.chevron_right, color: AppColors.textSecondary, size: 17),
+                                    onTap: () => _showDisappearOptions(
+                                      context,
+                                      (convoSnapshot.data?.data()?['disappearIn'] as num?)?.toInt() ?? 0,
                                     ),
                                   ),
                                   Divider(color: AppColors.glassBorder, height: 1),

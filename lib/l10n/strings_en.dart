@@ -298,4 +298,9 @@ const Map<String, String> stringsEn = {
   'k296': 'Status',
   'k297': 'Reply sent',
   'k298': 'Reply…',
+  'k299': 'Disappearing messages',
+  'k300': '24 hours',
+  'k301': '7 days',
+  'k302': '90 days',
+  'k303': 'Off',
 };

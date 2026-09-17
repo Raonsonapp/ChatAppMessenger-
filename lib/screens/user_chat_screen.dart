@@ -55,6 +55,11 @@ class _UserChatScreenState extends State<UserChatScreen> {
   bool _isUploading = false;
   bool _recording = false;
 
+  /// Мӯҳлати нопадид шудани паёмҳо бо сония (0 — хомӯш). Аз ҳуҷҷати сӯҳбат
+  /// хонда мешавад, то ҳангоми фиристодан фавран дастрас бошад.
+  int _disappearIn = 0;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _convoSub;
+
   /// «Менависад…» — таймери хомӯшкунӣ пас аз таваққуфи чоп.
   Timer? _typingTimer;
   bool _typingSent = false;
@@ -110,6 +115,30 @@ class _UserChatScreenState extends State<UserChatScreen> {
     return true;
   }
 
+  /// Майдони мӯҳлат барои паёми нав — агар паёмҳои муваққатӣ фаъол бошанд.
+  Map<String, dynamic> _expiryField() {
+    if (_disappearIn <= 0) return const {};
+    return {
+      'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(seconds: _disappearIn))),
+    };
+  }
+
+  /// Паёмҳои мӯҳлаташон гузашта воқеан нест карда мешаванд — то онҳо дар
+  /// Firestore то абад намонанд. Ин ҳангоми кушодани чат як бор иҷро мешавад.
+  void _purgeExpired(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+    final now = DateTime.now();
+    final expired = docs.where((d) {
+      final at = (d.data()['expiresAt'] as Timestamp?)?.toDate();
+      return at != null && now.isAfter(at);
+    }).toList();
+    if (expired.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final d in expired) {
+        d.reference.delete().catchError((_) {});
+      }
+    });
+  }
+
   /// Ба ҳамсӯҳбат хабар медиҳем, ки ман ҳозир менависам.
   Future<void> _setTyping(bool typing) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -140,7 +169,17 @@ class _UserChatScreenState extends State<UserChatScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _convoSub = _conversationRef.snapshots().listen((snap) {
+      final value = (snap.data()?['disappearIn'] as num?)?.toInt() ?? 0;
+      if (value != _disappearIn && mounted) setState(() => _disappearIn = value);
+    }, onError: (_) {});
+  }
+
+  @override
   void dispose() {
+    _convoSub?.cancel();
     _typingTimer?.cancel();
     _typingExpiryTimer?.cancel();
     _setTyping(false);
@@ -213,6 +252,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
       'isAI': false,
       'createdAt': FieldValue.serverTimestamp(),
       'read': false,
+      ..._expiryField(),
       'mediaType': 'sticker',
     });
     await _touchConversation('$sticker Стикер');
@@ -239,6 +279,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
       'isAI': false,
       'createdAt': FieldValue.serverTimestamp(),
       'read': false,
+      ..._expiryField(),
     });
     await _touchConversation(text);
     _notifyOther(text);
@@ -257,6 +298,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         'isAI': false,
         'createdAt': FieldValue.serverTimestamp(),
         'read': false,
+        ..._expiryField(),
         'mediaUrl': url,
         'mediaType': mediaType,
       });
@@ -292,6 +334,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         longitude: position.longitude,
         preview: tr('k286'),
         unreadFor: [widget.otherUserId],
+        disappearInSeconds: _disappearIn,
       ),
       tr('k286'),
     );
@@ -322,6 +365,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
           storageFolder: _storageFolder,
           picked: file,
           unreadFor: [widget.otherUserId],
+        disappearInSeconds: _disappearIn,
         ),
         '🎥 Видео',
       );
@@ -333,6 +377,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
           storageFolder: _storageFolder,
           picked: picked,
           unreadFor: [widget.otherUserId],
+        disappearInSeconds: _disappearIn,
         ),
         '📄 ${picked.name}',
       );
@@ -347,6 +392,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         file: file,
         duration: duration,
         unreadFor: [widget.otherUserId],
+        disappearInSeconds: _disappearIn,
       ),
       '🎤 Паёми овозӣ',
     );
@@ -369,6 +415,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
       'isAI': false,
       'createdAt': FieldValue.serverTimestamp(),
       'read': false,
+      ..._expiryField(),
       if (replying != null) 'replyToText': replying.text,
       if (replying != null) 'replyToSenderId': replying.senderId,
     });
@@ -508,10 +555,16 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         if (!snapshot.hasData) {
                           return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
                         }
-                        // Паёмҳое, ки ман барои худам нест кардаам, намоён нестанд.
+                        _purgeExpired(snapshot.data!.docs);
+                        // Паёмҳое, ки ман барои худам нест кардаам ё мӯҳлаташон
+                        // гузаштааст, намоён нестанд.
+                        final now = DateTime.now();
                         final allDocs = snapshot.data!.docs.where((d) {
-                          final hidden = List<String>.from(d.data()['deletedFor'] as List? ?? []);
-                          return !hidden.contains(currentUid);
+                          final data = d.data();
+                          final hidden = List<String>.from(data['deletedFor'] as List? ?? []);
+                          if (hidden.contains(currentUid)) return false;
+                          final expiresAt = (data['expiresAt'] as Timestamp?)?.toDate();
+                          return expiresAt == null || now.isBefore(expiresAt);
                         }).toList();
                         if (allDocs.isEmpty) {
                           return Center(
@@ -747,6 +800,12 @@ class _UserChatScreenState extends State<UserChatScreen> {
                 ),
               ),
             ),
+            // Нишони паёмҳои муваққатӣ — то корбар фаромӯш накунад, ки он фаъол аст.
+            if (_disappearIn > 0)
+              Padding(
+                padding: const EdgeInsets.only(right: 2),
+                child: Icon(LucideIcons.timer, color: AppColors.neonEmerald, size: 17),
+              ),
             IconButton(
               onPressed: _openSearch,
               icon: Icon(LucideIcons.search, color: AppColors.textSecondary, size: 19),

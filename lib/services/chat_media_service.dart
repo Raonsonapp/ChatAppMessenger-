@@ -28,6 +28,7 @@ class ChatMediaService {
     int? durationSeconds,
     int? sizeBytes,
     List<String>? unreadFor,
+    int? disappearInSeconds,
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return false;
@@ -44,6 +45,8 @@ class ChatMediaService {
       if (durationSeconds != null) 'mediaDuration': durationSeconds,
       if (sizeBytes != null) 'mediaSize': sizeBytes,
       if (mediaType == 'document') 'mediaName': name,
+      if (disappearInSeconds != null && disappearInSeconds > 0)
+        'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(seconds: disappearInSeconds))),
     });
     await parentRef.set({
       'lastMessage': preview,
@@ -65,6 +68,7 @@ class ChatMediaService {
     required String storageFolder,
     required XFile picked,
     List<String>? unreadFor,
+    int? disappearInSeconds,
   }) {
     return sendFile(
       messagesRef: messagesRef,
@@ -75,6 +79,7 @@ class ChatMediaService {
       mediaType: 'video',
       preview: '🎥 Видео',
       unreadFor: unreadFor,
+      disappearInSeconds: disappearInSeconds,
     );
   }
 
@@ -84,6 +89,7 @@ class ChatMediaService {
     required String storageFolder,
     required PlatformFile picked,
     List<String>? unreadFor,
+    int? disappearInSeconds,
   }) async {
     final path = picked.path;
     if (path == null) return false;
@@ -100,6 +106,7 @@ class ChatMediaService {
       preview: '📄 ${picked.name}',
       sizeBytes: size,
       unreadFor: unreadFor,
+      disappearInSeconds: disappearInSeconds,
     );
   }
 
@@ -112,6 +119,7 @@ class ChatMediaService {
     required double longitude,
     required String preview,
     List<String>? unreadFor,
+    int? disappearInSeconds,
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return false;
@@ -126,6 +134,8 @@ class ChatMediaService {
       'mediaType': 'location',
       'latitude': latitude,
       'longitude': longitude,
+      if (disappearInSeconds != null && disappearInSeconds > 0)
+        'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(seconds: disappearInSeconds))),
     });
     await parentRef.set({
       'lastMessage': preview,
@@ -148,6 +158,7 @@ class ChatMediaService {
     required File file,
     required Duration duration,
     List<String>? unreadFor,
+    int? disappearInSeconds,
   }) async {
     final sent = await sendFile(
       messagesRef: messagesRef,
@@ -159,6 +170,7 @@ class ChatMediaService {
       preview: '🎤 Паёми овозӣ',
       durationSeconds: duration.inSeconds,
       unreadFor: unreadFor,
+      disappearInSeconds: disappearInSeconds,
     );
     // Файли муваққатӣ дигар лозим нест.
     await file.delete().catchError((_) => file);
