@@ -257,4 +257,9 @@ const Map<String, String> stringsEn = {
   'k255': 'Forwarded',
   'k256': 'Forward',
   'k257': 'Forwarded',
+  'k258': 'Star',
+  'k259': 'Unstar',
+  'k260': 'Starred messages',
+  'k261': 'No starred messages yet',
+  'k262': 'Added to starred',
 };

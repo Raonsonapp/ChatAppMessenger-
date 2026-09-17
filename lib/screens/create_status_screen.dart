@@ -15,7 +15,10 @@ import '../l10n/l10n.dart';
 /// Сохтани навсозии воқеӣ (матн ё расм) — дар Firestore
 /// `statuses/{uid}/items/{id}` бо мӯҳлати 24-соата сабт мешавад.
 class CreateStatusScreen extends StatefulWidget {
-  const CreateStatusScreen({super.key});
+  /// Расми аллакай гирифташуда (масалан аз тугмаи камера дар сарлавҳа) —
+  /// экран фавран бо ҳамон расм кушода мешавад.
+  final XFile? initialImage;
+  const CreateStatusScreen({super.key, this.initialImage});
 
   @override
   State<CreateStatusScreen> createState() => _CreateStatusScreenState();
@@ -25,6 +28,12 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
   final TextEditingController _textController = TextEditingController();
   XFile? _pickedImage;
   bool _isPosting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pickedImage = widget.initialImage;
+  }
 
   @override
   void dispose() {

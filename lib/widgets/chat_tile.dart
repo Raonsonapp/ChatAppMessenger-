@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../models/chat_conversation.dart';
 import '../screens/chat_detail_screen.dart';
 import '../l10n/l10n.dart';
+import '../utils/time_format.dart';
 
 /// Сатри чат — WhatsApp-тарз: ҳамаи қаторҳо якхела ба назар мерасанд.
 /// ChatAI танҳо бо нишони сӯзан (pin) фарқ мекунад — на бо банер/glow.
@@ -22,15 +23,6 @@ class ChatTile extends StatelessWidget {
       .orderBy('createdAt', descending: true)
       .limit(1)
       .snapshots();
-
-  String _formatTime(DateTime? t) {
-    if (t == null) return '';
-    final now = DateTime.now();
-    if (now.difference(t).inDays >= 1) return '${t.day}/${t.month}';
-    final h = t.hour.toString().padLeft(2, '0');
-    final m = t.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +67,7 @@ class ChatTile extends StatelessWidget {
                     if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
                       final data = snapshot.data!.docs.first.data();
                       preview = (data['text'] ?? preview) as String;
-                      time = _formatTime((data['createdAt'] as Timestamp?)?.toDate());
+                      time = formatChatTime((data['createdAt'] as Timestamp?)?.toDate());
                     }
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

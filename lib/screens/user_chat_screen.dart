@@ -407,6 +407,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
                               onReply: (m) => setState(() => _replyingTo = m),
                               onDelete: _deleteMessage,
                               onReact: _reactToMessage,
+                              messageRef: _messagesRef.doc(message.id),
+                              chatTitle: widget.otherUserName,
                             );
                           },
                         );

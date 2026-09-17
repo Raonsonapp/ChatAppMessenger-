@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
-import '../utils/snackbar_utils.dart';
+import '../services/media_service.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
@@ -53,6 +53,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   void _openCreateStatus() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateStatusScreen()));
+  }
+
+  /// Тугмаи камера дар сарлавҳа — мисли WhatsApp: сурат мегирем ва фавран
+  /// экрани сохтани навсозӣ бо ҳамон сурат кушода мешавад.
+  Future<void> _openCameraStatus() async {
+    final photo = await MediaService.pickFromCamera();
+    if (photo == null || !mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => CreateStatusScreen(initialImage: photo)),
+    );
   }
 
   void _openCreateCommunity() {
@@ -135,7 +146,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
           Row(
             children: [
-              _iconButton(LucideIcons.camera, onTap: () => showComingSoonSnack(context, tr('k043'))),
+              _iconButton(LucideIcons.camera, onTap: _openCameraStatus),
               const SizedBox(width: 8),
               _iconButton(LucideIcons.search, onTap: _openSearch),
               const SizedBox(width: 8),

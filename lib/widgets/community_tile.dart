@@ -5,19 +5,11 @@ import '../theme/app_theme.dart';
 import '../models/app_community.dart';
 import '../screens/community_chat_screen.dart';
 import '../l10n/l10n.dart';
+import '../utils/time_format.dart';
 
 class CommunityTile extends StatelessWidget {
   final AppCommunity community;
   const CommunityTile({super.key, required this.community});
-
-  String _formatTime(DateTime? t) {
-    if (t == null) return '';
-    final now = DateTime.now();
-    if (now.difference(t).inDays >= 1) return '${t.day}/${t.month}';
-    final h = t.hour.toString().padLeft(2, '0');
-    final m = t.minute.toString().padLeft(2, '0');
-    return '$h:$m';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +59,7 @@ class CommunityTile extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          _formatTime(community.lastMessageTime),
+                          formatChatTime(community.lastMessageTime),
                           style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 11.5),
                         ),
                       ],

@@ -3,8 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../theme/app_theme.dart';
 import '../services/media_service.dart';
+import '../services/star_service.dart';
 import 'audio_message_player.dart';
 import 'video_message_player.dart';
 import '../models/chat_message.dart';
@@ -20,6 +23,12 @@ class MessageBubble extends StatelessWidget {
   final ValueChanged<ChatMessage>? onReply;
   final ValueChanged<ChatMessage>? onDelete;
   final void Function(ChatMessage message, String emoji)? onReact;
+
+  /// Ҳуҷҷати худи паём — барои ситорадор кардан лозим аст.
+  final DocumentReference<Map<String, dynamic>>? messageRef;
+
+  /// Номи чат — дар рӯйхати паёмҳои ситорадор нишон дода мешавад.
+  final String? chatTitle;
   const MessageBubble({
     super.key,
     required this.message,
@@ -30,6 +39,8 @@ class MessageBubble extends StatelessWidget {
     this.onReply,
     this.onDelete,
     this.onReact,
+    this.messageRef,
+    this.chatTitle,
   });
 
   static const List<String> _quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
@@ -91,6 +102,7 @@ class MessageBubble extends StatelessWidget {
                   );
                 },
               ),
+              if (messageRef != null) _starTile(context),
               if (message.mediaUrl == null)
                 _actionTile(
                   context,
@@ -116,6 +128,33 @@ class MessageBubble extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// Тугмаи ситора — навиштаҷот вобаста ба он ки паём аллакай ситорадор аст.
+  Widget _starTile(BuildContext context) {
+    final ref = messageRef!;
+    return FutureBuilder<bool>(
+      future: StarService.isStarred(ref),
+      builder: (context, snapshot) {
+        final starred = snapshot.data ?? false;
+        return _actionTile(
+          context,
+          icon: starred ? LucideIcons.star_off : LucideIcons.star,
+          label: starred ? tr('k259') : tr('k258'),
+          onTap: () async {
+            Navigator.pop(context);
+            final now = await StarService.toggle(
+              messageRef: ref,
+              message: message,
+              chatTitle: chatTitle ?? '',
+            );
+            if (now && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k262'))));
+            }
+          },
+        );
+      },
     );
   }
 

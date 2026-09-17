@@ -23,6 +23,12 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if signedIn();
       allow write: if signedIn() && uid() == userId;
+
+      // Паёмҳои ситорадор — танҳо барои худи соҳиб. Қоидаҳои ҳуҷҷати падар ба
+      // зерколлексия татбиқ намешаванд, бинобар ин ин ҷо алоҳида навишта шуд.
+      match /starred/{starId} {
+        allow read, write: if signedIn() && uid() == userId;
+      }
     }
 
     // Сӯҳбати шахсӣ: танҳо ду иштирокчӣ.

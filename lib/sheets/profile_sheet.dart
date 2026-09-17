@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/settings/settings_home_screen.dart';
+import '../screens/starred_messages_screen.dart';
 import '../l10n/l10n.dart';
 
 class ProfileSheet extends StatelessWidget {
@@ -65,6 +66,15 @@ class ProfileSheet extends StatelessWidget {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen()));
+              },
+            ),
+            const SizedBox(height: 8),
+            _menuRow(
+              icon: LucideIcons.star,
+              label: tr('k260'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const StarredMessagesScreen()));
               },
             ),
             const SizedBox(height: 8),
