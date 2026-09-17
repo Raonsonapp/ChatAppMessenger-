@@ -9,6 +9,7 @@ import '../models/app_call.dart';
 import '../screens/call_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
+import '../utils/user_search.dart';
 
 /// Интихоби корбар барои сар кардани занги нав (садоӣ ё видеоӣ).
 class NewCallSheet extends StatefulWidget {
@@ -41,14 +42,11 @@ class _NewCallSheetState extends State<NewCallSheet> {
     }
     setState(() => _isSearching = true);
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    final snapshot = await FirebaseFirestore.instance.collection('users').limit(50).get();
-    final ql = q.toLowerCase();
+    final snapshot = await FirebaseFirestore.instance.collection('users').limit(kUserSearchLimit).get();
     final matches = snapshot.docs.where((doc) {
       if (doc.id == currentUid) return false;
       final data = doc.data();
-      final phone = (data['phone'] ?? '') as String;
-      final name = (data['name'] ?? '') as String;
-      return phone.contains(q) || name.toLowerCase().contains(ql);
+      return userMatchesQuery(data, q);
     }).map((doc) {
       final data = doc.data();
       return {'uid': doc.id, 'name': (data['name'] ?? tr('k002')) as String, 'phone': (data['phone'] ?? '') as String};

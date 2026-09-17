@@ -8,6 +8,7 @@ import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import 'group_chat_screen.dart';
 import '../l10n/l10n.dart';
+import '../utils/user_search.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({super.key});
@@ -40,14 +41,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     }
     setState(() => _isSearching = true);
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    final snapshot = await FirebaseFirestore.instance.collection('users').limit(50).get();
-    final ql = q.toLowerCase();
+    final snapshot = await FirebaseFirestore.instance.collection('users').limit(kUserSearchLimit).get();
     final matches = snapshot.docs.where((doc) {
       if (doc.id == currentUid) return false;
       final data = doc.data();
-      final phone = (data['phone'] ?? '') as String;
-      final name = (data['name'] ?? '') as String;
-      return phone.contains(q) || name.toLowerCase().contains(ql);
+      return userMatchesQuery(data, q);
     }).map((doc) {
       final data = doc.data();
       return {'uid': doc.id, 'name': (data['name'] ?? tr('k002')) as String, 'phone': (data['phone'] ?? '') as String};

@@ -11,6 +11,7 @@ import 'user_chat_screen.dart';
 import 'create_group_screen.dart';
 import 'create_community_screen.dart';
 import '../l10n/l10n.dart';
+import '../utils/user_search.dart';
 
 /// Интихоби contact аз contact-ҳои воқеии телефон.
 /// + дигар рақам талаб намекунад: contact аз телефон интихоб мешавад.
@@ -97,7 +98,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
     if (phoneSet.isEmpty) return;
 
     // Бе orderBy/compound query: index-и Firestore талаб намешавад.
-    final snapshot = await FirebaseFirestore.instance.collection('users').limit(500).get();
+    final snapshot = await FirebaseFirestore.instance.collection('users').limit(kUserSearchLimit).get();
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
 
     for (final doc in snapshot.docs) {

@@ -10,6 +10,7 @@ import '../l10n/l10n.dart';
 import '../services/media_service.dart';
 import '../widgets/group_avatar.dart';
 import 'shared_media_screen.dart';
+import '../utils/user_search.dart';
 
 /// Маълумоти воқеии ҷамъият — сохти монанд ба GroupInfoScreen.
 class CommunityInfoScreen extends StatelessWidget {
@@ -333,14 +334,11 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
     }
     setState(() => _isSearching = true);
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    final snapshot = await FirebaseFirestore.instance.collection('users').limit(50).get();
-    final ql = q.toLowerCase();
+    final snapshot = await FirebaseFirestore.instance.collection('users').limit(kUserSearchLimit).get();
     final matches = snapshot.docs.where((doc) {
       if (doc.id == currentUid) return false;
       final data = doc.data();
-      final phone = (data['phone'] ?? '') as String;
-      final name = (data['name'] ?? '') as String;
-      return phone.contains(q) || name.toLowerCase().contains(ql);
+      return userMatchesQuery(data, q);
     }).map((doc) {
       final data = doc.data();
       return {'uid': doc.id, 'name': (data['name'] ?? tr('k002')) as String, 'phone': (data['phone'] ?? '') as String};

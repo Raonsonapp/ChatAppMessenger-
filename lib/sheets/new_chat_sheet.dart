@@ -11,6 +11,7 @@ import '../screens/create_group_screen.dart';
 import '../screens/contact_picker_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
+import '../utils/user_search.dart';
 
 /// Феҳристи ҷустуҷӯи корбарони воқеӣ + гузаргоҳ ба сохтани гурӯҳи нав.
 class NewChatSheet extends StatefulWidget {
@@ -44,15 +45,11 @@ class _NewChatSheetState extends State<NewChatSheet> {
     setState(() => _isSearching = true);
 
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    final snapshot = await FirebaseFirestore.instance.collection('users').limit(50).get();
+    final snapshot = await FirebaseFirestore.instance.collection('users').limit(kUserSearchLimit).get();
 
-    final ql = q.toLowerCase();
     final matches = snapshot.docs.where((doc) {
       if (doc.id == currentUid) return false;
-      final data = doc.data();
-      final phone = (data['phone'] ?? '') as String;
-      final name = (data['name'] ?? '') as String;
-      return phone.contains(q) || name.toLowerCase().contains(ql);
+      return userMatchesQuery(doc.data(), q);
     }).map((doc) {
       final data = doc.data();
       return {
