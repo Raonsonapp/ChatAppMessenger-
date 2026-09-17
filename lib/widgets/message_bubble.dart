@@ -29,6 +29,9 @@ class MessageBubble extends StatelessWidget {
 
   /// Тағйир додани матни паёми худам.
   final void Function(ChatMessage message, String newText)? onEdit;
+
+  /// «Ҷавоби шахсӣ» — танҳо дар гурӯҳ ва ҷамъият маънӣ дорад.
+  final ValueChanged<ChatMessage>? onReplyPrivately;
   final void Function(ChatMessage message, String emoji)? onReact;
 
   /// Ҳуҷҷати худи паём — барои ситорадор кардан лозим аст.
@@ -47,6 +50,7 @@ class MessageBubble extends StatelessWidget {
     this.onDelete,
     this.onDeleteForMe,
     this.onEdit,
+    this.onReplyPrivately,
     this.onReact,
     this.messageRef,
     this.chatTitle,
@@ -111,6 +115,16 @@ class MessageBubble extends StatelessWidget {
                   );
                 },
               ),
+              if (!isMe && onReplyPrivately != null)
+                _actionTile(
+                  context,
+                  icon: LucideIcons.message_circle,
+                  label: tr('k304'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onReplyPrivately?.call(message);
+                  },
+                ),
               if (messageRef != null) _starTile(context),
               if (message.mediaUrl == null)
                 _actionTile(

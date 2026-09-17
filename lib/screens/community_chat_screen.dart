@@ -24,6 +24,8 @@ import '../l10n/l10n.dart';
 import '../widgets/chat_wallpaper.dart';
 import '../services/location_service.dart';
 import '../services/push_service.dart';
+import '../models/app_conversation.dart';
+import 'user_chat_screen.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -320,6 +322,33 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     await _messagesRef.doc(message.id).update({'deleted': true});
   }
 
+  /// Ҷавоби шахсӣ — сӯҳбати шахсӣ бо фиристанда кушода мешавад (агар набошад,
+  /// сохта мешавад) ва матни паём ҳамчун иқтибос гузошта мешавад.
+  Future<void> _replyPrivately(ChatMessage message) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || message.senderId == uid) return;
+    final otherName = widget.memberNames[message.senderId] ?? tr('k002');
+    final conversationId = AppConversation.idFor(uid, message.senderId);
+    final myName = widget.memberNames[uid] ?? tr('k002');
+
+    await FirebaseFirestore.instance.collection('conversations').doc(conversationId).set({
+      'participants': [uid, message.senderId],
+      'participantNames': {uid: myName, message.senderId: otherName},
+    }, SetOptions(merge: true));
+
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UserChatScreen(
+          conversationId: conversationId,
+          otherUserName: otherName,
+          otherUserId: message.senderId,
+        ),
+      ),
+    );
+  }
+
   Future<void> _editMessage(ChatMessage message, String newText) async {
     await _messagesRef.doc(message.id).update({'text': newText, 'edited': true});
   }
@@ -407,6 +436,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                           onDelete: _deleteMessage,
                           onReact: _reactToMessage,
                           onEdit: _editMessage,
+                          onReplyPrivately: _replyPrivately,
                           onDeleteForMe: _deleteForMe,
                           messageRef: _messagesRef.doc(message.id),
                           chatTitle: widget.communityName,

@@ -27,6 +27,8 @@ import '../widgets/group_avatar.dart';
 import '../models/app_call.dart';
 import 'group_call_screen.dart';
 import '../services/push_service.dart';
+import '../models/app_conversation.dart';
+import 'user_chat_screen.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -325,6 +327,33 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await _messagesRef.doc(message.id).update({'deleted': true});
   }
 
+  /// Ҷавоби шахсӣ — сӯҳбати шахсӣ бо фиристанда кушода мешавад (агар набошад,
+  /// сохта мешавад) ва матни паём ҳамчун иқтибос гузошта мешавад.
+  Future<void> _replyPrivately(ChatMessage message) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || message.senderId == uid) return;
+    final otherName = widget.memberNames[message.senderId] ?? tr('k002');
+    final conversationId = AppConversation.idFor(uid, message.senderId);
+    final myName = widget.memberNames[uid] ?? tr('k002');
+
+    await FirebaseFirestore.instance.collection('conversations').doc(conversationId).set({
+      'participants': [uid, message.senderId],
+      'participantNames': {uid: myName, message.senderId: otherName},
+    }, SetOptions(merge: true));
+
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UserChatScreen(
+          conversationId: conversationId,
+          otherUserName: otherName,
+          otherUserId: message.senderId,
+        ),
+      ),
+    );
+  }
+
   Future<void> _editMessage(ChatMessage message, String newText) async {
     await _messagesRef.doc(message.id).update({'text': newText, 'edited': true});
   }
@@ -412,6 +441,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           onDelete: _deleteMessage,
                           onReact: _reactToMessage,
                           onEdit: _editMessage,
+                          onReplyPrivately: _replyPrivately,
                           onDeleteForMe: _deleteForMe,
                           messageRef: _messagesRef.doc(message.id),
                           chatTitle: widget.groupName,
