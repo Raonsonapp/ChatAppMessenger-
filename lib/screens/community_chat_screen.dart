@@ -75,21 +75,19 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final myName = widget.memberNames[uid] ?? tr('k002');
-    for (final member in _others) {
-      await PushService.notify(
-        toUid: member,
-        title: widget.communityName,
-        body: '$myName: $preview',
-        data: {
-          'type': 'chat_message',
-          'kind': 'community',
-          'threadId': widget.communityId,
-          'threadName': widget.communityName,
-          'senderId': uid,
-          'senderName': myName,
-        },
-      );
-    }
+    await PushService.notifyMany(
+      toUids: _others,
+      title: widget.communityName,
+      body: '$myName: $preview',
+      data: {
+        'type': 'chat_message',
+        'kind': 'community',
+        'threadId': widget.communityId,
+        'threadName': widget.communityName,
+        'senderId': uid,
+        'senderName': myName,
+      },
+    );
   }
 
   Future<void> _touchCommunity(String preview) async {

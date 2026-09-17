@@ -73,21 +73,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final myName = widget.memberNames[uid] ?? tr('k002');
-    for (final member in _others) {
-      await PushService.notify(
-        toUid: member,
-        title: widget.groupName,
-        body: '$myName: $preview',
-        data: {
-          'type': 'chat_message',
-          'kind': 'group',
-          'threadId': widget.groupId,
-          'threadName': widget.groupName,
-          'senderId': uid,
-          'senderName': myName,
-        },
-      );
-    }
+    await PushService.notifyMany(
+      toUids: _others,
+      title: widget.groupName,
+      body: '$myName: $preview',
+      data: {
+        'type': 'chat_message',
+        'kind': 'group',
+        'threadId': widget.groupId,
+        'threadName': widget.groupName,
+        'senderId': uid,
+        'senderName': myName,
+      },
+    );
   }
 
   Future<void> _touchGroup(String preview) async {
