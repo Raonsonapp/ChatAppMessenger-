@@ -52,8 +52,45 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
       FirebaseFirestore.instance.collection('communities').doc(widget.communityId);
   CollectionReference<Map<String, dynamic>> get _messagesRef => _communityRef.collection('messages');
 
+  /// Ҳамаи аъзоён ба ғайр аз худам — барои ҳисоби нохондашуда.
+  List<String> get _others {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    return widget.memberNames.keys.where((m) => m != uid).toList();
+  }
+
+  /// Сарлавҳаи ҷамъиятро нав мекунад ва ҳисоби нохондашударо зиёд мекунад.
+  Future<void> _touchCommunity(String preview) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final counters = <String, Object>{
+      for (final member in _others) member: FieldValue.increment(1),
+    };
+    await _communityRef.set({
+      'lastMessage': preview,
+      'lastMessageTime': FieldValue.serverTimestamp(),
+      'lastSenderId': uid,
+      if (counters.isNotEmpty) 'unread': counters,
+    }, SetOptions(merge: true));
+  }
+
+  /// Ҳангоми кушодани ҷамъият ҳисоби нохондашудаи ман сифр мешавад.
+  Future<void> _clearMyUnread() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await _communityRef.set({
+      'unread': {uid: 0},
+    }, SetOptions(merge: true)).catchError((_) {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _clearMyUnread();
+  }
+
   @override
   void dispose() {
+    _clearMyUnread();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -116,10 +153,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     await _messagesRef.add({'text': sticker, 'senderId': uid, 'isAI': false, 'createdAt': FieldValue.serverTimestamp(), 'mediaType': 'sticker'});
-    await _communityRef.set({
-      'lastMessage': '$sticker Стикер',
-      'lastMessageTime': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    await _touchCommunity('$sticker Стикер');
     _scrollToBottom();
   }
 
@@ -134,11 +168,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
           if (uid == null) return;
           final text = '👤 ${contact['name']}\n${contact['phone']}';
           await _messagesRef.add({'text': text, 'senderId': uid, 'isAI': false, 'createdAt': FieldValue.serverTimestamp()});
-          await _communityRef.set({
-            'lastMessage': text,
-            'lastMessageTime': FieldValue.serverTimestamp(),
-            'lastSenderId': uid,
-          }, SetOptions(merge: true));
+          await _touchCommunity(text);
           _scrollToBottom();
         },
       ),
@@ -159,11 +189,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         'mediaUrl': url,
         'mediaType': mediaType,
       });
-      await _communityRef.set({
-        'lastMessage': '📷 Расм',
-        'lastMessageTime': FieldValue.serverTimestamp(),
-        'lastSenderId': uid,
-      }, SetOptions(merge: true));
+      await _touchCommunity('📷 Расм');
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
@@ -190,7 +216,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         latitude: position.latitude,
         longitude: position.longitude,
         preview: tr('k286'),
-        unreadFor: null,
+        unreadFor: _others,
       ),
     );
   }
@@ -216,6 +242,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
           parentRef: _communityRef,
           storageFolder: _storageFolder,
           picked: file,
+          unreadFor: _others,
         ),
       );
 
@@ -225,6 +252,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
           parentRef: _communityRef,
           storageFolder: _storageFolder,
           picked: picked,
+          unreadFor: _others,
         ),
       );
 
@@ -237,6 +265,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         storageFolder: _storageFolder,
         file: file,
         duration: duration,
+        unreadFor: _others,
       ),
     );
   }
@@ -258,11 +287,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
       if (replying != null) 'replyToText': replying.text,
       if (replying != null) 'replyToSenderId': replying.senderId,
     });
-    await _communityRef.set({
-      'lastMessage': text,
-      'lastMessageTime': FieldValue.serverTimestamp(),
-      'lastSenderId': uid,
-    }, SetOptions(merge: true));
+    await _touchCommunity(text);
     _scrollToBottom();
   }
 

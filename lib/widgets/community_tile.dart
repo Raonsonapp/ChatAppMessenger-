@@ -7,13 +7,19 @@ import '../screens/community_chat_screen.dart';
 import '../l10n/l10n.dart';
 import '../utils/time_format.dart';
 import 'group_avatar.dart';
+import 'unread_badge.dart';
 
 class CommunityTile extends StatelessWidget {
   final AppCommunity community;
-  const CommunityTile({super.key, required this.community});
+
+  /// Барои нишон додани шумораи нохондашуда маҳз барои ҳамин корбар.
+  final String? currentUid;
+  const CommunityTile({super.key, required this.community, this.currentUid});
 
   @override
   Widget build(BuildContext context) {
+    final unread = currentUid == null ? 0 : community.unreadFor(currentUid!);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -52,16 +58,32 @@ class CommunityTile extends StatelessWidget {
                         ),
                         Text(
                           formatChatTime(community.lastMessageTime),
-                          style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.7), fontSize: 11.5),
+                          style: TextStyle(
+                            color: unread > 0 ? AppColors.neonEmerald : AppColors.textSecondary.withValues(alpha: 0.7),
+                            fontSize: 11.5,
+                            fontWeight: unread > 0 ? FontWeight.w700 : FontWeight.w400,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 3),
-                    Text(
-                      community.lastMessage.isEmpty ? trf('k051', [community.members.length]) : community.lastMessage,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            community.lastMessage.isEmpty
+                                ? trf('k051', [community.members.length])
+                                : community.lastMessage,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+                          ),
+                        ),
+                        if (unread > 0) ...[
+                          const SizedBox(width: 6),
+                          UnreadBadge(count: unread),
+                        ],
+                      ],
                     ),
                   ],
                 ),

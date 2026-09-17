@@ -77,7 +77,7 @@ class CommunitiesTab extends StatelessWidget {
           children: docs.map((doc) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 2),
-              child: CommunityTile(community: AppCommunity.fromDoc(doc)),
+              child: CommunityTile(community: AppCommunity.fromDoc(doc), currentUid: currentUid),
             );
           }).toList(),
         );

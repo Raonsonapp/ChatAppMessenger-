@@ -18,6 +18,9 @@ class AppCommunity {
   /// Акси ҷамъият.
   final String? photoUrl;
 
+  /// Шумораи паёмҳои нохондашуда барои ҳар узв.
+  final Map<String, int> unread;
+
   AppCommunity({
     required this.id,
     required this.name,
@@ -30,7 +33,10 @@ class AppCommunity {
     this.lastMessageTime,
     this.lastSenderId,
     this.photoUrl,
+    this.unread = const {},
   });
+
+  int unreadFor(String uid) => unread[uid] ?? 0;
 
   factory AppCommunity.fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
@@ -47,6 +53,8 @@ class AppCommunity {
       lastMessageTime: (data['lastMessageTime'] as Timestamp?)?.toDate(),
       lastSenderId: data['lastSenderId'] as String?,
       photoUrl: data['photoUrl'] as String?,
+      unread: ((data['unread'] as Map<String, dynamic>?) ?? {})
+          .map((k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0)),
     );
   }
 }
