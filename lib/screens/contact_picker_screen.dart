@@ -12,6 +12,7 @@ import 'create_group_screen.dart';
 import 'create_community_screen.dart';
 import '../l10n/l10n.dart';
 import '../utils/user_search.dart';
+import '../theme/app_scope.dart';
 
 /// Интихоби contact аз contact-ҳои воқеии телефон.
 /// + дигар рақам талаб намекунад: contact аз телефон интихоб мешавад.
@@ -189,6 +190,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(

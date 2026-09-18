@@ -10,12 +10,14 @@ import '../../utils/doc_sort.dart';
 import '../create_community_screen.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/empty_state.dart';
+import '../../theme/app_scope.dart';
 
 class CommunitiesTab extends StatelessWidget {
   const CommunitiesTab({super.key});
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     if (currentUid == null) return const SizedBox.shrink();
 

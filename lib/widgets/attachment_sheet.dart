@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../services/media_service.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Феҳристи замима ба тарзи WhatsApp: Галерея, Камера, Видео, Ҳуҷҷат,
 /// Контакт, Ҷойгиршавӣ, Пурсиш, GIF ва Стикер.
@@ -80,6 +81,7 @@ class AttachmentSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
       child: GlassContainer(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_scope.dart';
 
 class AppLogo extends StatelessWidget {
   final double size;
@@ -9,6 +10,7 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Container(
       width: size,
       height: size,

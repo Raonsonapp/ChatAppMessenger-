@@ -8,6 +8,7 @@ import '../l10n/media_preview.dart';
 import '../utils/time_format.dart';
 import 'unread_badge.dart';
 import 'group_avatar.dart';
+import '../theme/app_scope.dart';
 
 class GroupTile extends StatelessWidget {
   final AppGroup group;
@@ -18,6 +19,7 @@ class GroupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final unread = currentUid == null ? 0 : group.unreadFor(currentUid!);
 
     return Material(

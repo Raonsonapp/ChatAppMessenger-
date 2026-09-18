@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../theme/app_scope.dart';
 
 /// Расми пурраи экран бо имкони калон кардан — мисли WhatsApp.
 class ImageViewerScreen extends StatelessWidget {
@@ -12,6 +13,7 @@ class ImageViewerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(

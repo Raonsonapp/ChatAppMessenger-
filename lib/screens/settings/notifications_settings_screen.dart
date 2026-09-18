@@ -8,6 +8,7 @@ import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
 import '../../services/notification_prefs.dart';
+import '../../theme/app_scope.dart';
 
 class NotificationsSettingsScreen extends StatefulWidget {
   const NotificationsSettingsScreen({super.key});
@@ -62,6 +63,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

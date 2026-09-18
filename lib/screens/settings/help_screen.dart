@@ -5,6 +5,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
+import '../../theme/app_scope.dart';
 
 class _Faq {
   final String question;
@@ -59,6 +60,7 @@ class _HelpScreenState extends State<HelpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

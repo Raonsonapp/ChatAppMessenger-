@@ -9,6 +9,7 @@ import '../../services/media_service.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
+import '../../theme/app_scope.dart';
 
 class AppearanceSettingsScreen extends StatefulWidget {
   const AppearanceSettingsScreen({super.key});
@@ -43,6 +44,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final isDark = themeController.isDark;
 
     return Scaffold(

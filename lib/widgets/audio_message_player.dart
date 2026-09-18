@@ -6,6 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
 import '../services/media_service.dart';
+import '../theme/app_scope.dart';
 
 /// Паёми овозӣ дар чат: тугмаи пахш, хати пешравии кашидашаванда, вақт ва
 /// суръати пахш (1x / 1.5x / 2x).
@@ -98,6 +99,7 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final total = _total ?? Duration.zero;
     final progress = total.inMilliseconds == 0
         ? 0.0

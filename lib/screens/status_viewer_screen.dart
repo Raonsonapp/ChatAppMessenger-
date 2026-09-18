@@ -10,6 +10,8 @@ import '../models/app_conversation.dart';
 import '../services/push_service.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
+import '../theme/app_scope.dart';
+import '../utils/upload_error.dart';
 
 /// Намоиши пурраи навсозиҳо (мисли Stories) — гузариши худкор, progress bar
 /// дар боло, ва сабти воқеии viewedBy дар Firestore.
@@ -188,7 +190,7 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k297'))));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k049', [e]))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(describeUploadError(e))));
       }
     } finally {
       if (mounted) setState(() => _sendingReply = false);
@@ -197,6 +199,7 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final status = widget.statuses[_index];
     return Scaffold(
       backgroundColor: Colors.black,
@@ -385,6 +388,7 @@ class _ViewerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       future: FirebaseFirestore.instance.collection('users').doc(uid).get(),
       builder: (context, snapshot) {

@@ -11,12 +11,14 @@ import '../../l10n/l10n.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/group_avatar.dart';
 import '../../widgets/empty_state.dart';
+import '../../theme/app_scope.dart';
 
 class CallsTab extends StatelessWidget {
   const CallsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     if (currentUid == null) return const SizedBox.shrink();
 

@@ -4,6 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import '../theme/app_theme.dart';
 import 'glass_container.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Панели интихоби emoji — рӯйхати эмоҷиҳои маъмул дар шакли grid.
 /// Панел кушода мемонад то корбар якчанд emoji интихоб кунад ва бо
@@ -27,6 +28,7 @@ class EmojiPickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: GlassContainer(

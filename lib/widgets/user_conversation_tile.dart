@@ -11,6 +11,7 @@ import '../l10n/l10n.dart';
 import '../l10n/media_preview.dart';
 import '../utils/time_format.dart';
 import '../services/draft_store.dart';
+import '../theme/app_scope.dart';
 
 class UserConversationTile extends StatelessWidget {
   final AppConversation conversation;
@@ -96,6 +97,7 @@ class UserConversationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final name = conversation.otherName(currentUid);
     final otherUid = conversation.otherUid(currentUid);
     final unread = conversation.unreadFor(currentUid);

@@ -9,6 +9,8 @@ import '../widgets/glass_container.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
+import '../utils/upload_error.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -74,7 +76,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() => _photoUrl = url);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _errorText = trf('k061', [e]));
+      setState(() => _errorText = describeUploadError(e));
     } finally {
       if (mounted) setState(() => _isUploadingPhoto = false);
     }
@@ -109,13 +111,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _errorText = trf('k061', [e]);
+        _errorText = describeUploadError(e);
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final phone = FirebaseAuth.instance.currentUser?.phoneNumber ?? '';
     return Scaffold(
       backgroundColor: AppColors.background,

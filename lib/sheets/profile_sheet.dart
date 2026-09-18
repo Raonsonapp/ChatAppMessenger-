@@ -10,6 +10,7 @@ import '../screens/settings/settings_home_screen.dart';
 import '../screens/starred_messages_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
+import '../theme/app_scope.dart';
 
 class ProfileSheet extends StatelessWidget {
   const ProfileSheet({super.key});
@@ -23,6 +24,7 @@ class ProfileSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final uid = FirebaseAuth.instance.currentUser?.uid;
     final phone = FirebaseAuth.instance.currentUser?.phoneNumber ?? '—';
 

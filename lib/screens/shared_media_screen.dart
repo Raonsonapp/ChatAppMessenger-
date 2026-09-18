@@ -9,6 +9,7 @@ import '../widgets/neon_backdrop.dart';
 import '../widgets/empty_state.dart';
 import 'image_viewer_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// «Медиа, ҳуҷҷатҳо» — ҳамаи файлҳое, ки дар ҳамин чат мубодила шудаанд.
 ///
@@ -22,6 +23,7 @@ class SharedMediaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final messages = FirebaseFirestore.instance.doc(parentPath).collection('messages');
 
     return Scaffold(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Ҷудокунандаи рӯз дар байни паёмҳо — «Имрӯз», «Дирӯз» ё сана.
 class DateSeparator extends StatelessWidget {
@@ -31,6 +32,7 @@ class DateSeparator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Center(

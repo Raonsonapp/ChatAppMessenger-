@@ -9,6 +9,7 @@ import '../widgets/neon_backdrop.dart';
 import 'group_chat_screen.dart';
 import '../l10n/l10n.dart';
 import '../utils/user_search.dart';
+import '../theme/app_scope.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({super.key});
@@ -114,6 +115,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

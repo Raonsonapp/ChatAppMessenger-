@@ -6,6 +6,7 @@ import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
 import '../../l10n/locale_controller.dart';
+import '../../theme/app_scope.dart';
 
 class LanguageSettingsScreen extends StatefulWidget {
   const LanguageSettingsScreen({super.key});
@@ -22,6 +23,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final current = localeController.language;
 
     return Scaffold(

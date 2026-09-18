@@ -5,12 +5,14 @@ import '../widgets/app_logo.dart';
 import '../widgets/neon_backdrop.dart';
 import 'phone_entry_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

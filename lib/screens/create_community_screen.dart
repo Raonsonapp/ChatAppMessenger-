@@ -9,6 +9,7 @@ import '../widgets/neon_backdrop.dart';
 import 'community_chat_screen.dart';
 import '../l10n/l10n.dart';
 import '../utils/user_search.dart';
+import '../theme/app_scope.dart';
 
 /// Сохтани ҷамъияти воқеӣ дар Cloud Firestore (`communities/{id}`) —
 /// монанди CreateGroupScreen, вале бо тавсиф.
@@ -114,6 +115,7 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

@@ -13,6 +13,7 @@ import '../theme/app_theme.dart';
 import '../widgets/group_avatar.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Занги гурӯҳӣ — ҳамаи аъзоён ба як канали Agora ҳамроҳ мешаванд.
 ///
@@ -113,6 +114,15 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
     }
   }
 
+  /// Хатои гузоштани роҳи садо набояд худи зангро вайрон кунад.
+  Future<void> _applySpeakerRoute() async {
+    try {
+      await _engine?.setEnableSpeakerphone(_speakerOn);
+    } catch (_) {
+      // Дар баъзе дастгоҳҳо ин кор намекунад — занг бояд идома ёбад.
+    }
+  }
+
   Future<void> _joinChannel() async {
     try {
       final engine = createAgoraRtcEngine();
@@ -124,6 +134,9 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
 
       engine.registerEventHandler(RtcEngineEventHandler(
         onJoinChannelSuccess: (connection, elapsed) {
+          // Роҳи садо танҳо пас аз ҳамроҳ шудан ба канал гузошта мешавад —
+          // пеш аз он Agora хатои ERR_NOT_READY (-3) медиҳад.
+          _applySpeakerRoute();
           if (!mounted) return;
           setState(() => _joined = true);
           _durationTimer ??= Timer.periodic(const Duration(seconds: 1), (_) {
@@ -149,7 +162,6 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
         await engine.enableVideo();
         await engine.startPreview();
       }
-      await engine.setEnableSpeakerphone(_speakerOn);
 
       await engine.joinChannel(
         token: '',
@@ -216,6 +228,7 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final isVideo = widget.type == CallType.video;
 
     return PopScope(
@@ -282,7 +295,7 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
                           active: _speakerOn,
                           onTap: () {
                             setState(() => _speakerOn = !_speakerOn);
-                            _engine?.setEnableSpeakerphone(_speakerOn);
+                            _applySpeakerRoute();
                           },
                         ),
                       ],

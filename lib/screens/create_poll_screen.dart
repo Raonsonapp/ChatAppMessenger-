@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Натиҷаи экрани сохтани пурсиш.
 class PollDraft {
@@ -64,6 +65,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

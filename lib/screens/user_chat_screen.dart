@@ -36,6 +36,8 @@ import '../sheets/forward_sheet.dart';
 import '../utils/message_grouping.dart';
 import '../services/draft_store.dart';
 import 'create_poll_screen.dart';
+import '../theme/app_scope.dart';
+import '../utils/upload_error.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -371,7 +373,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(trf('k049', [e]))),
+          SnackBar(content: Text(describeUploadError(e))),
         );
       }
     } finally {
@@ -449,7 +451,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k247', [e]))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(describeUploadError(e))));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -638,6 +640,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(

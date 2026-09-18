@@ -10,6 +10,7 @@ import '../widgets/neon_backdrop.dart';
 import '../widgets/empty_state.dart';
 import '../l10n/l10n.dart';
 import '../l10n/media_preview.dart';
+import '../theme/app_scope.dart';
 
 /// Рӯйхати паёмҳои ситорадори корбар — мисли «Избранные» дар WhatsApp.
 class StarredMessagesScreen extends StatelessWidget {
@@ -26,6 +27,7 @@ class StarredMessagesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

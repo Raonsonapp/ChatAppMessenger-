@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'glass_container.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Феҳристи стикерҳо. Азбаски дар лоиҳа расмҳои воқеии стикер (PNG/WebP)
 /// мавҷуд нестанд, стикерҳо ҳамчун эмоҷии калон (шабеҳи стикер, бе замина)
@@ -19,6 +20,7 @@ class StickerPickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       child: GlassContainer(

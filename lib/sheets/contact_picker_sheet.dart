@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
 import '../l10n/l10n.dart';
 import '../utils/user_search.dart';
+import '../theme/app_scope.dart';
 
 /// Интихоби воқеии контакт аз корбарони бақайдгирифташуда, барои
 /// фиристодан ҳамчун корти контакт дар дохили чат.
@@ -63,6 +64,7 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Padding(
       padding: EdgeInsets.only(
         left: 16,

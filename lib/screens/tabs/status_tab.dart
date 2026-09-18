@@ -13,6 +13,7 @@ import '../discover_channels_screen.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/user_avatar.dart';
 import '../../services/status_privacy.dart';
+import '../../theme/app_scope.dart';
 
 class StatusTab extends StatelessWidget {
   const StatusTab({super.key});
@@ -24,6 +25,7 @@ class StatusTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     if (currentUid == null) return const SizedBox.shrink();
 
@@ -216,6 +218,7 @@ class _OtherStatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     // Аввал танзимоти махфияти соҳиб тафтиш мешавад: агар ӯ навсозиҳояшро
     // пинҳон карда бошад, сатр умуман сохта намешавад.
     return FutureBuilder<bool>(

@@ -6,6 +6,7 @@ import '../models/chat_conversation.dart';
 import '../screens/chat_detail_screen.dart';
 import 'glass_container.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Блоки ChatAI (мисли Meta AI) — имконияти сохтани расм, мусиқӣ ва видео.
 /// Пахши ҳар чип корбарро ба чати AI Ассистент мебарад бо матни омодашуда
@@ -24,6 +25,7 @@ class ChatAIBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return GlassContainer(
       borderRadius: 22,
       glow: true,
@@ -94,6 +96,7 @@ class _AiActionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(

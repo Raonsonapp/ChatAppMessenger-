@@ -7,6 +7,7 @@ import '../models/chat_conversation.dart';
 import '../screens/chat_detail_screen.dart';
 import '../l10n/l10n.dart';
 import '../utils/time_format.dart';
+import '../theme/app_scope.dart';
 
 /// Сатри чат — WhatsApp-тарз: ҳамаи қаторҳо якхела ба назар мерасанд.
 /// ChatAI танҳо бо нишони сӯзан (pin) фарқ мекунад — на бо банер/glow.
@@ -26,6 +27,7 @@ class ChatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(

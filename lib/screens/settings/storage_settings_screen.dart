@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
+import '../../theme/app_scope.dart';
 
 class StorageSettingsScreen extends StatefulWidget {
   const StorageSettingsScreen({super.key});
@@ -70,6 +71,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final cache = PaintingBinding.instance.imageCache;
 
     return Scaffold(

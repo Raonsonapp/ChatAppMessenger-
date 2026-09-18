@@ -364,4 +364,7 @@ const Map<String, String> stringsEn = {
   'k362': 'Everyone',
   'k363': 'Only people I have a chat with',
   'k364': 'Nobody',
+  'k365': 'Upload failed: Cloud Storage is not enabled in the Firebase project',
+  'k366': 'Upload failed: not allowed (Storage rules)',
+  'k367': 'Upload failed: weak or interrupted connection',
 };

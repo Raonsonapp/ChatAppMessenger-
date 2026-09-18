@@ -3,6 +3,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Панели паёми пиншуда дар болои рӯйхати паёмҳо — мисли WhatsApp.
 class PinnedMessageBar extends StatelessWidget {
@@ -12,6 +13,7 @@ class PinnedMessageBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(10, 0, 10, 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/wallpaper_controller.dart';
+import '../theme/app_scope.dart';
 
 /// Заминаи интихобкардаи корбарро зери рӯйхати паёмҳо мегузорад.
 ///
@@ -12,6 +13,7 @@ class ChatWallpaper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final file = wallpaperController.file;
     if (file == null) return child;
     return Container(

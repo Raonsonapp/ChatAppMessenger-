@@ -9,6 +9,7 @@ import 'package:record/record.dart';
 import '../theme/app_theme.dart';
 import '../services/media_service.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Сабти паёми овозӣ. Ҳангоми сабт ба ҷои майдони матн нишон дода мешавад:
 /// вақти гузашта, тугмаи бекор кардан ва тугмаи фиристодан.
@@ -98,6 +99,7 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     if (_error != null) {
       return Row(
         children: [

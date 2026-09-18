@@ -12,12 +12,14 @@ import 'storage_settings_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
 import '../../l10n/l10n.dart';
+import '../../theme/app_scope.dart';
 
 class SettingsHomeScreen extends StatelessWidget {
   const SettingsHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

@@ -11,6 +11,7 @@ import 'call_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import 'shared_media_screen.dart';
+import '../theme/app_scope.dart';
 
 /// Маълумоти воқеии контакт — mute/манъ/тоза кардани чат ҳама воқеан
 /// дар Firestore сабт мешаванд.
@@ -114,6 +115,7 @@ class ContactInfoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(

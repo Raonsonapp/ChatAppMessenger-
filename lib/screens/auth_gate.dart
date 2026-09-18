@@ -11,6 +11,7 @@ import 'chat_list_screen.dart';
 import 'complete_profile_screen.dart';
 import 'welcome_screen.dart';
 import '../services/notification_prefs.dart';
+import '../theme/app_scope.dart';
 
 /// Гардиши воридшавӣ: агар корбар аллакай бо телефон ворид шуда бошад,
 /// мустақим ChatListScreen; акс ҳолат, WelcomeScreen (телефон → OTP).
@@ -26,6 +27,7 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
@@ -65,6 +67,7 @@ class _ProfileGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
       builder: (context, snapshot) {

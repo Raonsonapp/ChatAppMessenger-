@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_scope.dart';
 
 class NeonBackdrop extends StatelessWidget {
   final Widget child;
@@ -9,6 +10,7 @@ class NeonBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Stack(
       children: [
         Positioned.fill(

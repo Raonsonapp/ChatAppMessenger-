@@ -12,6 +12,7 @@ import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/attachment_sheet.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Тасмаи пахши канал — танҳо соҳиб (ownerId) паём мефиристад,
 /// обунашудагон танҳо мехонанд.
@@ -109,6 +110,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,

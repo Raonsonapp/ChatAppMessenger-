@@ -9,6 +9,7 @@ import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
 import 'blocked_users_screen.dart';
 import '../../services/status_privacy.dart';
+import '../../theme/app_scope.dart';
 
 /// Танзимоти воқеии махфият — ҳар тағйирот фавран дар
 /// `users/{uid}` (майдони `settings`) сабт мешавад ва пас аз
@@ -68,6 +69,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

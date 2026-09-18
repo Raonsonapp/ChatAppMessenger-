@@ -11,6 +11,8 @@ import '../services/media_service.dart';
 import '../widgets/group_avatar.dart';
 import 'shared_media_screen.dart';
 import '../utils/user_search.dart';
+import '../theme/app_scope.dart';
+import '../utils/upload_error.dart';
 
 /// Маълумоти воқеии ҷамъият — сохти монанд ба GroupInfoScreen.
 class CommunityInfoScreen extends StatelessWidget {
@@ -65,7 +67,7 @@ class CommunityInfoScreen extends StatelessWidget {
       await _communityRef.set({'photoUrl': url}, SetOptions(merge: true));
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k049', [e]))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(describeUploadError(e))));
       }
     }
   }
@@ -157,6 +159,7 @@ class CommunityInfoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
@@ -410,6 +413,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Padding(
       padding: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
       child: GlassContainer(

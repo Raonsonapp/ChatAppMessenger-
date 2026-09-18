@@ -7,6 +7,7 @@ import '../widgets/neon_backdrop.dart';
 import '../services/otp_bot_service.dart';
 import 'otp_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 class PhoneEntryScreen extends StatefulWidget {
   const PhoneEntryScreen({super.key});
@@ -64,6 +65,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

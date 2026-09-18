@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_scope.dart';
 
 class TypingBubble extends StatefulWidget {
   const TypingBubble({super.key});
@@ -26,6 +27,7 @@ class _TypingBubbleState extends State<TypingBubble> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(

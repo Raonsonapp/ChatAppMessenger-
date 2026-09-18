@@ -4,6 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import '../models/chat_message.dart';
 import '../theme/app_theme.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Пурсиш дар чат — савол, вариантҳо бо фоиз ва овози худи корбар.
 class PollCard extends StatelessWidget {
@@ -24,6 +25,7 @@ class PollCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final tint = isMe ? AppColors.background : AppColors.textPrimary;
     final total = message.pollVotes.length;
     final myVote = message.pollVotes[currentUid];

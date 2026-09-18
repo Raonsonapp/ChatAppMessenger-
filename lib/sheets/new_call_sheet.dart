@@ -10,6 +10,7 @@ import '../screens/call_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import '../utils/user_search.dart';
+import '../theme/app_scope.dart';
 
 /// Интихоби корбар барои сар кардани занги нав (садоӣ ё видеоӣ).
 class NewCallSheet extends StatefulWidget {
@@ -66,6 +67,7 @@ class _NewCallSheetState extends State<NewCallSheet> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Padding(
       padding: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
       child: GlassContainer(

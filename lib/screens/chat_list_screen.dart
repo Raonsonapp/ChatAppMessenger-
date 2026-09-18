@@ -19,6 +19,7 @@ import 'tabs/status_tab.dart';
 import 'tabs/communities_tab.dart';
 import 'tabs/calls_tab.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -96,6 +97,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       floatingActionButton: _buildFab(),

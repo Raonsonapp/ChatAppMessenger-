@@ -14,12 +14,14 @@ import '../../utils/doc_sort.dart';
 import '../../l10n/l10n.dart';
 import '../archived_chats_screen.dart';
 import '../../widgets/empty_state.dart';
+import '../../theme/app_scope.dart';
 
 class ChatsTab extends StatelessWidget {
   const ChatsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
 
     return ListView(
@@ -137,6 +139,7 @@ class _ArchivedRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(

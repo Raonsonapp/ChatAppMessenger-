@@ -9,6 +9,7 @@ import 'call_screen.dart';
 import 'group_call_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
+import '../theme/app_scope.dart';
 
 /// Экрани занги воридотӣ — намоён мешавад вақте ки корбари дигар занг
 /// мезанад (тавассути IncomingCallListener). Қабул → CallScreen (ба ҳамон
@@ -68,6 +69,7 @@ class IncomingCallScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final isVideo = type == CallType.video;
     return PopScope(
       canPop: false,

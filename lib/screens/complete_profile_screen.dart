@@ -7,6 +7,7 @@ import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import 'chat_list_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 class CompleteProfileScreen extends StatefulWidget {
   final String phoneNumber;
@@ -72,6 +73,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

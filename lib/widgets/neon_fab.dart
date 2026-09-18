@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_scope.dart';
 
 /// Истифода мешавад ҳамчун Scaffold.floatingActionButton бо
 /// floatingActionButtonLocation: endFloat (кунҷи поёни рост), мисли WhatsApp.
@@ -12,6 +13,7 @@ class NeonFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Container(
       width: 56,
       height: 56,

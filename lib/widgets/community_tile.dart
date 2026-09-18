@@ -9,6 +9,7 @@ import '../l10n/media_preview.dart';
 import '../utils/time_format.dart';
 import 'group_avatar.dart';
 import 'unread_badge.dart';
+import '../theme/app_scope.dart';
 
 class CommunityTile extends StatelessWidget {
   final AppCommunity community;
@@ -19,6 +20,7 @@ class CommunityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final unread = currentUid == null ? 0 : community.unreadFor(currentUid!);
 
     return Material(

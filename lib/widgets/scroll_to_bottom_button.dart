@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_scope.dart';
 
 /// Тугмаи «ба поён» — вақте корбар дар чати дароз ба боло варақ задааст.
 ///
@@ -14,6 +15,7 @@ class ScrollToBottomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {

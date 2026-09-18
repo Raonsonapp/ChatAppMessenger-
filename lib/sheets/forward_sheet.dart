@@ -10,6 +10,7 @@ import '../utils/doc_sort.dart';
 import '../widgets/glass_container.dart';
 import '../l10n/l10n.dart';
 import '../l10n/media_preview.dart';
+import '../theme/app_scope.dart';
 
 /// Интихоби чат барои фиристодани нусхаи паём.
 ///
@@ -72,6 +73,7 @@ class ForwardSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
     final db = FirebaseFirestore.instance;

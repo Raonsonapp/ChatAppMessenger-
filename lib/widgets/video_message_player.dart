@@ -3,6 +3,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:video_player/video_player.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_scope.dart';
 
 /// Видео дар чат. То даме ки корбар пахш накунад, видео боргирӣ намешавад —
 /// вагарна ҳар кушодани чат ҳамаи видеоҳоро мекашид.
@@ -41,6 +42,7 @@ class _VideoMessagePlayerState extends State<VideoMessagePlayer> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final controller = _controller;
 
     if (controller == null) {

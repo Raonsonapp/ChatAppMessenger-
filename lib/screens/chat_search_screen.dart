@@ -13,6 +13,7 @@ import '../widgets/group_tile.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/glass_container.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Ҷустуҷӯи умумӣ: ChatAI, сӯҳбатҳои шахсӣ ва гурӯҳҳо — ҳам аз рӯи ном ва
 /// ҳам аз рӯи матни охирин паём.
@@ -35,6 +36,7 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     final ql = _query.trim().toLowerCase();
     final showAi = ql.isEmpty || AppChats.aiAssistant.name.toLowerCase().contains(ql);

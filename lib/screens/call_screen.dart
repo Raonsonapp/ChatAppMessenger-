@@ -12,6 +12,7 @@ import '../services/agora_config.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
+import '../theme/app_scope.dart';
 
 enum _CallStage { connecting, ringing, connected, ended }
 
@@ -114,6 +115,15 @@ class _CallScreenState extends State<CallScreen> {
     });
   }
 
+  /// Хатои гузоштани роҳи садо набояд худи зангро вайрон кунад.
+  Future<void> _applySpeakerRoute() async {
+    try {
+      await _engine?.setEnableSpeakerphone(_speakerOn);
+    } catch (_) {
+      // Дар баъзе дастгоҳҳо (гарнитураи Bluetooth ва ғ.) ин кор намекунад.
+    }
+  }
+
   Future<void> _joinChannel() async {
     try {
       final engine = createAgoraRtcEngine();
@@ -124,6 +134,12 @@ class _CallScreenState extends State<CallScreen> {
       ));
 
       engine.registerEventHandler(RtcEngineEventHandler(
+        // Роҳи садо (динамик) танҳо ПАС АЗ ҳамроҳ шудан ба канал гузошта
+        // мешавад: пеш аз он модули садо ҳанӯз фаъол нест ва Agora хатои
+        // ERR_NOT_READY (-3) медиҳад — маҳз ҳамин занг заданро вайрон мекард.
+        onJoinChannelSuccess: (connection, elapsed) {
+          _applySpeakerRoute();
+        },
         onUserJoined: (connection, remoteUid, elapsed) {
           _ringTimeout?.cancel();
           if (!mounted) return;
@@ -151,7 +167,6 @@ class _CallScreenState extends State<CallScreen> {
         await engine.enableVideo();
         await engine.startPreview();
       }
-      await engine.setEnableSpeakerphone(_speakerOn);
 
       await engine.joinChannel(
         token: '',
@@ -226,6 +241,7 @@ class _CallScreenState extends State<CallScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final isVideo = widget.type == CallType.video;
     final connected = _stage == _CallStage.connected;
 
@@ -333,7 +349,7 @@ class _CallScreenState extends State<CallScreen> {
                           active: _speakerOn,
                           onTap: () {
                             setState(() => _speakerOn = !_speakerOn);
-                            _engine?.setEnableSpeakerphone(_speakerOn);
+                            _applySpeakerRoute();
                           },
                         ),
                       ],

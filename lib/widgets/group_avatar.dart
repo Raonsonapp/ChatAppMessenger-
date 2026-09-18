@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_scope.dart';
 
 /// Акси гурӯҳ ё ҷамъият бо бозгашт ба нишонаи одамон.
 class GroupAvatar extends StatelessWidget {
@@ -17,6 +18,7 @@ class GroupAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final hasPhoto = photoUrl != null && photoUrl!.isNotEmpty;
     return Container(
       width: size,

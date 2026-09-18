@@ -35,6 +35,8 @@ import '../sheets/forward_sheet.dart';
 import '../utils/message_grouping.dart';
 import '../services/draft_store.dart';
 import 'create_poll_screen.dart';
+import '../theme/app_scope.dart';
+import '../utils/upload_error.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -267,7 +269,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k049', [e]))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(describeUploadError(e))));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -337,7 +339,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
       if (await send()) _scrollToBottom();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k247', [e]))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(describeUploadError(e))));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -651,6 +653,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(

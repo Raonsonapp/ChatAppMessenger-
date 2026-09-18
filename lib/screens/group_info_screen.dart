@@ -13,6 +13,8 @@ import 'shared_media_screen.dart';
 import '../utils/user_search.dart';
 import '../services/group_invite_service.dart';
 import 'package:flutter/services.dart';
+import '../theme/app_scope.dart';
+import '../utils/upload_error.dart';
 
 /// Маълумоти воқеии гурӯҳ — аъзоён аз Firestore, амалҳои admin воқеан
 /// дар `groups/{id}` сабт мешаванд (на fake).
@@ -169,7 +171,7 @@ class GroupInfoScreen extends StatelessWidget {
       await _groupRef.set({'photoUrl': url}, SetOptions(merge: true));
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k049', [e]))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(describeUploadError(e))));
       }
     }
   }
@@ -261,6 +263,7 @@ class GroupInfoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
@@ -545,6 +548,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Padding(
       padding: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: MediaQuery.of(context).viewInsets.bottom + 24),
       child: GlassContainer(

@@ -12,6 +12,7 @@ import '../services/otp_bot_service.dart';
 import 'complete_profile_screen.dart';
 import 'chat_list_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 class OtpScreen extends StatefulWidget {
   final String phoneNumber;
@@ -137,6 +138,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_scope.dart';
 
 /// Доирачаи сабзи шумораи паёмҳои нохонда.
 class UnreadBadge extends StatelessWidget {
@@ -9,6 +10,7 @@ class UnreadBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     if (count <= 0) return const SizedBox.shrink();
     return Container(
       constraints: const BoxConstraints(minWidth: 20),

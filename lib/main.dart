@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
+import 'theme/app_scope.dart';
 import 'theme/theme_controller.dart';
 import 'theme/wallpaper_controller.dart';
 import 'theme/text_scale_controller.dart';
@@ -26,24 +27,53 @@ void main() async {
   runApp(const ChatApp());
 }
 
-class ChatApp extends StatelessWidget {
+class ChatApp extends StatefulWidget {
   const ChatApp({super.key});
+
+  @override
+  State<ChatApp> createState() => _ChatAppState();
+}
+
+class _ChatAppState extends State<ChatApp> {
+  /// Ҳангоми ҳар тағйири мавзӯъ/забон/андоза зиёд мешавад ва ҳамаи экранҳоро
+  /// ба аз нав сохта шудан водор мекунад (ниг. AppScope).
+  int _version = 0;
+
+  late final Listenable _settings = Listenable.merge([
+    themeController,
+    localeController,
+    wallpaperController,
+    textScaleController,
+    draftStore,
+  ]);
+
+  @override
+  void initState() {
+    super.initState();
+    _settings.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void dispose() {
+    _settings.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  void _onSettingsChanged() => setState(() => _version++);
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: Listenable.merge([
-        themeController,
-        localeController,
-        wallpaperController,
-        textScaleController,
-        draftStore,
-      ]),
+      animation: _settings,
       builder: (context, _) {
         return MaterialApp(
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           theme: themeController.isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
+          // AppScope дар болои Navigator меистад, вале хабари тағйирот ба
+          // дохили ҳамаи маршрутҳо мерасад — маҳз ҳамин экранҳои кушодаро
+          // бо ранг ва забони нав аз нав месозад.
+          builder: (context, child) => AppScope(version: _version, child: child!),
           home: const AuthGate(),
         );
       },

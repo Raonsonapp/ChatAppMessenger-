@@ -16,6 +16,7 @@ import '../sheets/forward_sheet.dart';
 import '../screens/image_viewer_screen.dart';
 import '../theme/text_scale_controller.dart';
 import 'poll_card.dart';
+import '../theme/app_scope.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -399,6 +400,7 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final isAI = message.isAI;
     final isSticker = !message.deleted && message.mediaType == 'sticker';
     final hasMedia = !message.deleted && message.mediaUrl != null;

@@ -9,6 +9,7 @@ import '../../widgets/neon_backdrop.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/user_avatar.dart';
 import '../../l10n/l10n.dart';
+import '../../theme/app_scope.dart';
 
 /// Рӯйхати корбарони манъшуда.
 ///
@@ -25,6 +26,7 @@ class BlockedUsersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
@@ -92,6 +94,7 @@ class _BlockedRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       future: FirebaseFirestore.instance.collection('users').doc(otherUid).get(),
       builder: (context, snapshot) {

@@ -13,6 +13,7 @@ import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import '../utils/user_search.dart';
 import '../services/group_invite_service.dart';
+import '../theme/app_scope.dart';
 
 /// Феҳристи ҷустуҷӯи корбарони воқеӣ + гузаргоҳ ба сохтани гурӯҳи нав.
 class NewChatSheet extends StatefulWidget {
@@ -163,6 +164,7 @@ class _NewChatSheetState extends State<NewChatSheet> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Padding(
       padding: EdgeInsets.only(
         left: 16,

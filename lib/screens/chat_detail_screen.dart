@@ -18,6 +18,7 @@ import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
 import '../l10n/l10n.dart';
 import '../widgets/chat_wallpaper.dart';
+import '../theme/app_scope.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final ChatConversation conversation;
@@ -215,6 +216,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final convo = widget.conversation;
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 

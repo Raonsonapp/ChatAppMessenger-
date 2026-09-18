@@ -8,6 +8,7 @@ import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import 'channel_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Сохтани канали воқеӣ дар Firestore (`channels/{id}`).
 class CreateChannelScreen extends StatefulWidget {
@@ -64,6 +65,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

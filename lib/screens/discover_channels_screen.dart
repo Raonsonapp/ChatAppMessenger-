@@ -9,6 +9,7 @@ import '../widgets/neon_backdrop.dart';
 import 'channel_screen.dart';
 import 'create_channel_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
 
 /// Кашфи ҳамаи каналҳои воқеӣ (коллексияи `channels`), бо тугмаи обуна.
 class DiscoverChannelsScreen extends StatelessWidget {
@@ -16,6 +17,7 @@ class DiscoverChannelsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(

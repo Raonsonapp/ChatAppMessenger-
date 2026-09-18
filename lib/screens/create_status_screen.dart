@@ -11,6 +11,8 @@ import '../services/media_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_scope.dart';
+import '../utils/upload_error.dart';
 
 /// Сохтани навсозии воқеӣ (матн ё расм) — дар Firestore
 /// `statuses/{uid}/items/{id}` бо мӯҳлати 24-соата сабт мешавад.
@@ -73,7 +75,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
       Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(trf('k105', [e]))));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(describeUploadError(e))));
       }
     } finally {
       if (mounted) setState(() => _isPosting = false);
@@ -82,6 +84,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,

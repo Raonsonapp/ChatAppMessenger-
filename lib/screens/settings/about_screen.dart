@@ -6,6 +6,7 @@ import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../widgets/app_logo.dart';
 import '../../l10n/l10n.dart';
+import '../../theme/app_scope.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -15,6 +16,7 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(

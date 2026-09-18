@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_scope.dart';
 
 /// Аксиcи профили корбар бо бозгашт ба ҳарфи аввали ном.
 ///
@@ -98,6 +99,7 @@ class _UserAvatarState extends State<UserAvatar> {
 
   @override
   Widget build(BuildContext context) {
+    AppScope.watch(context);
     final name = widget.name.trim();
     final letter = name.isNotEmpty ? name[0].toUpperCase() : '?';
     final colors = UserAvatar.gradientFor(name.isNotEmpty ? name : (widget.uid ?? ''));
