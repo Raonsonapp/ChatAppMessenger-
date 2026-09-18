@@ -169,12 +169,23 @@ function encodePath(key) {
 /**
  * Ҳаволаи имзошуда барои PUT.
  *
+ * Агар `contentLength` дода шавад, он ба имзо дохил мешавад. Ин маънои онро
+ * дорад, ки бо ҳамин ҳавола танҳо файли маҳз ҳамон андоза бор карда
+ * мешавад — касе наметавонад ҳаволаро гирифта, ба ҷои акси хурд файли
+ * бисёргигабайтӣ фиристад.
+ *
  * @param {string} key роҳи файл дар бакет
  * @param {number} expiresInSeconds мӯҳлати эътибор
- * @returns {{uploadUrl: string, fileUrl: string|null, key: string}}
+ * @param {{contentLength?: number}} options
+ * @returns {{uploadUrl: string, fileUrl: string|null, key: string, contentLength: number|null}}
  */
-function presignPut(key, expiresInSeconds = 900) {
+function presignPut(key, expiresInSeconds = 900, options = {}) {
   if (!isConfigured()) throw new Error('R2 танзим нашудааст');
+
+  const contentLength =
+    Number.isInteger(options.contentLength) && options.contentLength >= 0
+      ? options.contentLength
+      : null;
 
   const host = endpointHost();
   const now = new Date();
@@ -185,24 +196,35 @@ function presignPut(key, expiresInSeconds = 900) {
   const scope = `${dateStamp}/${region}/${service}/aws4_request`;
 
   const canonicalUri = `/${bucketName()}/${encodePath(key)}`;
+  // Сарлавҳаҳои имзошуда бо ҳарфи хурд ва аз рӯи алифбо тартиб дода мешаванд.
+  const headers = contentLength === null
+    ? { host }
+    : { 'content-length': String(contentLength), host };
+  const signedHeaders = Object.keys(headers).sort().join(';');
+
   const query = {
     'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
     'X-Amz-Credential': `${config.accessKeyId}/${scope}`,
     'X-Amz-Date': amzDate,
     'X-Amz-Expires': String(expiresInSeconds),
-    'X-Amz-SignedHeaders': 'host',
+    'X-Amz-SignedHeaders': signedHeaders,
   };
   const canonicalQuery = Object.keys(query)
     .sort()
     .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(query[k])}`)
     .join('&');
 
+  const canonicalHeaders = Object.keys(headers)
+    .sort()
+    .map((k) => `${k}:${headers[k]}\n`)
+    .join('');
+
   const canonicalRequest = [
     'PUT',
     canonicalUri,
     canonicalQuery,
-    `host:${host}\n`,
-    'host',
+    canonicalHeaders,
+    signedHeaders,
     UNSIGNED_PAYLOAD,
   ].join('\n');
 
@@ -226,6 +248,7 @@ function presignPut(key, expiresInSeconds = 900) {
     uploadUrl,
     fileUrl: base ? `${base}/${encodePath(key)}` : null,
     key,
+    contentLength,
   };
 }
 
@@ -245,19 +268,22 @@ async function runSelfTest() {
     return { ok: false, stage: 'config', detail: 'R2 танзим нашудааст' };
   }
 
+  const body = `chatapp selftest ${new Date().toISOString()}`;
+  const bodyLength = Buffer.byteLength(body);
+
   let signed;
   try {
-    signed = presignPut(SELF_TEST_KEY, 300);
+    // Бо `contentLength` имзо мешавад — ҳамин роҳро барнома низ истифода
+    // мебарад, бинобар ин санҷиш маҳз ҳамон чизро месанҷад.
+    signed = presignPut(SELF_TEST_KEY, 300, { contentLength: bodyLength });
   } catch (err) {
     return { ok: false, stage: 'sign', detail: String(err && err.message ? err.message : err) };
   }
 
-  const body = `chatapp selftest ${new Date().toISOString()}`;
-
   try {
     const put = await fetch(signed.uploadUrl, {
       method: 'PUT',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'text/plain', 'Content-Length': String(bodyLength) },
       body,
     });
     if (!put.ok) {

@@ -14,6 +14,8 @@ String describeUploadError(Object error) {
       StorageFailureKind.rejected => tr('k371'),
       StorageFailureKind.network => tr('k367'),
       StorageFailureKind.notSignedIn => tr('k366'),
+      StorageFailureKind.tooLarge => tr('k373'),
+      StorageFailureKind.tooManyUploads => tr('k374'),
       StorageFailureKind.uploadFailed || StorageFailureKind.server => tr('k372'),
     };
   }

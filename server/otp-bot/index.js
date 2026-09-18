@@ -186,6 +186,33 @@ app.get('/api/storage-selftest', async (req, res) => {
  * мефиристад ва ҳаволаи кӯтоҳмуддат мегирад, баъд файлро бевосита ба R2
  * мефиристад. Ин ҳам бехатартар аст, ҳам трафики сервер сарф намешавад.
  */
+/** Ҳадди ниҳоии андозаи як файл — 100 МБ. */
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
+
+/** Ҳадди дархостҳои боркунӣ барои як корбар дар як соат. */
+const UPLOAD_QUOTA_PER_HOUR = 200;
+const uploadQuota = new Map();
+
+function quotaExceeded(uid) {
+  const now = Date.now();
+  const hour = 60 * 60 * 1000;
+  const entry = uploadQuota.get(uid);
+
+  if (!entry || now - entry.since > hour) {
+    uploadQuota.set(uid, { since: now, count: 1 });
+    // Сабтҳои кӯҳна тоза карда мешаванд, то хотира нашъунамо накунад.
+    if (uploadQuota.size > 5000) {
+      for (const [key, value] of uploadQuota) {
+        if (now - value.since > hour) uploadQuota.delete(key);
+      }
+    }
+    return false;
+  }
+
+  entry.count += 1;
+  return entry.count > UPLOAD_QUOTA_PER_HOUR;
+}
+
 app.post('/api/upload-url', async (req, res) => {
   const authHeader = req.headers.authorization || '';
   const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -202,8 +229,22 @@ app.post('/api/upload-url', async (req, res) => {
     return res.status(503).json({ error: 'r2-not-configured', storage: r2.status() });
   }
 
-  const { folder, name, contentType } = req.body ?? {};
+  if (quotaExceeded(user.uid)) {
+    return res.status(429).json({ error: 'too-many-uploads' });
+  }
+
+  const { folder, name, contentType, size } = req.body ?? {};
   if (!name) return res.status(400).json({ error: 'name lozim ast' });
+
+  // Андоза ҳатмист ва ба имзо дохил мешавад: бо як ҳавола танҳо ҳамон
+  // андоза бор карда мешавад, на бештар.
+  const contentLength = Number(size);
+  if (!Number.isInteger(contentLength) || contentLength <= 0) {
+    return res.status(400).json({ error: 'size lozim ast' });
+  }
+  if (contentLength > MAX_UPLOAD_BYTES) {
+    return res.status(413).json({ error: 'file-too-large', maxBytes: MAX_UPLOAD_BYTES });
+  }
 
   // Роҳи файл: папка + uid + вақт + ном. uid дар роҳ мемонад, то маълум бошад
   // кӣ файлро бор кардааст.
@@ -212,7 +253,7 @@ app.post('/api/upload-url', async (req, res) => {
   const key = `${safeFolder || 'files'}/${user.uid}/${Date.now()}_${safeName}`;
 
   try {
-    const signed = r2.presignPut(key, 900);
+    const signed = r2.presignPut(key, 900, { contentLength });
     res.json({ ...signed, contentType: contentType || 'application/octet-stream' });
   } catch (err) {
     console.error('Хатои сохтани ҳаволаи боркунӣ:', err?.message ?? err);

@@ -372,4 +372,6 @@ const Map<String, String> stringsEn = {
   'k370': 'The storage has no public URL',
   'k371': 'The storage rejected the file — check the R2 keys',
   'k372': 'Upload failed, please try again',
+  'k373': 'File is too large (up to 100 MB)',
+  'k374': 'Too many uploads, try again later',
 };

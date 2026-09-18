@@ -24,15 +24,19 @@ class StorageService {
       throw const StorageFailure(StorageFailureKind.notSignedIn);
     }
 
+    // Андоза пешакӣ ба сервер фиристода мешавад ва ба имзо дохил мегардад,
+    // бинобар ин байни ин ҷо ва PUT он набояд тағйир ёбад.
+    final length = await file.length();
     final contentType = _contentTypeFor(name);
     final ticket = await _requestTicket(
       idToken: idToken,
       name: name,
       folder: folder,
       contentType: contentType,
+      size: length,
     );
 
-    await _put(file, ticket.uploadUrl, contentType);
+    await _put(file, length, ticket.uploadUrl, contentType);
     return ticket.fileUrl;
   }
 
@@ -41,6 +45,7 @@ class StorageService {
     required String name,
     required String folder,
     required String contentType,
+    required int size,
   }) async {
     http.Response response;
     try {
@@ -51,7 +56,12 @@ class StorageService {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $idToken',
             },
-            body: jsonEncode({'folder': folder, 'name': name, 'contentType': contentType}),
+            body: jsonEncode({
+              'folder': folder,
+              'name': name,
+              'contentType': contentType,
+              'size': size,
+            }),
           )
           .timeout(const Duration(seconds: 20));
     } catch (_) {
@@ -60,6 +70,12 @@ class StorageService {
 
     if (response.statusCode == 503) {
       throw const StorageFailure(StorageFailureKind.notConfigured);
+    }
+    if (response.statusCode == 413) {
+      throw const StorageFailure(StorageFailureKind.tooLarge);
+    }
+    if (response.statusCode == 429) {
+      throw const StorageFailure(StorageFailureKind.tooManyUploads);
     }
     if (response.statusCode != 200) {
       throw const StorageFailure(StorageFailureKind.server);
@@ -78,8 +94,12 @@ class StorageService {
 
   /// Файл ҷараёнӣ фиристода мешавад — видеои калон набояд тамоман ба хотира
   /// бор карда шавад.
-  static Future<void> _put(File file, String uploadUrl, String contentType) async {
-    final length = await file.length();
+  static Future<void> _put(
+    File file,
+    int length,
+    String uploadUrl,
+    String contentType,
+  ) async {
     final request = http.StreamedRequest('PUT', Uri.parse(uploadUrl))
       ..headers['Content-Type'] = contentType
       ..contentLength = length;
@@ -146,6 +166,8 @@ enum StorageFailureKind {
   noPublicUrl,
   rejected,
   uploadFailed,
+  tooLarge,
+  tooManyUploads,
   server,
 }
 
