@@ -660,6 +660,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                               isMe: message.senderId == currentUid,
                               currentUid: currentUid,
                               showReadReceipts: readReceipts,
+                              animateIn: index == docs.length - 1,
                               onReply: (m) => setState(() => _replyingTo = m),
                               onDelete: _deleteMessage,
                               onReact: _reactToMessage,

@@ -317,4 +317,6 @@ const Map<String, String> stringsEn = {
   'k315': '👤 Contact',
   'k316': '📄 {0}',
   'k317': 'Microphone permission is required',
+  'k318': 'Admin',
+  'k319': 'Nickname',
 };

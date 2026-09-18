@@ -181,7 +181,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       const SizedBox(height: 26),
                       _buildField(tr('k063'), _nameController, hint: tr('k064')),
                       const SizedBox(height: 14),
-                      _buildField('Nickname', _nicknameController, hint: '@shahron'),
+                      _buildField(tr('k319'), _nicknameController, hint: '@shahron'),
                       const SizedBox(height: 14),
                       _buildField(tr('k116'), _aboutController, hint: tr('k067')),
                       if (_errorText != null) ...[

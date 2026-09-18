@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'page_transitions.dart';
+
 /// Маҷмӯи рангҳои як мавзӯъ.
 class AppPalette {
   final Brightness brightness;
@@ -105,6 +107,14 @@ class AppTheme {
       textTheme: TextTheme(
         bodyMedium: TextStyle(color: p.textPrimary),
       ),
+      // Ҳамаи экранҳо бо як гузариши нарм кушода мешаванд.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeSlidePageTransitionsBuilder(),
+          TargetPlatform.iOS: FadeSlidePageTransitionsBuilder(),
+        },
+      ),
+      splashFactory: InkSparkle.splashFactory,
     );
   }
 

@@ -35,6 +35,9 @@ class MessageBubble extends StatelessWidget {
 
   /// Пин кардани паём дар болои чат.
   final ValueChanged<ChatMessage>? onPin;
+
+  /// Танҳо барои охирин паём фаъол мешавад — паёми нав нарм пайдо мешавад.
+  final bool animateIn;
   final void Function(ChatMessage message, String emoji)? onReact;
 
   /// Ҳуҷҷати худи паём — барои ситорадор кардан лозим аст.
@@ -55,6 +58,7 @@ class MessageBubble extends StatelessWidget {
     this.onEdit,
     this.onReplyPrivately,
     this.onPin,
+    this.animateIn = false,
     this.onReact,
     this.messageRef,
     this.chatTitle,
@@ -379,6 +383,38 @@ class MessageBubble extends StatelessWidget {
     // Кашидан ба рост — ҷавоб додан, ҳамон ишораи WhatsApp. `confirmDismiss`
     // ҳамеша `false` бармегардонад, бинобар ин паём нест намешавад — танҳо
     // ба ҳолати аввал бармегардад.
+    final bubble = _buildSwipeable(context, isMe, isAI, isSticker, hasImage, hasAudio,
+        hasVideo, hasDocument, hasLocation, distinctReactions);
+    if (!animateIn) return bubble;
+
+    // Паёми нав нарм пайдо мешавад: каме аз поён ва бо шаффофият.
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('in_${message.id}'),
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      builder: (context, t, child) {
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(offset: Offset(0, 10 * (1 - t)), child: child),
+        );
+      },
+      child: bubble,
+    );
+  }
+
+  Widget _buildSwipeable(
+    BuildContext context,
+    bool isMe,
+    bool isAI,
+    bool isSticker,
+    bool hasImage,
+    bool hasAudio,
+    bool hasVideo,
+    bool hasDocument,
+    bool hasLocation,
+    List<String> distinctReactions,
+  ) {
     return Dismissible(
       key: ValueKey('swipe_${message.id}'),
       direction: (onReply == null || message.deleted)

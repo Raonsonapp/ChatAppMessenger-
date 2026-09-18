@@ -308,7 +308,7 @@ class CommunityInfoScreen extends StatelessWidget {
                                     ? Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                         decoration: BoxDecoration(gradient: AppColors.neonGradient, borderRadius: BorderRadius.circular(8)),
-                                        child: const Text('Admin', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.black)),
+                                        child: Text(tr('k318'), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.black)),
                                       )
                                     : null,
                                 onTap: () => _showMemberActions(context, uid, memberName, isAdmin, amIAdmin, currentUid),

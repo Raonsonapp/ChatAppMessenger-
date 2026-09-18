@@ -545,6 +545,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           isMe: isMe,
                           currentUid: currentUid,
                           senderLabel: isMe ? null : _memberNames[message.senderId],
+                          animateIn: index == docs.length - 1,
                           showReadReceipts: false,
                           onReply: (m) => setState(() => _replyingTo = m),
                           onDelete: _deleteMessage,
