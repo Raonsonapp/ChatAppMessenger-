@@ -33,6 +33,7 @@ import '../widgets/pinned_message_bar.dart';
 import 'dart:async';
 import '../widgets/user_avatar.dart';
 import '../widgets/date_separator.dart';
+import '../widgets/scroll_to_bottom_button.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -501,7 +502,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               if (_pinnedText.isNotEmpty)
                 PinnedMessageBar(text: _pinnedText, onUnpin: _unpinMessage),
               Expanded(
-                child: ChatWallpaper(
+                child: Stack(
+                  children: [
+                    ChatWallpaper(
                     child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                   builder: (context, snapshot) {
@@ -574,6 +577,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     );
                   },
                 )),
+                    Positioned(
+                      right: 14,
+                      bottom: 12,
+                      child: ScrollToBottomButton(
+                        controller: _scrollController,
+                        onTap: _scrollToBottom,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               if (_replyingTo != null) _buildReplyPreview(),
               _buildInputBar(),

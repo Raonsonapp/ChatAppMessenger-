@@ -31,6 +31,7 @@ import '../widgets/chat_wallpaper.dart';
 import '../services/location_service.dart';
 import '../widgets/pinned_message_bar.dart';
 import '../widgets/date_separator.dart';
+import '../widgets/scroll_to_bottom_button.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -590,7 +591,9 @@ class _UserChatScreenState extends State<UserChatScreen> {
                   if (_pinnedText.isNotEmpty)
                     PinnedMessageBar(text: _pinnedText, onUnpin: _unpinMessage),
                   Expanded(
-                    child: ChatWallpaper(
+                    child: Stack(
+                      children: [
+                        ChatWallpaper(
                         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                       stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                       builder: (context, snapshot) {
@@ -687,6 +690,16 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         );
                       },
                     )),
+                        Positioned(
+                          right: 14,
+                          bottom: 12,
+                          child: ScrollToBottomButton(
+                            controller: _scrollController,
+                            onTap: _scrollToBottom,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   if (_replyingTo != null && !iBlockedThem) _buildReplyPreview(),
                   if (iBlockedThem) _buildBlockedBanner() else _buildInputBar(),

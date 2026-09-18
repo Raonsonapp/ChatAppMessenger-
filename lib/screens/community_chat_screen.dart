@@ -30,6 +30,7 @@ import '../widgets/pinned_message_bar.dart';
 import 'dart:async';
 import '../widgets/user_avatar.dart';
 import '../widgets/date_separator.dart';
+import '../widgets/scroll_to_bottom_button.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -496,7 +497,9 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
               if (_pinnedText.isNotEmpty)
                 PinnedMessageBar(text: _pinnedText, onUnpin: _unpinMessage),
               Expanded(
-                child: ChatWallpaper(
+                child: Stack(
+                  children: [
+                    ChatWallpaper(
                     child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                   builder: (context, snapshot) {
@@ -569,6 +572,16 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                     );
                   },
                 )),
+                    Positioned(
+                      right: 14,
+                      bottom: 12,
+                      child: ScrollToBottomButton(
+                        controller: _scrollController,
+                        onTap: _scrollToBottom,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               if (_replyingTo != null) _buildReplyPreview(),
               _buildInputBar(),
