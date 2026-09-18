@@ -29,6 +29,7 @@ import 'user_chat_screen.dart';
 import '../widgets/pinned_message_bar.dart';
 import 'dart:async';
 import '../widgets/user_avatar.dart';
+import '../widgets/date_separator.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -535,7 +536,10 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                       itemBuilder: (context, index) {
                         final message = ChatMessage.fromDoc(docs[index]);
                         final isMe = message.senderId == currentUid;
-                        return MessageBubble(
+                        final previous = index == 0
+                            ? null
+                            : ChatMessage.fromDoc(docs[index - 1]).timestamp;
+                        final bubble = MessageBubble(
                           message: message,
                           isMe: isMe,
                           currentUid: currentUid,
@@ -551,6 +555,15 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                           onDeleteForMe: _deleteForMe,
                           messageRef: _messagesRef.doc(message.id),
                           chatTitle: widget.communityName,
+                        );
+                        if (!DateSeparator.isNewDay(previous, message.timestamp)) return bubble;
+                        // Ҷудокунандаи рӯз — мисли WhatsApp, вақте сана иваз мешавад.
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            DateSeparator(date: message.timestamp!),
+                            bubble,
+                          ],
                         );
                       },
                     );

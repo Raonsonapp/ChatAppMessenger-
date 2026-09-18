@@ -30,6 +30,7 @@ import '../widgets/user_avatar.dart';
 import '../widgets/chat_wallpaper.dart';
 import '../services/location_service.dart';
 import '../widgets/pinned_message_bar.dart';
+import '../widgets/date_separator.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -655,7 +656,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
                           itemCount: docs.length,
                           itemBuilder: (context, index) {
                             final message = ChatMessage.fromDoc(docs[index]);
-                            return MessageBubble(
+                            final previous = index == 0
+                                ? null
+                                : ChatMessage.fromDoc(docs[index - 1]).timestamp;
+                            final bubble = MessageBubble(
                               message: message,
                               isMe: message.senderId == currentUid,
                               currentUid: currentUid,
@@ -669,6 +673,15 @@ class _UserChatScreenState extends State<UserChatScreen> {
                               onPin: _pinMessage,
                               messageRef: _messagesRef.doc(message.id),
                               chatTitle: widget.otherUserName,
+                            );
+                            if (!DateSeparator.isNewDay(previous, message.timestamp)) return bubble;
+                            // Ҷудокунандаи рӯз — мисли WhatsApp, вақте сана иваз мешавад.
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                DateSeparator(date: message.timestamp!),
+                                bubble,
+                              ],
                             );
                           },
                         );

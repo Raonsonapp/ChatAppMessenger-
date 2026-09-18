@@ -328,4 +328,6 @@ const Map<String, String> stringsEn = {
   'k326': 'Slightly smaller message text',
   'k327': 'Default size',
   'k328': 'Larger message text',
+  'k329': 'Today',
+  'k330': 'Yesterday',
 };

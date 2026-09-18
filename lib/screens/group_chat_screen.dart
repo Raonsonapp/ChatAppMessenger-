@@ -32,6 +32,7 @@ import 'user_chat_screen.dart';
 import '../widgets/pinned_message_bar.dart';
 import 'dart:async';
 import '../widgets/user_avatar.dart';
+import '../widgets/date_separator.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -540,7 +541,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       itemBuilder: (context, index) {
                         final message = ChatMessage.fromDoc(docs[index]);
                         final isMe = message.senderId == currentUid;
-                        return MessageBubble(
+                        final previous = index == 0
+                            ? null
+                            : ChatMessage.fromDoc(docs[index - 1]).timestamp;
+                        final bubble = MessageBubble(
                           message: message,
                           isMe: isMe,
                           currentUid: currentUid,
@@ -556,6 +560,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           onDeleteForMe: _deleteForMe,
                           messageRef: _messagesRef.doc(message.id),
                           chatTitle: widget.groupName,
+                        );
+                        if (!DateSeparator.isNewDay(previous, message.timestamp)) return bubble;
+                        // Ҷудокунандаи рӯз — мисли WhatsApp, вақте сана иваз мешавад.
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            DateSeparator(date: message.timestamp!),
+                            bubble,
+                          ],
                         );
                       },
                     );
