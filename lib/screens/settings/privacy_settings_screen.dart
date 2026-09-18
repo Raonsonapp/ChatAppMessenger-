@@ -10,6 +10,7 @@ import '../../l10n/l10n.dart';
 import 'blocked_users_screen.dart';
 import '../../services/status_privacy.dart';
 import '../../theme/app_scope.dart';
+import '../../services/presence_service.dart';
 
 /// Танзимоти воқеии махфият — ҳар тағйирот фавран дар
 /// `users/{uid}` (майдони `settings`) сабт мешавад ва пас аз
@@ -57,6 +58,12 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
     await FirebaseFirestore.instance.collection('users').doc(uid).set({
       'settings': {key: value},
     }, SetOptions(merge: true));
+
+    // Бе ин қимати кӯҳнаи `online`/`lastSeen` то дафъаи дигар кушодани
+    // барнома намоён мемонад — яъне хомӯш кардани тугма фавран кор намекард.
+    if (key == 'lastSeenVisible' || key == 'onlineVisible') {
+      await PresenceService.instance.refresh();
+    }
   }
 
   Future<void> _updateString(String key, String value) async {

@@ -16,6 +16,10 @@ class PresenceService with WidgetsBindingObserver {
 
   bool _started = false;
 
+  /// Танзимоти махфият дар хотира нигоҳ дошта мешавад, то ҳар бор ба ҷои як
+  /// навиштан ду муроҷиат ба Firestore нашавад.
+  Map<String, dynamic>? _settingsCache;
+
   void start() {
     if (_started) return;
     _started = true;
@@ -46,11 +50,52 @@ class PresenceService with WidgetsBindingObserver {
   Future<void> _setOnline(bool online) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
+
+    final ref = FirebaseFirestore.instance.collection('users').doc(uid);
+
+    // Танзимоти махфият пештар ТАНҲО ҳангоми нишон додан ба назар гирифта
+    // мешуд: худи `online` ва `lastSeen` ба ҳар ҳол навишта мешуданд ва ҳар
+    // корбари воридшуда онҳоро бевосита хонда метавонист. Яъне тугма
+    // махфиятро ҳифз намекард, танҳо чашмро мепӯшид.
+    //
+    // Ҳоло чизе ки пинҳон кардан лозим аст, УМУМАН НАВИШТА НАМЕШАВАД ва
+    // қимати кӯҳна тоза мегардад — маълумоте ки нест, ошкор ҳам намешавад.
+    var settings = _settingsCache;
+    if (settings == null) {
+      try {
+        final snapshot = await ref.get();
+        settings = (snapshot.data()?['settings'] as Map<String, dynamic>?) ?? const {};
+        _settingsCache = settings;
+      } catch (_) {
+        // Танзимот хонда нашуд — эҳтиёткорона рафтор мекунем ва чизе
+        // намеnависем, то маълумоти пинҳонӣ тасодуфан ошкор нашавад.
+        return;
+      }
+    }
+
+    final onlineVisible = (settings['onlineVisible'] ?? true) == true;
+    final lastSeenVisible = (settings['lastSeenVisible'] ?? true) == true;
+
+    final update = <String, dynamic>{
+      'online': onlineVisible ? online : FieldValue.delete(),
+      'lastSeen': lastSeenVisible
+          ? FieldValue.serverTimestamp()
+          : FieldValue.delete(),
+    };
+
     // Хатогиро фурӯ мебарем: ҳолати presence набояд барномаро вайрон кунад.
-    await FirebaseFirestore.instance.collection('users').doc(uid).set({
-      'online': online,
-      'lastSeen': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true)).catchError((_) {});
+    await ref.set(update, SetOptions(merge: true)).catchError((_) {});
+  }
+
+  /// Пас аз тағйири танзимоти махфият даъват мешавад.
+  ///
+  /// Бе ин қимати кӯҳна то дафъаи дигар кушодани барнома боқӣ мемонад — яъне
+  /// корбар танзимотро хомӯш мекунад, вале «охирин дида шуд»-и ӯ ҳанӯз
+  /// намоён аст.
+  Future<void> refresh() async {
+    _settingsCache = null;
+    if (!_started) return;
+    await _setOnline(true);
   }
 
   /// Матни зери номи корбар дар сарлавҳаи чат.
