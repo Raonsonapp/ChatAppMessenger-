@@ -375,4 +375,8 @@ const Map<String, String> stringsEn = {
   'k373': 'File is too large (up to 100 MB)',
   'k374': 'Too many uploads, try again later',
   'k375': 'Downloaded files',
+  'k376': 'Saved to gallery',
+  'k377': 'Save',
+  'k378': 'Gallery access denied',
+  'k379': 'Could not save the file',
 };

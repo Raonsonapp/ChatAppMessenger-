@@ -11,6 +11,9 @@ const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 const r2 = require('./r2');
 
+/** Вақти оғози ин нусхаи сервер. */
+const startedAt = new Date();
+
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
 const PORT = process.env.PORT || 3000;
 const CODE_TTL_MS = 5 * 60 * 1000; // 5 дақиқа
@@ -166,6 +169,11 @@ app.get('/', (_req, res) => {
     // Ҳолати анбори файлҳо — бе ҳељ сирре, танҳо «ҳаст/нест».
     storage: { ...r2.status(), selfTest: r2.lastSelfTest() },
     publicDomain: process.env.PUBLIC_URL || process.env.RAILWAY_PUBLIC_DOMAIN || null,
+    // Кадом нусхаи код кор мекунад — барои санҷиши он ки деплой расидааст ё не.
+    build: {
+      commit: (process.env.RAILWAY_GIT_COMMIT_SHA || '').slice(0, 7) || null,
+      startedAt: startedAt.toISOString(),
+    },
   });
 });
 

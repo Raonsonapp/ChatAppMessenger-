@@ -1,16 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/l10n.dart';
+import '../services/media_download_service.dart';
 import '../theme/app_scope.dart';
+import '../utils/download_error.dart';
 import '../widgets/net_image.dart';
 
 /// Расми пурраи экран бо имкони калон кардан — мисли WhatsApp.
-class ImageViewerScreen extends StatelessWidget {
+class ImageViewerScreen extends StatefulWidget {
   final String url;
 
   /// Номи фиристанда ё чат — дар болои расм нишон дода мешавад.
   final String? title;
   const ImageViewerScreen({super.key, required this.url, this.title});
+
+  @override
+  State<ImageViewerScreen> createState() => _ImageViewerScreenState();
+}
+
+class _ImageViewerScreenState extends State<ImageViewerScreen> {
+  bool _saving = false;
+
+  Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+
+    String message;
+    try {
+      await MediaDownloadService.saveImage(widget.url);
+      message = tr('k376');
+    } catch (error) {
+      message = describeDownloadError(error);
+    }
+
+    if (!mounted) return;
+    setState(() => _saving = false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +52,7 @@ class ImageViewerScreen extends StatelessWidget {
               maxScale: 5,
               child: Center(
                 child: NetImage(
-                  url: url,
+                  url: widget.url,
                   fit: BoxFit.contain,
                   loading: const Center(
                     child: CircularProgressIndicator(color: Colors.white),
@@ -48,13 +75,25 @@ class ImageViewerScreen extends StatelessWidget {
                 ),
                 Expanded(
                   child: Text(
-                    title ?? '',
+                    widget.title ?? '',
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
                   ),
                 ),
                 IconButton(
-                  onPressed: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+                  tooltip: tr('k377'),
+                  onPressed: _saving ? null : _save,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(LucideIcons.download, color: Colors.white, size: 20),
+                ),
+                IconButton(
+                  onPressed: () =>
+                      launchUrl(Uri.parse(widget.url), mode: LaunchMode.externalApplication),
                   icon: const Icon(LucideIcons.external_link, color: Colors.white, size: 20),
                 ),
               ],
