@@ -9,6 +9,8 @@ import '../models/app_status.dart';
 import '../models/app_conversation.dart';
 import '../services/push_service.dart';
 import '../l10n/l10n.dart';
+import '../services/media_download_service.dart';
+import '../utils/download_error.dart';
 import '../widgets/user_avatar.dart';
 import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
@@ -26,6 +28,26 @@ class StatusViewerScreen extends StatefulWidget {
 }
 
 class _StatusViewerScreenState extends State<StatusViewerScreen> {
+  bool _saving = false;
+
+  /// Акси навсозиро ба галерея мегузорад.
+  Future<void> _saveStatus(String url) async {
+    if (_saving) return;
+    setState(() => _saving = true);
+
+    String message;
+    try {
+      await MediaDownloadService.saveImage(url);
+      message = tr('k376');
+    } catch (error) {
+      message = describeDownloadError(error);
+    }
+
+    if (!mounted) return;
+    setState(() => _saving = false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   int _index = 0;
   Timer? _timer;
   final TextEditingController _replyController = TextEditingController();
@@ -312,6 +334,21 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
                             ),
                           );
                         },
+                      ),
+                    if (status.imageUrl != null)
+                      IconButton(
+                        tooltip: tr('k377'),
+                        onPressed: _saving ? null : () => _saveStatus(status.imageUrl!),
+                        icon: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(LucideIcons.download, color: Colors.white, size: 20),
                       ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),

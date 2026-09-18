@@ -12,6 +12,8 @@ import 'audio_message_player.dart';
 import 'video_message_player.dart';
 import '../models/chat_message.dart';
 import '../l10n/l10n.dart';
+import '../services/media_download_service.dart';
+import '../utils/download_error.dart';
 import '../sheets/forward_sheet.dart';
 import '../screens/image_viewer_screen.dart';
 import '../theme/text_scale_controller.dart';
@@ -87,6 +89,48 @@ class MessageBubble extends StatelessWidget {
 
   static const List<String> _quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
+  /// Оё ин паёмро ба дастгоҳ нигоҳ доштан мумкин аст?
+  bool get _isSavable {
+    if (message.deleted) return false;
+    final url = message.mediaUrl;
+    if (url == null || url.isEmpty) return false;
+    return const {'image', 'gif', 'video', 'audio', 'document'}
+        .contains(message.mediaType);
+  }
+
+  /// Файлро ба галерея (акс/видео) ё ба папкаи ҳуҷҷатҳои барнома мегузорад.
+  Future<void> _saveMedia(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final url = message.mediaUrl!;
+    final type = message.mediaType;
+
+    messenger.showSnackBar(SnackBar(content: Text(tr('k380'))));
+
+    String result;
+    try {
+      if (type == 'video') {
+        await MediaDownloadService.saveVideo(url);
+        result = tr('k376');
+      } else if (type == 'image' || type == 'gif') {
+        await MediaDownloadService.saveImage(url);
+        result = tr('k376');
+      } else {
+        final name = message.mediaName?.trim();
+        await MediaDownloadService.saveDocument(
+          url,
+          name == null || name.isEmpty ? 'chatapp_file' : name,
+        );
+        result = tr('k381');
+      }
+    } catch (error) {
+      result = describeDownloadError(error);
+    }
+
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(result)));
+  }
+
   void _showActions(BuildContext context) {
     if (message.deleted) return;
     showModalBottomSheet(
@@ -130,6 +174,16 @@ class MessageBubble extends StatelessWidget {
                   onReply?.call(message);
                 },
               ),
+              if (_isSavable)
+                _actionTile(
+                  context,
+                  icon: LucideIcons.download,
+                  label: tr('k377'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _saveMedia(context);
+                  },
+                ),
               _actionTile(
                 context,
                 icon: LucideIcons.corner_up_right,

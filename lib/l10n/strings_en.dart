@@ -379,4 +379,6 @@ const Map<String, String> stringsEn = {
   'k377': 'Save',
   'k378': 'Gallery access denied',
   'k379': 'Could not save the file',
+  'k380': 'Saving…',
+  'k381': 'Saved to files',
 };
