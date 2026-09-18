@@ -10,6 +10,7 @@ import '../widgets/empty_state.dart';
 import 'image_viewer_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_scope.dart';
+import '../widgets/net_image.dart';
 
 /// «Медиа, ҳуҷҷатҳо» — ҳамаи файлҳое, ки дар ҳамин чат мубодила шудаанд.
 ///
@@ -93,10 +94,11 @@ class SharedMediaScreen extends StatelessWidget {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: isImage
-                                ? Image.network(
-                                    url,
+                                ? NetImage(
+                                    url: url,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => _placeholder(type, data),
+                                    memCacheWidth: 400,
+                                    error: _placeholder(type, data),
                                   )
                                 : _placeholder(type, data),
                           ),

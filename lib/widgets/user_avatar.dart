@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/app_scope.dart';
+import 'net_image.dart';
 
 /// Аксиcи профили корбар бо бозгашт ба ҳарфи аввали ном.
 ///
@@ -133,10 +134,11 @@ class _UserAvatarState extends State<UserAvatar> {
       ),
       clipBehavior: Clip.antiAlias,
       child: hasPhoto
-          ? Image.network(
-              _url!,
+          ? NetImage(
+              url: _url!,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => placeholder,
+              error: placeholder,
+              loading: placeholder,
             )
           : placeholder,
     );

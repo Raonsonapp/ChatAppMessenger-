@@ -3,6 +3,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/app_scope.dart';
+import 'net_image.dart';
 
 /// Акси гурӯҳ ё ҷамъият бо бозгашт ба нишонаи одамон.
 class GroupAvatar extends StatelessWidget {
@@ -30,10 +31,11 @@ class GroupAvatar extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: hasPhoto
-          ? Image.network(
-              photoUrl!,
+          ? NetImage(
+              url: photoUrl!,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Icon(icon, color: AppColors.textSecondary, size: size * 0.42),
+              error: Icon(icon, color: AppColors.textSecondary, size: size * 0.42),
+              loading: Icon(icon, color: AppColors.textSecondary, size: size * 0.42),
             )
           : Icon(icon, color: AppColors.textSecondary, size: size * 0.42),
     );

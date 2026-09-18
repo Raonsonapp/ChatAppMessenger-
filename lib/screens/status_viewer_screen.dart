@@ -12,6 +12,7 @@ import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
+import '../widgets/net_image.dart';
 
 /// Намоиши пурраи навсозиҳо (мисли Stories) — гузариши худкор, progress bar
 /// дар боло, ва сабти воқеии viewedBy дар Firestore.
@@ -220,7 +221,7 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
                 InteractiveViewer(
                   minScale: 1,
                   maxScale: 4,
-                  child: Image.network(status.imageUrl!, fit: BoxFit.contain),
+                  child: NetImage(url: status.imageUrl!, fit: BoxFit.contain),
                 )
               else
                 Container(

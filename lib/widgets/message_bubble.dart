@@ -17,6 +17,7 @@ import '../screens/image_viewer_screen.dart';
 import '../theme/text_scale_controller.dart';
 import 'poll_card.dart';
 import '../theme/app_scope.dart';
+import 'net_image.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -572,20 +573,18 @@ class MessageBubble extends StatelessWidget {
                             ),
                             child: ClipRRect(
                             borderRadius: BorderRadius.circular(14),
-                            child: Image.network(
-                              message.mediaUrl!,
+                            child: NetImage(
+                              url: message.mediaUrl!,
                               width: 220,
                               fit: BoxFit.cover,
-                              loadingBuilder: (context, child, progress) {
-                                if (progress == null) return child;
-                                return Container(
-                                  width: 220,
-                                  height: 220,
-                                  alignment: Alignment.center,
-                                  child: CircularProgressIndicator(color: AppColors.neonEmerald, strokeWidth: 2),
-                                );
-                              },
-                              errorBuilder: (context, error, stack) => Container(
+                              memCacheWidth: 660,
+                              loading: Container(
+                                width: 220,
+                                height: 220,
+                                alignment: Alignment.center,
+                                child: CircularProgressIndicator(color: AppColors.neonEmerald, strokeWidth: 2),
+                              ),
+                              error: Container(
                                 width: 220,
                                 height: 120,
                                 alignment: Alignment.center,

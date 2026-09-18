@@ -11,6 +11,7 @@ import '../widgets/empty_state.dart';
 import '../l10n/l10n.dart';
 import '../l10n/media_preview.dart';
 import '../theme/app_scope.dart';
+import '../widgets/net_image.dart';
 
 /// Рӯйхати паёмҳои ситорадори корбар — мисли «Избранные» дар WhatsApp.
 class StarredMessagesScreen extends StatelessWidget {
@@ -79,7 +80,7 @@ class StarredMessagesScreen extends StatelessWidget {
                               if (isImage)
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
-                                  child: Image.network(mediaUrl, width: 44, height: 44, fit: BoxFit.cover),
+                                  child: NetImage(url: mediaUrl, width: 44, height: 44, memCacheWidth: 132),
                                 )
                               else
                                 Icon(LucideIcons.star, color: AppColors.neonEmerald, size: 20),

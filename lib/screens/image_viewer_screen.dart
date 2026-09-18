@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_scope.dart';
+import '../widgets/net_image.dart';
 
 /// Расми пурраи экран бо имкони калон кардан — мисли WhatsApp.
 class ImageViewerScreen extends StatelessWidget {
@@ -23,14 +24,13 @@ class ImageViewerScreen extends StatelessWidget {
               minScale: 1,
               maxScale: 5,
               child: Center(
-                child: Image.network(
-                  url,
+                child: NetImage(
+                  url: url,
                   fit: BoxFit.contain,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const CircularProgressIndicator(color: Colors.white);
-                  },
-                  errorBuilder: (_, __, ___) => const Icon(
+                  loading: const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+                  error: const Icon(
                     LucideIcons.triangle_alert,
                     color: Colors.white54,
                     size: 40,
