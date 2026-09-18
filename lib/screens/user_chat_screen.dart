@@ -64,6 +64,9 @@ class _UserChatScreenState extends State<UserChatScreen> {
 
   /// Матни паёми пиншуда (холӣ — пин нест).
   String _pinnedText = '';
+
+  /// Ҳисоби нохондашудаи ман — то навиштани такрории сифр пешгирӣ шавад.
+  int _myUnread = 0;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _convoSub;
 
   /// «Менависад…» — таймери хомӯшкунӣ пас аз таваққуфи чоп.
@@ -188,6 +191,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
 
   /// Ҳангоми кушодани чат ҳисоби нохондашудаи ман сифр мешавад.
   Future<void> _clearMyUnread(String currentUid) async {
+    // Бе ин тафтиш ҳар навсозии рӯйхати паёмҳо як навиштани нав ба Firestore
+    // мешуд, ҳол он ки ҳисоб аллакай сифр аст.
+    if (_myUnread == 0) return;
+    _myUnread = 0;
     await _conversationRef.set({
       'unread': {currentUid: 0},
     }, SetOptions(merge: true)).catchError((_) {});
@@ -200,6 +207,9 @@ class _UserChatScreenState extends State<UserChatScreen> {
       final data = snap.data();
       final value = (data?['disappearIn'] as num?)?.toInt() ?? 0;
       final pinned = (data?['pinnedText'] as String?) ?? '';
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      final unread = (data?['unread'] as Map<String, dynamic>?)?[uid];
+      _myUnread = (unread as num?)?.toInt() ?? 0;
       if (!mounted) return;
       if (value != _disappearIn || pinned != _pinnedText) {
         setState(() {
