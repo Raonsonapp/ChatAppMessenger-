@@ -381,4 +381,5 @@ const Map<String, String> stringsEn = {
   'k379': 'Could not save the file',
   'k380': 'Saving…',
   'k381': 'Saved to files',
+  'k382': 'No internet — waiting to connect',
 };
