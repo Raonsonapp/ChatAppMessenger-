@@ -29,6 +29,9 @@ const config = {
     'R2_ACCESS_KEY',
     'R2_KEY_ID',
     'R2_TOKEN_ID',
+    'CF_R2_ACCESS_KEY_ID',
+    'CF_R2_ACCESS_KEY',
+    'CF_ACCESS_KEY_ID',
     'CLOUDFLARE_R2_ACCESS_KEY_ID',
     'CLOUDFLARE_ACCESS_KEY_ID',
     'AWS_ACCESS_KEY_ID',
@@ -40,6 +43,9 @@ const config = {
     'R2_SECRET_KEY',
     'R2_SECRET',
     'R2_TOKEN',
+    'CF_R2_SECRET_ACCESS_KEY',
+    'CF_R2_SECRET_KEY',
+    'CF_SECRET_ACCESS_KEY',
     'CLOUDFLARE_R2_SECRET_ACCESS_KEY',
     'CLOUDFLARE_SECRET_ACCESS_KEY',
     'AWS_SECRET_ACCESS_KEY',
@@ -49,6 +55,9 @@ const config = {
   bucket: pick(
     'R2_BUCKET',
     'R2_BUCKET_NAME',
+    'CF_R2_BUCKET',
+    'CF_R2_BUCKET_NAME',
+    'CF_BUCKET',
     'CLOUDFLARE_R2_BUCKET',
     'S3_BUCKET',
     'BUCKET_NAME',
@@ -57,6 +66,8 @@ const config = {
   // Суроғаи ҷамъиятии бакет: домени r2.dev ё домени худӣ.
   publicUrl: pick(
     'R2_PUBLIC_URL',
+    'CF_R2_PUBLIC_URL',
+    'CF_PUBLIC_URL',
     'R2_PUBLIC_BASE_URL',
     'R2_DOMAIN',
     'R2_PUBLIC_DOMAIN',
@@ -68,11 +79,27 @@ const config = {
   endpoint: pick('R2_ENDPOINT', 'R2_S3_ENDPOINT'),
 };
 
+/** Endpoint метавонад бо роҳи бакет дода шавад — онро ҷудо мекунем. */
+function splitEndpoint() {
+  if (!config.endpoint) return { host: null, bucket: null };
+  const withoutScheme = config.endpoint.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  const slash = withoutScheme.indexOf('/');
+  if (slash === -1) return { host: withoutScheme, bucket: null };
+  return {
+    host: withoutScheme.slice(0, slash),
+    bucket: withoutScheme.slice(slash + 1) || null,
+  };
+}
+
 function endpointHost() {
-  if (config.endpoint) {
-    return config.endpoint.replace(/^https?:\/\//, '').replace(/\/+$/, '');
-  }
+  const fromEndpoint = splitEndpoint().host;
+  if (fromEndpoint) return fromEndpoint;
   return `${config.accountId}.r2.cloudflarestorage.com`;
+}
+
+/** Номи бакет: аз тағйирёбанда ё аз роҳи endpoint. */
+function bucketName() {
+  return config.bucket || splitEndpoint().bucket;
 }
 
 function publicBase() {
@@ -88,7 +115,7 @@ function isConfigured() {
   return Boolean(config.accountId || config.endpoint)
     && Boolean(config.accessKeyId)
     && Boolean(config.secretAccessKey)
-    && Boolean(config.bucket);
+    && Boolean(bucketName());
 }
 
 /**
@@ -112,9 +139,9 @@ function status() {
     hasAccount: Boolean(config.accountId || config.endpoint),
     hasAccessKey: Boolean(config.accessKeyId),
     hasSecretKey: Boolean(config.secretAccessKey),
-    hasBucket: Boolean(config.bucket),
+    hasBucket: Boolean(bucketName()),
     hasPublicUrl: Boolean(config.publicUrl),
-    bucket: config.bucket || null,
+    bucket: bucketName(),
     endpoint: isConfigured() ? endpointHost() : null,
     publicUrl: publicBase(),
   };
@@ -157,7 +184,7 @@ function presignPut(key, expiresInSeconds = 900) {
   const service = 's3';
   const scope = `${dateStamp}/${region}/${service}/aws4_request`;
 
-  const canonicalUri = `/${config.bucket}/${encodePath(key)}`;
+  const canonicalUri = `/${bucketName()}/${encodePath(key)}`;
   const query = {
     'X-Amz-Algorithm': 'AWS4-HMAC-SHA256',
     'X-Amz-Credential': `${config.accessKeyId}/${scope}`,
