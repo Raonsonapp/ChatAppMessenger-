@@ -89,7 +89,8 @@ class _ChannelScreenState extends State<ChannelScreen> {
         'mediaType': 'image',
       });
       await _channelRef.set({
-        'lastMessage': '📷 Расм',
+        'lastMessage': tr('k311'),
+        'lastMessageType': 'image',
         'lastMessageTime': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
       _scrollToBottom();

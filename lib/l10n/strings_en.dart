@@ -310,4 +310,11 @@ const Map<String, String> stringsEn = {
   'k308': 'Pinned message',
   'k309': 'Unpin',
   'k310': 'MENTION',
+  'k311': '📷 Photo',
+  'k312': '🎤 Voice message',
+  'k313': '🎥 Video',
+  'k314': '🙂 Sticker',
+  'k315': '👤 Contact',
+  'k316': '📄 {0}',
+  'k317': 'Microphone permission is required',
 };

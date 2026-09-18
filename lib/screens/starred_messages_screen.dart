@@ -8,6 +8,7 @@ import '../utils/time_format.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
+import '../l10n/media_preview.dart';
 
 /// Рӯйхати паёмҳои ситорадори корбар — мисли «Избранные» дар WhatsApp.
 class StarredMessagesScreen extends StatelessWidget {
@@ -16,14 +17,10 @@ class StarredMessagesScreen extends StatelessWidget {
   String _preview(Map<String, dynamic> data) {
     final text = (data['text'] as String?)?.trim() ?? '';
     if (text.isNotEmpty) return text;
-    return switch (data['mediaType'] as String?) {
-      'image' || 'gif' => '📷',
-      'audio' => '🎤',
-      'video' => '🎥',
-      'document' => '📄 ${data['mediaName'] ?? ''}',
-      'sticker' => '🙂',
-      _ => '',
-    };
+    return mediaPreviewLabel(
+      data['mediaType'] as String?,
+      name: data['mediaName'] as String?,
+    );
   }
 
   @override

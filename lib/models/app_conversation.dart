@@ -11,6 +11,13 @@ class AppConversation {
   final DateTime? lastMessageTime;
   final String? lastSenderId;
 
+  /// Навъи охирин паём (`image`, `audio`, `video`, `document`, `sticker`,
+  /// `location`) — бо ёрии он матни кӯтоҳ бо забони бинанда сохта мешавад.
+  final String? lastMessageType;
+
+  /// Номи файл барои охирин паёми навъи `document`.
+  final String? lastMessageName;
+
   /// Шумораи паёмҳои нохондашуда барои ҳар иштирокчӣ: `{uid: 3}`.
   ///
   /// Он ҳангоми фиристодан зиёд ва ҳангоми кушодани чат сифр карда мешавад —
@@ -33,6 +40,8 @@ class AppConversation {
     this.lastMessage = '',
     this.lastMessageTime,
     this.lastSenderId,
+    this.lastMessageType,
+    this.lastMessageName,
     this.unread = const {},
     this.pinnedBy = const [],
     this.archivedBy = const [],
@@ -51,6 +60,8 @@ class AppConversation {
       lastMessage: (data['lastMessage'] ?? '') as String,
       lastMessageTime: (data['lastMessageTime'] as Timestamp?)?.toDate(),
       lastSenderId: data['lastSenderId'] as String?,
+      lastMessageType: data['lastMessageType'] as String?,
+      lastMessageName: data['lastMessageName'] as String?,
       unread: rawUnread.map((k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0)),
       pinnedBy: List<String>.from(data['pinnedBy'] as List? ?? []),
       archivedBy: List<String>.from(data['archivedBy'] as List? ?? []),

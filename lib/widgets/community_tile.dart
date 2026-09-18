@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../models/app_community.dart';
 import '../screens/community_chat_screen.dart';
 import '../l10n/l10n.dart';
+import '../l10n/media_preview.dart';
 import '../utils/time_format.dart';
 import 'group_avatar.dart';
 import 'unread_badge.dart';
@@ -73,7 +74,11 @@ class CommunityTile extends StatelessWidget {
                           child: Text(
                             community.lastMessage.isEmpty
                                 ? trf('k051', [community.members.length])
-                                : community.lastMessage,
+                                : mediaPreviewLabel(
+                                    community.lastMessageType,
+                                    fallback: community.lastMessage,
+                                    name: community.lastMessageName,
+                                  ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),

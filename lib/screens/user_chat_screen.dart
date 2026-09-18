@@ -86,11 +86,13 @@ class _UserChatScreenState extends State<UserChatScreen> {
   /// Пас аз ҳар паём сарлавҳаи сӯҳбат нав карда мешавад ва ҳисоби нохондашуда
   /// барои тарафи муқобил як воҳид зиёд мешавад — рӯйхати чатҳо ҳамин ҳисобро
   /// нишон медиҳад, бе он ки паёмҳоро аз нав ҳисоб кунад.
-  Future<void> _touchConversation(String preview) async {
+  Future<void> _touchConversation(String preview, {String? type}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     await _conversationRef.set({
       'lastMessage': preview,
+      // Навъи паём — то гиранда матни кӯтоҳро бо забони худаш бубинад.
+      if (type != null) 'lastMessageType': type,
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
       'unread': {widget.otherUserId: FieldValue.increment(1)},
@@ -284,7 +286,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
       ..._expiryField(),
       'mediaType': 'sticker',
     });
-    await _touchConversation('$sticker Стикер');
+    await _touchConversation(tr('k314'), type: 'sticker');
     _notifyOther('$sticker Стикер');
     _scrollToBottom();
   }
@@ -331,8 +333,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
         'mediaUrl': url,
         'mediaType': mediaType,
       });
-      await _touchConversation('📷 Расм');
-      _notifyOther('📷 Расм');
+      await _touchConversation(tr('k311'), type: 'image');
+      _notifyOther(tr('k311'));
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
@@ -396,7 +398,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
           unreadFor: [widget.otherUserId],
         disappearInSeconds: _disappearIn,
         ),
-        '🎥 Видео',
+        tr('k313'),
       );
 
   Future<void> _sendDocumentMessage(PlatformFile picked) => _sendMedia(
@@ -408,7 +410,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
           unreadFor: [widget.otherUserId],
         disappearInSeconds: _disappearIn,
         ),
-        '📄 ${picked.name}',
+        trf('k316', [picked.name]),
       );
 
   Future<void> _sendVoiceMessage(File file, Duration duration) {
@@ -423,7 +425,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         unreadFor: [widget.otherUserId],
         disappearInSeconds: _disappearIn,
       ),
-      '🎤 Паёми овозӣ',
+      tr('k312'),
     );
   }
 

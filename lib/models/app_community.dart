@@ -15,6 +15,13 @@ class AppCommunity {
   final DateTime? lastMessageTime;
   final String? lastSenderId;
 
+  /// Навъи охирин паём (`image`, `audio`, `video`, `document`, `sticker`,
+  /// `location`) — бо ёрии он матни кӯтоҳ бо забони бинанда сохта мешавад.
+  final String? lastMessageType;
+
+  /// Номи файл барои охирин паёми навъи `document`.
+  final String? lastMessageName;
+
   /// Акси ҷамъият.
   final String? photoUrl;
 
@@ -32,6 +39,8 @@ class AppCommunity {
     this.lastMessage = '',
     this.lastMessageTime,
     this.lastSenderId,
+    this.lastMessageType,
+    this.lastMessageName,
     this.photoUrl,
     this.unread = const {},
   });
@@ -52,6 +61,8 @@ class AppCommunity {
       lastMessage: (data['lastMessage'] ?? '') as String,
       lastMessageTime: (data['lastMessageTime'] as Timestamp?)?.toDate(),
       lastSenderId: data['lastSenderId'] as String?,
+      lastMessageType: data['lastMessageType'] as String?,
+      lastMessageName: data['lastMessageName'] as String?,
       photoUrl: data['photoUrl'] as String?,
       unread: ((data['unread'] as Map<String, dynamic>?) ?? {})
           .map((k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0)),

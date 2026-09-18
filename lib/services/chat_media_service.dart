@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../l10n/l10n.dart';
 import 'location_service.dart';
 import 'media_service.dart';
 
@@ -50,6 +51,10 @@ class ChatMediaService {
     });
     await parentRef.set({
       'lastMessage': preview,
+      // Навъ нигоҳ дошта мешавад, то гиранда матни кӯтоҳро бо забони худаш
+      // бубинад, на бо забони фиристанда.
+      'lastMessageType': mediaType,
+      if (mediaType == 'document') 'lastMessageName': name,
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
       if (unreadFor != null && unreadFor.isNotEmpty)
@@ -77,7 +82,7 @@ class ChatMediaService {
       file: File(picked.path),
       name: picked.name,
       mediaType: 'video',
-      preview: '🎥 Видео',
+      preview: tr('k313'),
       unreadFor: unreadFor,
       disappearInSeconds: disappearInSeconds,
     );
@@ -103,7 +108,7 @@ class ChatMediaService {
       file: file,
       name: picked.name,
       mediaType: 'document',
-      preview: '📄 ${picked.name}',
+      preview: trf('k316', [picked.name]),
       sizeBytes: size,
       unreadFor: unreadFor,
       disappearInSeconds: disappearInSeconds,
@@ -139,6 +144,9 @@ class ChatMediaService {
     });
     await parentRef.set({
       'lastMessage': preview,
+      // Навъ нигоҳ дошта мешавад, то гиранда матни кӯтоҳро бо забони худаш
+      // бубинад, на бо забони фиристанда.
+      'lastMessageType': 'location',
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
       if (unreadFor != null && unreadFor.isNotEmpty)
@@ -167,7 +175,7 @@ class ChatMediaService {
       file: file,
       name: 'voice.m4a',
       mediaType: 'audio',
-      preview: '🎤 Паёми овозӣ',
+      preview: tr('k312'),
       durationSeconds: duration.inSeconds,
       unreadFor: unreadFor,
       disappearInSeconds: disappearInSeconds,

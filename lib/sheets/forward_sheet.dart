@@ -9,6 +9,7 @@ import '../models/app_conversation.dart';
 import '../utils/doc_sort.dart';
 import '../widgets/glass_container.dart';
 import '../l10n/l10n.dart';
+import '../l10n/media_preview.dart';
 
 /// Интихоби чат барои фиристодани нусхаи паём.
 ///
@@ -53,15 +54,7 @@ class ForwardSheet extends StatelessWidget {
 
   String get _preview {
     if (message.text.isNotEmpty) return message.text;
-    return switch (message.mediaType) {
-      'image' || 'gif' => '📷 Расм',
-      'audio' => '🎤 Паёми овозӣ',
-      'video' => '🎥 Видео',
-      'document' => '📄 ${message.mediaName ?? ''}',
-      'sticker' => '🙂 Стикер',
-      'location' => tr('k286'),
-      _ => '',
-    };
+    return mediaPreviewLabel(message.mediaType, name: message.mediaName);
   }
 
   @override

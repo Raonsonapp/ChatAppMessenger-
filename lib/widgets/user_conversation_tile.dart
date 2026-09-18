@@ -8,6 +8,7 @@ import '../services/conversation_actions.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/unread_badge.dart';
 import '../l10n/l10n.dart';
+import '../l10n/media_preview.dart';
 import '../utils/time_format.dart';
 
 class UserConversationTile extends StatelessWidget {
@@ -151,7 +152,13 @@ class UserConversationTile extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            conversation.lastMessage.isEmpty ? tr('k236') : conversation.lastMessage,
+                            conversation.lastMessage.isEmpty
+                                ? tr('k236')
+                                : mediaPreviewLabel(
+                                    conversation.lastMessageType,
+                                    fallback: conversation.lastMessage,
+                                    name: conversation.lastMessageName,
+                                  ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),

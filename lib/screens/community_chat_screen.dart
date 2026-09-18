@@ -94,7 +94,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     );
   }
 
-  Future<void> _touchCommunity(String preview) async {
+  Future<void> _touchCommunity(String preview, {String? type}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final counters = <String, Object>{
@@ -102,6 +102,8 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     };
     await _communityRef.set({
       'lastMessage': preview,
+      // Навъи паём — то гиранда матни кӯтоҳро бо забони худаш бубинад.
+      if (type != null) 'lastMessageType': type,
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
       if (counters.isNotEmpty) 'unread': counters,
@@ -205,7 +207,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     await _messagesRef.add({'text': sticker, 'senderId': uid, 'isAI': false, 'createdAt': FieldValue.serverTimestamp(), 'mediaType': 'sticker'});
-    await _touchCommunity('$sticker Стикер');
+    await _touchCommunity(tr('k314'), type: 'sticker');
     _scrollToBottom();
   }
 
@@ -241,7 +243,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         'mediaUrl': url,
         'mediaType': mediaType,
       });
-      await _touchCommunity('📷 Расм');
+      await _touchCommunity(tr('k311'), type: 'image');
       _scrollToBottom();
     } catch (e) {
       if (mounted) {

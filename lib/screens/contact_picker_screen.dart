@@ -108,7 +108,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
       if (phone.isEmpty || !phoneSet.contains(phone)) continue;
       _registeredUsersByPhone[phone] = {
         'uid': doc.id,
-        'name': '${data['name'] ?? 'Корбар'}',
+        'name': '${data['name'] ?? tr('k002')}',
       };
     }
   }
@@ -157,7 +157,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
 
     final conversationId = AppConversation.idFor(currentUid, otherUid);
     final currentUserDoc = await FirebaseFirestore.instance.collection('users').doc(currentUid).get();
-    final myName = '${currentUserDoc.data()?['name'] ?? 'Корбар'}';
+    final myName = '${currentUserDoc.data()?['name'] ?? tr('k002')}';
 
     await FirebaseFirestore.instance.collection('conversations').doc(conversationId).set({
       'participants': [currentUid, otherUid],

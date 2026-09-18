@@ -92,7 +92,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
-  Future<void> _touchGroup(String preview) async {
+  Future<void> _touchGroup(String preview, {String? type}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final counters = <String, Object>{
@@ -101,6 +101,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     };
     await _groupRef.set({
       'lastMessage': preview,
+      // Навъи паём — то гиранда матни кӯтоҳро бо забони худаш бубинад.
+      if (type != null) 'lastMessageType': type,
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
       if (counters.isNotEmpty) 'unread': counters,
@@ -210,7 +212,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     await _messagesRef.add({'text': sticker, 'senderId': uid, 'isAI': false, 'createdAt': FieldValue.serverTimestamp(), 'mediaType': 'sticker'});
-    await _touchGroup('$sticker Стикер');
+    await _touchGroup(tr('k314'), type: 'sticker');
     _scrollToBottom();
   }
 
@@ -246,7 +248,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         'mediaUrl': url,
         'mediaType': mediaType,
       });
-      await _touchGroup('📷 Расм');
+      await _touchGroup(tr('k311'), type: 'image');
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
