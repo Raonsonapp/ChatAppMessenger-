@@ -9,6 +9,7 @@ const { initializeApp, cert } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
+const r2 = require('./r2');
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
 const PORT = process.env.PORT || 3000;
@@ -162,8 +163,51 @@ app.get('/', (_req, res) => {
     ok: true,
     service: 'chatapp-otp-bot',
     bot: botStatus,
+    // Ҳолати анбори файлҳо — бе ҳељ сирре, танҳо «ҳаст/нест».
+    storage: r2.status(),
     publicDomain: process.env.PUBLIC_URL || process.env.RAILWAY_PUBLIC_DOMAIN || null,
   });
+});
+
+/**
+ * Ҳаволаи имзошуда барои боркунии файл ба R2.
+ *
+ * Барнома калидҳои R2-ро намедонад: он танҳо токени Firebase-и худро
+ * мефиристад ва ҳаволаи кӯтоҳмуддат мегирад, баъд файлро бевосита ба R2
+ * мефиристад. Ин ҳам бехатартар аст, ҳам трафики сервер сарф намешавад.
+ */
+app.post('/api/upload-url', async (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!idToken) return res.status(401).json({ error: 'Authorization lozim ast' });
+
+  let user;
+  try {
+    user = await getAuth().verifyIdToken(idToken);
+  } catch {
+    return res.status(401).json({ error: 'Token nodurust ast' });
+  }
+
+  if (!r2.isConfigured()) {
+    return res.status(503).json({ error: 'r2-not-configured', storage: r2.status() });
+  }
+
+  const { folder, name, contentType } = req.body ?? {};
+  if (!name) return res.status(400).json({ error: 'name lozim ast' });
+
+  // Роҳи файл: папка + uid + вақт + ном. uid дар роҳ мемонад, то маълум бошад
+  // кӣ файлро бор кардааст.
+  const safeFolder = String(folder || 'files').replace(/[^a-zA-Z0-9/_-]/g, '').replace(/^\/+|\/+$/g, '');
+  const safeName = String(name).replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80);
+  const key = `${safeFolder || 'files'}/${user.uid}/${Date.now()}_${safeName}`;
+
+  try {
+    const signed = r2.presignPut(key, 900);
+    res.json({ ...signed, contentType: contentType || 'application/octet-stream' });
+  } catch (err) {
+    console.error('Хатои сохтани ҳаволаи боркунӣ:', err?.message ?? err);
+    res.status(500).json({ error: 'presign-failed' });
+  }
 });
 
 app.post('/api/otp/verify', async (req, res) => {

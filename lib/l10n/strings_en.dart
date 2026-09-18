@@ -367,4 +367,9 @@ const Map<String, String> stringsEn = {
   'k365': 'Upload failed: Cloud Storage is not enabled in the Firebase project',
   'k366': 'Upload failed: not allowed (Storage rules)',
   'k367': 'Upload failed: weak or interrupted connection',
+  'k368': 'File storage is not configured (R2)',
+  'k369': 'File not found',
+  'k370': 'The storage has no public URL',
+  'k371': 'The storage rejected the file — check the R2 keys',
+  'k372': 'Upload failed, please try again',
 };

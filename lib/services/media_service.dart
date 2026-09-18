@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'storage_service.dart';
 
-/// САБТ: интихоби воқеии расм/видео/ҳуҷҷат ва боркунии воқеӣ ба
-/// Cloud Storage. Ягон қисми ин hard-code/fake нест.
+/// Интихоби расм/видео/ҳуҷҷат ва боркунии воқеии онҳо.
+///
+/// Файлҳо ба Cloudflare R2 бор мешаванд (ниг. `StorageService`), на ба
+/// Firebase Storage.
 class MediaService {
   static final ImagePicker _picker = ImagePicker();
 
@@ -53,11 +55,8 @@ class MediaService {
   }
 
   /// Боркунии ҳар файл (овоз, видео, ҳуҷҷат) ва бозгашти URL.
-  static Future<String> uploadFile(File file, String name, String folderPath) async {
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}_$name';
-    final ref = FirebaseStorage.instance.ref().child('$folderPath/$fileName');
-    final uploadTask = await ref.putFile(file);
-    return uploadTask.ref.getDownloadURL();
+  static Future<String> uploadFile(File file, String name, String folderPath) {
+    return StorageService.upload(file, name, folderPath);
   }
 
   /// Ҳаҷми файл ба шакли хондашаванда.

@@ -1,28 +1,21 @@
-import 'package:firebase_core/firebase_core.dart';
-
 import '../l10n/l10n.dart';
+import '../services/storage_service.dart';
 
 /// Хатои боркунии файлро ба забони фаҳмо табдил медиҳад.
 ///
-/// Матни хоми Firebase («[firebase_storage/object-not-found] No object exists
-/// at the desired reference») ба корбар ҳељ чиз намефаҳмонад ва сабаби аслиро
-/// пинҳон мекунад: аксаран Cloud Storage дар лоиҳаи Firebase умуман фаъол
-/// нашудааст ё қоидаҳои он иҷозат намедиҳанд.
+/// Матни хоми хизматрасон ба корбар ҳељ чиз намефаҳмонад ва сабаби аслиро
+/// пинҳон мекунад.
 String describeUploadError(Object error) {
-  if (error is FirebaseException) {
-    switch (error.code) {
-      case 'object-not-found':
-      case 'bucket-not-found':
-      case 'project-not-found':
-        return tr('k365');
-      case 'unauthorized':
-      case 'unauthenticated':
-        return tr('k366');
-      case 'retry-limit-exceeded':
-      case 'canceled':
-        return tr('k367');
-    }
-    return error.message ?? error.code;
+  if (error is StorageFailure) {
+    return switch (error.kind) {
+      StorageFailureKind.notConfigured => tr('k368'),
+      StorageFailureKind.missingFile => tr('k369'),
+      StorageFailureKind.noPublicUrl => tr('k370'),
+      StorageFailureKind.rejected => tr('k371'),
+      StorageFailureKind.network => tr('k367'),
+      StorageFailureKind.notSignedIn => tr('k366'),
+      StorageFailureKind.uploadFailed || StorageFailureKind.server => tr('k372'),
+    };
   }
   return '$error';
 }
