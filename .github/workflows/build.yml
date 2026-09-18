@@ -8,6 +8,12 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Ҳангоми якчанд push пай дар пай танҳо охирин сохта мешавад: сохтани нусхаи
+# кӯҳна ҳељ фоида надорад ва навбатро банд мекунад.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
