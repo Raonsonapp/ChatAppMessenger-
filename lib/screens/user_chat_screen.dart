@@ -509,7 +509,22 @@ class _UserChatScreenState extends State<UserChatScreen> {
     await _messagesRef.doc(message.id).update({'reactions.$uid': emoji});
   }
 
-  void _markIncomingAsRead(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, String currentUid) {
+  /// [sendReceipts] — танзимоти «Хабари хондашуда». Агар хомӯш бошад, паём
+  /// ҳамчун хонда қайд НАМЕШАВАД, яъне ҳамсӯҳбат ду тирчаи кабудро намебинад.
+  /// Ҳисоби нохондашудаи худам ба ҳар ҳол сифр мешавад — он танҳо аз они ман аст.
+  void _markIncomingAsRead(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    String currentUid, {
+    required bool sendReceipts,
+  }) {
+    if (!sendReceipts) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _clearMyUnread(currentUid));
+      return;
+    }
+    _markIncomingAsReadInner(docs, currentUid);
+  }
+
+  void _markIncomingAsReadInner(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, String currentUid) {
     final unread = docs.where((d) {
       final data = d.data();
       return data['senderId'] != currentUid && (data['read'] != true);
@@ -560,8 +575,13 @@ class _UserChatScreenState extends State<UserChatScreen> {
           child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
             stream: FirebaseFirestore.instance.collection('users').doc(currentUid).snapshots(),
             builder: (context, userSnapshot) {
-              final blockedList = List<String>.from(userSnapshot.data?.data()?['blockedUsers'] as List? ?? []);
+              final myData = userSnapshot.data?.data();
+              final blockedList = List<String>.from(myData?['blockedUsers'] as List? ?? []);
               final iBlockedThem = blockedList.contains(widget.otherUserId);
+              // «Хабари хондашуда» ду тарафа аст: касе ки онро хомӯш мекунад,
+              // худаш низ тирчаҳои ҳамсӯҳбатро намебинад — мисли WhatsApp.
+              final readReceipts =
+                  ((myData?['settings'] as Map<String, dynamic>?)?['readReceipts'] ?? true) == true;
 
               return Column(
                 children: [
@@ -608,7 +628,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                           );
                         }
                         if (currentUid.isNotEmpty) {
-                          _markIncomingAsRead(allDocs, currentUid);
+                          _markIncomingAsRead(allDocs, currentUid, sendReceipts: readReceipts);
                         }
                         // Ҳангоми ҷустуҷӯ танҳо паёмҳои мувофиқ мемонанд.
                         final docs = _searchQuery.isEmpty
@@ -639,6 +659,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                               message: message,
                               isMe: message.senderId == currentUid,
                               currentUid: currentUid,
+                              showReadReceipts: readReceipts,
                               onReply: (m) => setState(() => _replyingTo = m),
                               onDelete: _deleteMessage,
                               onReact: _reactToMessage,
