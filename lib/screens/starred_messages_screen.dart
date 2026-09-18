@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../utils/time_format.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
+import '../widgets/empty_state.dart';
 import '../l10n/l10n.dart';
 import '../l10n/media_preview.dart';
 
@@ -55,16 +56,7 @@ class StarredMessagesScreen extends StatelessWidget {
                     }
                     final docs = snapshot.data?.docs ?? const [];
                     if (docs.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(LucideIcons.star, color: AppColors.textSecondary, size: 38),
-                            const SizedBox(height: 10),
-                            Text(tr('k261'), style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                          ],
-                        ),
-                      );
+                      return EmptyState(icon: LucideIcons.star, title: tr('k261'));
                     }
                     return ListView.separated(
                       padding: const EdgeInsets.fromLTRB(14, 4, 14, 20),

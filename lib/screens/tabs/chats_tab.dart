@@ -13,6 +13,7 @@ import '../../theme/app_theme.dart';
 import '../../utils/doc_sort.dart';
 import '../../l10n/l10n.dart';
 import '../archived_chats_screen.dart';
+import '../../widgets/empty_state.dart';
 
 class ChatsTab extends StatelessWidget {
   const ChatsTab({super.key});
@@ -94,11 +95,11 @@ class ChatsTab extends StatelessWidget {
 
               if (visibleAll.isEmpty) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Text(
-                    tr('k201'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 12.5),
+                  padding: const EdgeInsets.symmetric(vertical: 30),
+                  child: EmptyState(
+                    icon: LucideIcons.message_circle,
+                    title: tr('k335'),
+                    description: tr('k336'),
                   ),
                 );
               }

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/media_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/neon_backdrop.dart';
+import '../widgets/empty_state.dart';
 import 'image_viewer_screen.dart';
 import '../l10n/l10n.dart';
 
@@ -63,12 +64,7 @@ class SharedMediaScreen extends StatelessWidget {
                         })
                         .toList();
                     if (media.isEmpty) {
-                      return Center(
-                        child: Text(
-                          tr('k295'),
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                        ),
-                      );
+                      return EmptyState(icon: LucideIcons.images, title: tr('k340'));
                     }
                     return GridView.builder(
                       padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),

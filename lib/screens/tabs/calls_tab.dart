@@ -10,6 +10,7 @@ import '../call_screen.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/user_avatar.dart';
 import '../../widgets/group_avatar.dart';
+import '../../widgets/empty_state.dart';
 
 class CallsTab extends StatelessWidget {
   const CallsTab({super.key});
@@ -43,24 +44,10 @@ class CallsTab extends StatelessWidget {
         }
         final calls = sortByTimeDesc(snapshot.data!.docs, 'createdAt').map(AppCall.fromDoc).toList();
         if (calls.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(LucideIcons.phone, color: AppColors.textSecondary.withValues(alpha: 0.5), size: 48),
-                  const SizedBox(height: 16),
-                  Text(tr('k198'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
-                  const SizedBox(height: 8),
-                  Text(
-                    tr('k199'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.8), fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
+          return EmptyState(
+            icon: LucideIcons.phone,
+            title: tr('k198'),
+            description: tr('k199'),
           );
         }
         return ListView.separated(

@@ -7,6 +7,7 @@ import '../models/app_conversation.dart';
 import '../theme/app_theme.dart';
 import '../utils/doc_sort.dart';
 import '../widgets/neon_backdrop.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/user_conversation_tile.dart';
 import '../l10n/l10n.dart';
 
@@ -61,11 +62,9 @@ class ArchivedChatsScreen extends StatelessWidget {
                               .where((c) => c.isArchived(uid) && !c.isDeleted(uid))
                               .toList();
                           if (docs.isEmpty) {
-                            return Center(
-                              child: Text(
-                                tr('k270'),
-                                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                              ),
+                            return EmptyState(
+                              icon: LucideIcons.archive,
+                              title: tr('k339'),
                             );
                           }
                           return ListView(

@@ -334,4 +334,10 @@ const Map<String, String> stringsEn = {
   'k332': '{0} selected',
   'k333': 'Delete for everyone?',
   'k334': 'Delete',
+  'k335': 'No chats yet',
+  'k336': 'Tap the green button and start a conversation',
+  'k337': 'No calls yet',
+  'k338': 'Your voice and video calls will show up here',
+  'k339': 'No archived chats',
+  'k340': 'No shared files yet',
 };

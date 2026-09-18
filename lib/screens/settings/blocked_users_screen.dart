@@ -6,6 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/user_avatar.dart';
 import '../../l10n/l10n.dart';
 
@@ -59,18 +60,9 @@ class BlockedUsersScreen extends StatelessWidget {
                           final blocked =
                               List<String>.from(snapshot.data?.data()?['blockedUsers'] as List? ?? []);
                           if (blocked.isEmpty) {
-                            return Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(LucideIcons.shield_check, color: AppColors.textSecondary, size: 36),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    tr('k321'),
-                                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                                  ),
-                                ],
-                              ),
+                            return EmptyState(
+                              icon: LucideIcons.shield_check,
+                              title: tr('k321'),
                             );
                           }
                           return ListView.separated(
