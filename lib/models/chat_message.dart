@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 ///   deleted?, read?, mediaUrl?, mediaType?, mediaDuration?, mediaName?,
 ///   mediaSize?, edited?, deletedFor? }
 ///
-/// mediaType: image | gif | sticker | audio | video | document
+/// mediaType: image | gif | sticker | audio | video | document | location | poll
 class ChatMessage {
   final String id;
   final String text;
@@ -37,6 +37,11 @@ class ChatMessage {
   /// Корбароне, ки паёмро танҳо барои худ нест кардаанд.
   final List<String> deletedFor;
 
+  /// Пурсиш (poll): савол, вариантҳо ва овозҳо — `{uid: индекси вариант}`.
+  final String? pollQuestion;
+  final List<String> pollOptions;
+  final Map<String, int> pollVotes;
+
   final Map<String, String> reactions;
 
   ChatMessage({
@@ -57,6 +62,9 @@ class ChatMessage {
     this.forwarded = false,
     this.edited = false,
     this.deletedFor = const [],
+    this.pollQuestion,
+    this.pollOptions = const [],
+    this.pollVotes = const {},
     this.reactions = const {},
   });
 
@@ -81,6 +89,10 @@ class ChatMessage {
       forwarded: (data['forwarded'] ?? false) as bool,
       edited: (data['edited'] ?? false) as bool,
       deletedFor: List<String>.from(data['deletedFor'] as List? ?? []),
+      pollQuestion: data['pollQuestion'] as String?,
+      pollOptions: List<String>.from(data['pollOptions'] as List? ?? []),
+      pollVotes: ((data['pollVotes'] as Map<String, dynamic>?) ?? {})
+          .map((k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0)),
       reactions: rawReactions.map((k, v) => MapEntry(k, v as String)),
     );
   }

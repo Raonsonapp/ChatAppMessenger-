@@ -25,6 +25,9 @@ String mediaPreviewLabel(String? type, {String? fallback, String? name}) {
       return tr('k286');
     case 'document':
       return trf('k316', [name ?? '']);
+    case 'poll':
+      // Матни худи савол нигоҳ дошта мешавад, бинобар ин онро нишон медиҳем.
+      return fallback?.isNotEmpty == true ? '📊 $fallback' : tr('k346');
   }
   return fallback ?? '';
 }

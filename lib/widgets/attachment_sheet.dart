@@ -9,7 +9,7 @@ import '../services/media_service.dart';
 import '../l10n/l10n.dart';
 
 /// Феҳристи замима ба тарзи WhatsApp: Галерея, Камера, Видео, Ҳуҷҷат,
-/// Контакт, Ҷойгиршавӣ, GIF ва Стикер.
+/// Контакт, Ҷойгиршавӣ, Пурсиш, GIF ва Стикер.
 class AttachmentSheet extends StatelessWidget {
   final ValueChanged<XFile> onImagePicked;
   /// Агар дода нашавад, банди «Контакт» нишон дода намешавад (масалан дар
@@ -20,6 +20,7 @@ class AttachmentSheet extends StatelessWidget {
   final ValueChanged<XFile>? onVideoPicked;
   final ValueChanged<PlatformFile>? onDocumentPicked;
   final VoidCallback? onLocationTap;
+  final VoidCallback? onPollTap;
   const AttachmentSheet({
     super.key,
     required this.onImagePicked,
@@ -29,6 +30,7 @@ class AttachmentSheet extends StatelessWidget {
     this.onVideoPicked,
     this.onDocumentPicked,
     this.onLocationTap,
+    this.onPollTap,
   });
 
   Future<void> _pickGallery(BuildContext context) async {
@@ -140,6 +142,16 @@ class AttachmentSheet extends StatelessWidget {
                     onTap: () {
                       Navigator.pop(context);
                       onLocationTap!();
+                    },
+                  ),
+                if (onPollTap != null)
+                  _item(
+                    icon: LucideIcons.chart_bar,
+                    color: const Color(0xFF8E44AD),
+                    label: tr('k346'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      onPollTap!();
                     },
                   ),
                 if (onGifPicked != null)

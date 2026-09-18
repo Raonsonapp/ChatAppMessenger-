@@ -343,4 +343,11 @@ const Map<String, String> stringsEn = {
   'k341': 'Draft',
   'k342': 'Only admins can send messages',
   'k343': 'Only admins can send messages in this group',
+  'k344': 'POLL',
+  'k345': '{0} votes',
+  'k346': 'Poll',
+  'k347': 'Question',
+  'k348': 'Option {0}',
+  'k349': 'Add option',
+  'k350': 'Create',
 };

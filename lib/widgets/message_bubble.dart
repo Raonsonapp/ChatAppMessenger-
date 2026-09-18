@@ -15,6 +15,7 @@ import '../l10n/l10n.dart';
 import '../sheets/forward_sheet.dart';
 import '../screens/image_viewer_screen.dart';
 import '../theme/text_scale_controller.dart';
+import 'poll_card.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -33,6 +34,9 @@ class MessageBubble extends StatelessWidget {
 
   /// «Ҷавоби шахсӣ» — танҳо дар гурӯҳ ва ҷамъият маънӣ дорад.
   final ValueChanged<ChatMessage>? onReplyPrivately;
+
+  /// Овоз додан дар пурсиш.
+  final void Function(ChatMessage message, int optionIndex)? onVote;
 
   /// Пин кардани паём дар болои чат.
   final ValueChanged<ChatMessage>? onPin;
@@ -68,6 +72,7 @@ class MessageBubble extends StatelessWidget {
     this.onEdit,
     this.onReplyPrivately,
     this.onPin,
+    this.onVote,
     this.animateIn = false,
     this.grouped = false,
     this.selectionActive = false,
@@ -402,13 +407,14 @@ class MessageBubble extends StatelessWidget {
     final hasVideo = hasMedia && message.mediaType == 'video';
     final hasDocument = hasMedia && message.mediaType == 'document';
     final hasLocation = hasMedia && message.mediaType == 'location';
+    final hasPoll = !message.deleted && message.mediaType == 'poll';
     final distinctReactions = message.reactions.values.toSet().toList();
 
     // Кашидан ба рост — ҷавоб додан, ҳамон ишораи WhatsApp. `confirmDismiss`
     // ҳамеша `false` бармегардонад, бинобар ин паём нест намешавад — танҳо
     // ба ҳолати аввал бармегардад.
     final bubble = _buildSwipeable(context, isMe, isAI, isSticker, hasImage, hasAudio,
-        hasVideo, hasDocument, hasLocation, distinctReactions);
+        hasVideo, hasDocument, hasLocation, hasPoll, distinctReactions);
     if (!animateIn) return bubble;
 
     // Паёми нав нарм пайдо мешавад: каме аз поён ва бо шаффофият.
@@ -437,6 +443,7 @@ class MessageBubble extends StatelessWidget {
     bool hasVideo,
     bool hasDocument,
     bool hasLocation,
+    bool hasPoll,
     List<String> distinctReactions,
   ) {
     return Dismissible(
@@ -628,6 +635,13 @@ class MessageBubble extends StatelessWidget {
                           _documentTile(context),
                         if (hasLocation)
                           _locationTile(context),
+                        if (hasPoll)
+                          PollCard(
+                            message: message,
+                            currentUid: currentUid,
+                            isMe: isMe,
+                            onVote: onVote,
+                          ),
                         if (message.text.isNotEmpty || message.deleted)
                           Padding(
                             padding: hasImage ? const EdgeInsets.fromLTRB(8, 6, 8, 4) : EdgeInsets.zero,

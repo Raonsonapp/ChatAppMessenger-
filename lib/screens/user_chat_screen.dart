@@ -35,6 +35,7 @@ import '../widgets/scroll_to_bottom_button.dart';
 import '../sheets/forward_sheet.dart';
 import '../utils/message_grouping.dart';
 import '../services/draft_store.dart';
+import 'create_poll_screen.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -291,6 +292,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         onVideoPicked: _sendVideoMessage,
         onDocumentPicked: _sendDocumentMessage,
         onLocationTap: _sendLocationMessage,
+        onPollTap: _sendPoll,
         onStickerTap: _openStickerPicker,
       ),
     );
@@ -399,6 +401,43 @@ class _UserChatScreenState extends State<UserChatScreen> {
       ),
       tr('k286'),
     );
+  }
+
+  /// Сохтани пурсиш ва фиристодани он ҳамчун паём.
+  Future<void> _sendPoll() async {
+    final draft = await Navigator.push<PollDraft>(
+      context,
+      MaterialPageRoute(builder: (_) => const CreatePollScreen()),
+    );
+    if (draft == null || !mounted) return;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    await _messagesRef.add({
+      'text': '',
+      'senderId': uid,
+      'isAI': false,
+      'createdAt': FieldValue.serverTimestamp(),
+      'read': false,
+      'mediaType': 'poll',
+      'pollQuestion': draft.question,
+      'pollOptions': draft.options,
+      'pollVotes': <String, int>{},
+      ..._expiryField(),
+    });
+    await _touchConversation(draft.question, type: 'poll');
+    _scrollToBottom();
+  }
+
+  /// Овоз додан: ҳар корбар як овоз дорад; зер кардани ҳамон вариант овозро
+  /// бармедорад.
+  Future<void> _voteInPoll(ChatMessage message, int optionIndex) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final already = message.pollVotes[uid];
+    await _messagesRef.doc(message.id).update({
+      'pollVotes.$uid': already == optionIndex ? FieldValue.delete() : optionIndex,
+    });
   }
 
   Future<void> _sendMedia(Future<bool> Function() send, String preview) async {
@@ -715,6 +754,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                               onEdit: _editMessage,
                               onDeleteForMe: _deleteForMe,
                               onPin: _pinMessage,
+                              onVote: _voteInPoll,
                               messageRef: _messagesRef.doc(message.id),
                               chatTitle: widget.otherUserName,
                             );
