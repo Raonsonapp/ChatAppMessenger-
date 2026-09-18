@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ҳамон ранги заминаи мавзӯи торики барнома — то ҳангоми оғоз шудан
+         экрани сафед назди чашм наҷаҳад. -->
+    <color name="splash_background">#060B14</color>
+</resources>
