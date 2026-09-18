@@ -229,4 +229,95 @@ function presignPut(key, expiresInSeconds = 900) {
   };
 }
 
-module.exports = { isConfigured, status, presignPut };
+/**
+ * Санҷиши худкор: файли хурд ба R2 бор карда, аз домени ҷамъиятӣ хонда
+ * мешавад. Ҳамин як санҷиш се чизро якбора исбот мекунад — имзои SigV4
+ * дуруст аст, калидҳо кор мекунанд ва бакет ҷамъиятӣ кушода шудааст.
+ *
+ * Натиҷа нигоҳ дошта мешавад, то дар ҳар дархости `GET /` такрор нашавад.
+ */
+const SELF_TEST_KEY = '_selftest/probe.txt';
+let selfTestResult = null;
+let selfTestRunning = null;
+
+async function runSelfTest() {
+  if (!isConfigured()) {
+    return { ok: false, stage: 'config', detail: 'R2 танзим нашудааст' };
+  }
+
+  let signed;
+  try {
+    signed = presignPut(SELF_TEST_KEY, 300);
+  } catch (err) {
+    return { ok: false, stage: 'sign', detail: String(err && err.message ? err.message : err) };
+  }
+
+  const body = `chatapp selftest ${new Date().toISOString()}`;
+
+  try {
+    const put = await fetch(signed.uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'text/plain' },
+      body,
+    });
+    if (!put.ok) {
+      // Матни хатогии R2 (XML) — барои ташхис муфид, сир надорад.
+      const text = (await put.text().catch(() => '')).slice(0, 400);
+      return { ok: false, stage: 'upload', status: put.status, detail: text };
+    }
+  } catch (err) {
+    return { ok: false, stage: 'upload', detail: String(err && err.message ? err.message : err) };
+  }
+
+  if (!signed.fileUrl) {
+    return { ok: false, stage: 'public-url', detail: 'CF_R2_PUBLIC_URL гузошта нашудааст' };
+  }
+
+  try {
+    const get = await fetch(signed.fileUrl, { method: 'GET', cache: 'no-store' });
+    if (!get.ok) {
+      return {
+        ok: false,
+        stage: 'public-read',
+        status: get.status,
+        detail: 'Бакет ҷамъиятӣ кушода нашудааст ё домени r2.dev нодуруст аст',
+      };
+    }
+    const text = await get.text();
+    if (text.trim() !== body) {
+      return { ok: false, stage: 'public-read', detail: 'Мазмуни файл мувофиқ наомад' };
+    }
+  } catch (err) {
+    return { ok: false, stage: 'public-read', detail: String(err && err.message ? err.message : err) };
+  }
+
+  return { ok: true, stage: 'done', checkedAt: new Date().toISOString() };
+}
+
+/** Санҷишро як маротиба иҷро мекунад ва натиҷаи нигоҳдошташударо бармегардонад. */
+function selfTest({ force = false } = {}) {
+  if (selfTestResult && !force) return Promise.resolve(selfTestResult);
+  if (selfTestRunning && !force) return selfTestRunning;
+
+  selfTestRunning = runSelfTest()
+    .then((result) => {
+      selfTestResult = result;
+      return result;
+    })
+    .catch((err) => {
+      selfTestResult = { ok: false, stage: 'unknown', detail: String(err) };
+      return selfTestResult;
+    })
+    .finally(() => {
+      selfTestRunning = null;
+    });
+
+  return selfTestRunning;
+}
+
+/** Натиҷаи охирини санҷиш (агар ҳанӯз иҷро нашуда бошад — null). */
+function lastSelfTest() {
+  return selfTestResult;
+}
+
+module.exports = { isConfigured, status, presignPut, selfTest, lastSelfTest };

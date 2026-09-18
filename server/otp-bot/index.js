@@ -164,9 +164,19 @@ app.get('/', (_req, res) => {
     service: 'chatapp-otp-bot',
     bot: botStatus,
     // Ҳолати анбори файлҳо — бе ҳељ сирре, танҳо «ҳаст/нест».
-    storage: r2.status(),
+    storage: { ...r2.status(), selfTest: r2.lastSelfTest() },
     publicDomain: process.env.PUBLIC_URL || process.env.RAILWAY_PUBLIC_DOMAIN || null,
   });
+});
+
+/**
+ * Санҷиши анбор: файли хурд бор карда, аз домени ҷамъиятӣ хонда мешавад.
+ * `?force=1` санҷишро аз нав иҷро мекунад.
+ */
+app.get('/api/storage-selftest', async (req, res) => {
+  const force = req.query.force === '1' || req.query.force === 'true';
+  const result = await r2.selfTest({ force });
+  res.status(result.ok ? 200 : 503).json({ storage: r2.status(), selfTest: result });
 });
 
 /**
@@ -334,6 +344,22 @@ async function start() {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`OTP REST API дар 0.0.0.0:${PORT} кор мекунад (PORT env = ${process.env.PORT ?? 'нест'}).`);
   });
+
+  // Анборро якбора месанҷем, то хатогии танзим то кӯшиши аввалини корбар
+  // маълум шавад. Ин ба оғози сервер халал намерасонад.
+  if (r2.isConfigured()) {
+    r2.selfTest()
+      .then((result) => {
+        console.log(
+          result.ok
+            ? 'R2: санҷиши анбор бомуваффақият гузашт.'
+            : `R2: санҷиш нагузашт (${result.stage}): ${result.detail ?? ''}`,
+        );
+      })
+      .catch(() => {});
+  } else {
+    console.log('R2: танзим нашудааст — бор кардани файл кор намекунад.');
+  }
 }
 
 start();
