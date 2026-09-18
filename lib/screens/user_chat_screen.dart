@@ -70,6 +70,9 @@ class _UserChatScreenState extends State<UserChatScreen> {
   /// Ҳисоби нохондашудаи ман — то навиштани такрории сифр пешгирӣ шавад.
   int _myUnread = 0;
 
+  /// Дар майдон матн ҳаст — тугмаи мудаввар ба «фиристодан» иваз мешавад.
+  bool _hasText = false;
+
   /// Паёмҳои интихобшуда (ҳолати интихоби гурӯҳӣ).
   final Map<String, ChatMessage> _selected = {};
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _convoSub;
@@ -185,6 +188,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
 
   /// Ҳар тағйири матн нишонаро нав мекунад ва пас аз 4 сония онро мебардорад.
   void _onTyping(String value) {
+    final hasText = value.trim().isNotEmpty;
+    if (hasText != _hasText) setState(() => _hasText = hasText);
     _typingTimer?.cancel();
     if (value.trim().isEmpty) {
       _setTyping(false);
@@ -455,7 +460,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
     _controller.clear();
     _typingTimer?.cancel();
     _setTyping(false);
-    setState(() => _replyingTo = null);
+    setState(() {
+      _replyingTo = null;
+      _hasText = false;
+    });
 
     await _messagesRef.add({
       'text': text,
@@ -1069,10 +1077,6 @@ class _UserChatScreenState extends State<UserChatScreen> {
                     onPressed: _openEmojiPicker,
                     icon: Icon(LucideIcons.face_slightly_smiling, color: AppColors.textSecondary, size: 21),
                   ),
-                  IconButton(
-                    onPressed: _openStickerPicker,
-                    icon: Icon(LucideIcons.sticker, color: AppColors.textSecondary, size: 20),
-                  ),
                   Expanded(
                     child: TextField(
                       controller: _controller,
@@ -1102,27 +1106,38 @@ class _UserChatScreenState extends State<UserChatScreen> {
                           },
                     icon: Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
                   ),
-                  IconButton(
-                    onPressed: _isUploading ? null : () => setState(() => _recording = true),
-                    icon: Icon(LucideIcons.mic, color: AppColors.textSecondary, size: 20),
-                  ),
                 ],
               ),
             ),
           ),
           const SizedBox(width: 8),
+          // Майдон холӣ — микрофон, матн ҳаст — фиристодан. Ҳамон рафтори
+          // WhatsApp: як тугма ду кор мекунад.
           GestureDetector(
-            onTap: _isUploading ? null : _handleSend,
-            child: Container(
+            onTap: _isUploading
+                ? null
+                : (_hasText ? _handleSend : () => setState(() => _recording = true)),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
               width: 44,
               height: 44,
               decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
               child: _isUploading
                   ? Padding(
-                      padding: EdgeInsets.all(11),
+                      padding: const EdgeInsets.all(11),
                       child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
                     )
-                  : Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
+                  : AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 160),
+                      transitionBuilder: (child, animation) =>
+                          ScaleTransition(scale: animation, child: child),
+                      child: Icon(
+                        _hasText ? LucideIcons.arrow_up : LucideIcons.mic,
+                        key: ValueKey(_hasText),
+                        color: AppColors.background,
+                        size: 19,
+                      ),
+                    ),
             ),
           ),
         ],
