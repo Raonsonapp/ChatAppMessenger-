@@ -360,4 +360,8 @@ const Map<String, String> stringsEn = {
   'k358': 'No such code',
   'k359': 'You joined the group',
   'k360': 'Could not join',
+  'k361': 'Who can see my status',
+  'k362': 'Everyone',
+  'k363': 'Only people I have a chat with',
+  'k364': 'Nobody',
 };

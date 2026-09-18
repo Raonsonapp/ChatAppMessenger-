@@ -149,6 +149,32 @@ await check('C ба канал обуна мешавад (танҳо followers)'
   assertSucceeds(updateDoc(doc(c, 'channels', 'ch1'), { followers: [A, C] })));
 await check('B навсозии A-ро мебинад', () =>
   assertSucceeds(getDocs(collection(b, 'statuses', A, 'items'))));
+await check('C навсозии A-ро мебинад (пешфарз — ҳама)', () =>
+  assertSucceeds(getDocs(collection(c, 'statuses', A, 'items'))));
+await check('«Танҳо чатдорон»: B мебинад, C намебинад', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'users', A), {
+      settings: { statusVisibility: 'contacts' },
+    }, { merge: true });
+  });
+  await assertSucceeds(getDocs(collection(b, 'statuses', A, 'items')));
+  await assertFails(getDocs(collection(c, 'statuses', A, 'items')));
+});
+await check('«Ҳељ кас»: ҳатто B намебинад, вале A мебинад', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'users', A), {
+      settings: { statusVisibility: 'nobody' },
+    }, { merge: true });
+  });
+  await assertFails(getDocs(collection(b, 'statuses', A, 'items')));
+  await assertSucceeds(getDocs(collection(a, 'statuses', A, 'items')));
+  // Барои санҷишҳои минбаъда танзимотро бармегардонем.
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'users', A), {
+      settings: { statusVisibility: 'everyone' },
+    }, { merge: true });
+  });
+});
 await check('B навсозиро ҳамчун дидашуда қайд мекунад', () =>
   assertSucceeds(updateDoc(doc(b, 'statuses', A, 'items', 's1'), { viewedBy: [B] })));
 await check('B зангҳои воридотиро мешунавад (calleeId ==)', () =>

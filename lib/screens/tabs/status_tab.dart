@@ -12,6 +12,7 @@ import '../channel_screen.dart';
 import '../discover_channels_screen.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/user_avatar.dart';
+import '../../services/status_privacy.dart';
 
 class StatusTab extends StatelessWidget {
   const StatusTab({super.key});
@@ -130,7 +131,9 @@ class StatusTab extends StatelessWidget {
               );
             }
             return Column(
-              children: owners.map((doc) => _OtherStatusRow(ownerId: doc.id, currentUid: currentUid)).toList(),
+              children: owners
+                  .map((doc) => _OtherStatusRow(ownerId: doc.id, currentUid: currentUid))
+                  .toList(),
             );
           },
         ),
@@ -213,6 +216,28 @@ class _OtherStatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Аввал танзимоти махфияти соҳиб тафтиш мешавад: агар ӯ навсозиҳояшро
+    // пинҳон карда бошад, сатр умуман сохта намешавад.
+    return FutureBuilder<bool>(
+      future: _canView(),
+      builder: (context, allowed) {
+        if (allowed.data != true) return const SizedBox.shrink();
+        return _buildRow(context);
+      },
+    );
+  }
+
+  Future<bool> _canView() async {
+    final owner = await FirebaseFirestore.instance.collection('users').doc(ownerId).get();
+    final settings = owner.data()?['settings'] as Map<String, dynamic>?;
+    return StatusPrivacy.canView(
+      ownerId: ownerId,
+      viewerId: currentUid,
+      visibility: StatusVisibility.fromCode(settings?['statusVisibility'] as String?),
+    );
+  }
+
+  Widget _buildRow(BuildContext context) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('statuses')

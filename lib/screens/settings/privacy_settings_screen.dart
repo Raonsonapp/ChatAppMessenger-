@@ -8,6 +8,7 @@ import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
 import 'blocked_users_screen.dart';
+import '../../services/status_privacy.dart';
 
 /// Танзимоти воқеии махфият — ҳар тағйирот фавран дар
 /// `users/{uid}` (майдони `settings`) сабт мешавад ва пас аз
@@ -23,6 +24,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   bool _lastSeenVisible = true;
   bool _onlineVisible = true;
   bool _readReceipts = true;
+  StatusVisibility _statusVisibility = StatusVisibility.everyone;
   bool _isLoading = true;
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
@@ -42,12 +44,21 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
       _lastSeenVisible = (settings['lastSeenVisible'] ?? true) as bool;
       _onlineVisible = (settings['onlineVisible'] ?? true) as bool;
       _readReceipts = (settings['readReceipts'] ?? true) as bool;
+      _statusVisibility = StatusVisibility.fromCode(settings['statusVisibility'] as String?);
     }
     if (!mounted) return;
     setState(() => _isLoading = false);
   }
 
   Future<void> _update(String key, bool value) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'settings': {key: value},
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> _updateString(String key, String value) async {
     final uid = _uid;
     if (uid == null) return;
     await FirebaseFirestore.instance.collection('users').doc(uid).set({
@@ -120,6 +131,58 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                                   },
                                   showDivider: false,
                                 ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4, bottom: 8),
+                            child: Text(
+                              tr('k361'),
+                              style: TextStyle(
+                                color: AppColors.textSecondary.withValues(alpha: 0.7),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                          GlassContainer(
+                            borderRadius: 18,
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: Column(
+                              children: [
+                                for (final option in StatusVisibility.values) ...[
+                                  if (option != StatusVisibility.values.first)
+                                    Divider(color: AppColors.glassBorder, height: 1),
+                                  ListTile(
+                                    leading: Icon(
+                                      _statusVisibility == option
+                                          ? LucideIcons.circle_check
+                                          : LucideIcons.circle,
+                                      color: _statusVisibility == option
+                                          ? AppColors.neonEmerald
+                                          : AppColors.textSecondary,
+                                      size: 19,
+                                    ),
+                                    title: Text(
+                                      switch (option) {
+                                        StatusVisibility.everyone => tr('k362'),
+                                        StatusVisibility.contacts => tr('k363'),
+                                        StatusVisibility.nobody => tr('k364'),
+                                      },
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      setState(() => _statusVisibility = option);
+                                      _updateString('statusVisibility', option.code);
+                                    },
+                                  ),
+                                ],
                               ],
                             ),
                           ),

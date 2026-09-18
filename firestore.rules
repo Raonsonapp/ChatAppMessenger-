@@ -116,13 +116,40 @@ service cloud.firestore {
       }
     }
 
-    // Статус: ҳама мебинанд, вале танҳо соҳиб мегузорад ва нест мекунад.
+    // Статус: танҳо соҳиб мегузорад ва нест мекунад. Хондан ба танзимоти
+    // махфияти худи соҳиб тобеъ аст — вагарна «Навсозиҳои маро кӣ мебинад»
+    // танҳо дар экран менамуд ва дар база риоя намешуд.
+    //
+    // `contacts` маънои «касе ки бо ман сӯҳбати шахсӣ дорад»-ро дорад. Id-и
+    // сӯҳбат аз ду uid сохта мешавад ва тартиби онҳо номаълум аст, бинобар ин
+    // ҳар ду вариант тафтиш мешавад.
+    // Диққат: аксари корбарон ҳељ гоҳ ин танзимотро намегузоранд, бинобар ин
+    // `settings` метавонад умуман набошад. `get(..., default)` ҳамин ҳолатро
+    // мебандад — вагарна қоида хато медиҳад ва навсозии ҳама пинҳон мешавад.
+    function statusVisibilityOf(userId) {
+      return get(/databases/$(database)/documents/users/$(userId))
+        .data.get('settings', {})
+        .get('statusVisibility', 'everyone');
+    }
+
+    function statusVisibleTo(userId) {
+      return userId == uid()
+        || statusVisibilityOf(userId) == 'everyone'
+        || (
+          statusVisibilityOf(userId) == 'contacts'
+          && (
+            exists(/databases/$(database)/documents/conversations/$(userId + '_' + uid()))
+            || exists(/databases/$(database)/documents/conversations/$(uid() + '_' + userId))
+          )
+        );
+    }
+
     match /statuses/{userId} {
-      allow read: if signedIn();
+      allow read: if signedIn() && statusVisibleTo(userId);
       allow write: if signedIn() && uid() == userId;
 
       match /items/{itemId} {
-        allow read: if signedIn();
+        allow read: if signedIn() && statusVisibleTo(userId);
         allow create, delete: if signedIn() && uid() == userId;
 
         // Ғайр аз соҳиб, бинанда низ бояд худашро ба `viewedBy` илова карда
