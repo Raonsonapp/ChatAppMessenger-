@@ -307,6 +307,29 @@ class GroupInfoScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 18),
+                        if (amIAdmin)
+                          GlassContainer(
+                            borderRadius: 16,
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: SwitchListTile(
+                              value: (data['onlyAdminsCanSend'] ?? false) == true,
+                              activeThumbColor: AppColors.neonEmerald,
+                              onChanged: (value) => _groupRef.set(
+                                {'onlyAdminsCanSend': value},
+                                SetOptions(merge: true),
+                              ),
+                              secondary: Icon(LucideIcons.lock, color: AppColors.neonCyan, size: 20),
+                              title: Text(
+                                tr('k342'),
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (amIAdmin) const SizedBox(height: 10),
                         GlassContainer(
                           borderRadius: 16,
                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),

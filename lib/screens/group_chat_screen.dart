@@ -74,6 +74,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   /// Матни паёми пиншуда (холӣ — пин нест).
   String _pinnedText = '';
+
+  /// «Танҳо администраторҳо нависта метавонанд» ва рӯйхати администраторҳо.
+  bool _onlyAdmins = false;
+  List<String> _admins = const [];
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _pinSub;
 
   DocumentReference<Map<String, dynamic>> get _groupRef =>
@@ -151,7 +155,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       final pinned = (data?['pinnedText'] as String?) ?? '';
       final names = (data?['memberNames'] as Map<String, dynamic>? ?? {})
           .map((k, v) => MapEntry(k, '$v'));
+      final onlyAdmins = (data?['onlyAdminsCanSend'] ?? false) == true;
+      final admins = List<String>.from(data?['admins'] as List? ?? []);
       if (!mounted) return;
+      if (onlyAdmins != _onlyAdmins || admins.length != _admins.length) {
+        setState(() {
+          _onlyAdmins = onlyAdmins;
+          _admins = admins;
+        });
+      }
       final namesChanged = names.length != _memberNames.length ||
           names.entries.any((e) => _memberNames[e.key] != e.value);
       if (pinned != _pinnedText || namesChanged) {
@@ -722,7 +734,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ),
               ),
               if (_replyingTo != null) _buildReplyPreview(),
-              _buildInputBar(),
+              if (_onlyAdmins && !_admins.contains(currentUid))
+                _buildOnlyAdminsBanner()
+              else
+                _buildInputBar(),
             ],
           ),
         ),
@@ -827,6 +842,30 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             IconButton(
               onPressed: () => _startGroupCall(CallType.video),
               icon: Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Вақте гурӯҳ танҳо ба администраторҳо иҷозат медиҳад — ба ҷои панели
+  /// навиштан паёми фаҳмо нишон дода мешавад.
+  Widget _buildOnlyAdminsBanner() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 6, 14, 14),
+      child: GlassContainer(
+        borderRadius: 16,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(LucideIcons.lock, color: AppColors.textSecondary, size: 17),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                tr('k343'),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+              ),
             ),
           ],
         ),

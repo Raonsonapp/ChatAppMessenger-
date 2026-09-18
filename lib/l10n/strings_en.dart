@@ -341,4 +341,6 @@ const Map<String, String> stringsEn = {
   'k339': 'No archived chats',
   'k340': 'No shared files yet',
   'k341': 'Draft',
+  'k342': 'Only admins can send messages',
+  'k343': 'Only admins can send messages in this group',
 };

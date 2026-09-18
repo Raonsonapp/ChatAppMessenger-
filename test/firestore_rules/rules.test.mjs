@@ -83,6 +83,18 @@ await check('A паёми ситорадорашро мехонад', () =>
 await check('A гурӯҳашро мехонад', () => assertSucceeds(getDoc(doc(a, 'groups', 'g1'))));
 await check('A ба гурӯҳ паём мефиристад', () =>
   assertSucceeds(addDoc(collection(a, 'groups', 'g1', 'messages'), { text: 'x', senderId: A })));
+await check('Дар гурӯҳи «танҳо админҳо» админ навишта метавонад', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'groups', 'g2'), {
+      name: 'G2', members: [A, B], admins: [A], onlyAdminsCanSend: true,
+    });
+  });
+  await assertSucceeds(addDoc(collection(a, 'groups', 'g2', 'messages'), { text: 'ok', senderId: A }));
+});
+await check('Дар гурӯҳи «танҳо админҳо» узви оддӣ навишта НАМЕТАВОНАД', () =>
+  assertFails(addDoc(collection(b, 'groups', 'g2', 'messages'), { text: 'no', senderId: B })));
+await check('Дар гурӯҳи «танҳо админҳо» узви оддӣ мехонад', () =>
+  assertSucceeds(getDocs(collection(b, 'groups', 'g2', 'messages'))));
 await check('A рӯйхати гурӯҳҳояшро мегирад', () =>
   assertSucceeds(getDocs(query(collection(a, 'groups'), where('members', 'array-contains', A)))));
 await check('A ҷамъиятҳояшро мегирад', () =>
