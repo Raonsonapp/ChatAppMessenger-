@@ -95,6 +95,51 @@ await check('Дар гурӯҳи «танҳо админҳо» узви оддӣ
   assertFails(addDoc(collection(b, 'groups', 'g2', 'messages'), { text: 'no', senderId: B })));
 await check('Дар гурӯҳи «танҳо админҳо» узви оддӣ мехонад', () =>
   assertSucceeds(getDocs(collection(b, 'groups', 'g2', 'messages'))));
+
+// --- Рамзи даъват ба гурӯҳ ---
+await check('Админ рамзи даъват месозад', () =>
+  assertSucceeds(setDoc(doc(a, 'groupInvites', 'CODE1234'), {
+    groupId: 'g1', groupName: 'G', createdBy: A,
+  })));
+await check('Ғайриузв рамзро хонда метавонад', () =>
+  assertSucceeds(getDoc(doc(c, 'groupInvites', 'CODE1234'))));
+await check('Ғайриузв рамзи гурӯҳи бегонаро сохта НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(c, 'groupInvites', 'HACK0000'), {
+    groupId: 'g1', groupName: 'G', createdBy: C,
+  })));
+// Барои ин санҷиш гурӯҳи ҷудогона: вагарна C узви g1 мешавад ва санҷишҳои
+// поёнӣ («гурӯҳи бегонаро хонда наметавонад») маънои худро гум мекунанд.
+await check('C бо рамз ба гурӯҳ ҳамроҳ мешавад', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'groups', 'g5'), {
+      name: 'G5', members: [A], admins: [A], memberNames: { [A]: 'A' }, inviteCode: 'CODE5555',
+    });
+  });
+  await assertSucceeds(setDoc(doc(c, 'groups', 'g5'), {
+    members: [A, C],
+    memberNames: { [C]: 'C' },
+  }, { merge: true }));
+});
+await check('Ғайриузв каси дигарро ба гурӯҳ илова карда НАМЕТАВОНАД', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'groups', 'g3'), {
+      name: 'G3', members: [A], admins: [A], inviteCode: 'CODE9999',
+    });
+  });
+  await assertFails(setDoc(doc(c, 'groups', 'g3'), { members: [A, B] }, { merge: true }));
+});
+await check('Ғайриузв номи гурӯҳро бо ҳамроҳшавӣ иваз карда НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(c, 'groups', 'g3'), {
+    members: [A, C], name: 'hacked',
+  }, { merge: true })));
+await check('Бе рамзи даъват ҳамроҳ шудан имконнопазир аст', async () => {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'groups', 'g4'), {
+      name: 'G4', members: [A], admins: [A],
+    });
+  });
+  await assertFails(setDoc(doc(c, 'groups', 'g4'), { members: [A, C] }, { merge: true }));
+});
 await check('A рӯйхати гурӯҳҳояшро мегирад', () =>
   assertSucceeds(getDocs(query(collection(a, 'groups'), where('members', 'array-contains', A)))));
 await check('A ҷамъиятҳояшро мегирад', () =>

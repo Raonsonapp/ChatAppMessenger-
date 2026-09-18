@@ -11,6 +11,8 @@ import '../services/media_service.dart';
 import '../widgets/group_avatar.dart';
 import 'shared_media_screen.dart';
 import '../utils/user_search.dart';
+import '../services/group_invite_service.dart';
+import 'package:flutter/services.dart';
 
 /// Маълумоти воқеии гурӯҳ — аъзоён аз Firestore, амалҳои admin воқеан
 /// дар `groups/{id}` сабт мешаванд (на fake).
@@ -20,6 +22,107 @@ class GroupInfoScreen extends StatelessWidget {
 
   DocumentReference<Map<String, dynamic>> get _groupRef =>
       FirebaseFirestore.instance.collection('groups').doc(groupId);
+
+  /// Ҳаволаи даъват — рамз сохта ё нишон дода мешавад.
+  Future<void> _showInviteCode(BuildContext context, String name) async {
+    final code = await GroupInviteService.ensureCode(groupId, name);
+    if (code == null || !context.mounted) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                tr('k351'),
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                tr('k352'),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.glassFill,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                child: Text(
+                  code,
+                  style: TextStyle(
+                    color: AppColors.neonEmerald,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 22,
+                    letterSpacing: 3,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await Clipboard.setData(ClipboardData(text: code));
+                        if (sheetContext.mounted) {
+                          Navigator.pop(sheetContext);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(tr('k353'))),
+                          );
+                        }
+                      },
+                      icon: Icon(LucideIcons.copy, size: 16, color: AppColors.neonEmerald),
+                      label: Text(tr('k240'), style: TextStyle(color: AppColors.textPrimary)),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.glassBorder),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(sheetContext);
+                        await GroupInviteService.revokeCode(groupId);
+                        await GroupInviteService.ensureCode(groupId, name);
+                      },
+                      icon: Icon(LucideIcons.refresh_cw, size: 16, color: AppColors.neonCyan),
+                      label: Text(tr('k354'), style: TextStyle(color: AppColors.textPrimary, fontSize: 12.5)),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.glassBorder),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   /// Номи гурӯҳро иваз мекунад — танҳо администратор.
   void _renameGroup(BuildContext context, String current) {
@@ -327,6 +430,25 @@ class GroupInfoScreen extends StatelessWidget {
                                   fontSize: 14,
                                 ),
                               ),
+                            ),
+                          ),
+                        if (amIAdmin) const SizedBox(height: 10),
+                        if (amIAdmin)
+                          GlassContainer(
+                            borderRadius: 16,
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: ListTile(
+                              leading: Icon(LucideIcons.link, color: AppColors.neonCyan, size: 20),
+                              title: Text(
+                                tr('k351'),
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              trailing: Icon(LucideIcons.chevron_right, color: AppColors.textSecondary, size: 17),
+                              onTap: () => _showInviteCode(context, name),
                             ),
                           ),
                         if (amIAdmin) const SizedBox(height: 10),

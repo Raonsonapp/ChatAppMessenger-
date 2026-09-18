@@ -12,6 +12,7 @@ import '../screens/contact_picker_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import '../utils/user_search.dart';
+import '../services/group_invite_service.dart';
 
 /// Феҳристи ҷустуҷӯи корбарони воқеӣ + гузаргоҳ ба сохтани гурӯҳи нав.
 class NewChatSheet extends StatefulWidget {
@@ -98,6 +99,58 @@ class _NewChatSheetState extends State<NewChatSheet> {
     );
   }
 
+  /// Ҳамроҳ шудан ба гурӯҳ бо рамзи даъват.
+  Future<void> _joinByCode() async {
+    final controller = TextEditingController();
+    final code = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(tr('k355'), style: TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.characters,
+          style: TextStyle(color: AppColors.textPrimary, letterSpacing: 2),
+          decoration: InputDecoration(
+            hintText: tr('k356'),
+            hintStyle: TextStyle(color: AppColors.textSecondary, letterSpacing: 0),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(tr('k277'), style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+            child: Text(tr('k357'), style: TextStyle(color: AppColors.neonEmerald)),
+          ),
+        ],
+      ),
+    );
+    if (code == null || !mounted) return;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final myDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final myName = (myDoc.data()?['name'] as String?) ?? tr('k002');
+
+    final result = await GroupInviteService.joinByCode(code, myName);
+    if (!mounted) return;
+
+    if (!result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.codeUnknown ? tr('k358') : tr('k360'))),
+      );
+      return;
+    }
+
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k359'))));
+  }
+
   void _openCreateGroup() {
     Navigator.pop(context);
     Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateGroupScreen()));
@@ -156,6 +209,17 @@ class _NewChatSheetState extends State<NewChatSheet> {
               ),
               title: Text(tr('k228'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
               onTap: _openDeviceContacts,
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.surface, border: Border.all(color: AppColors.glassBorder)),
+                child: Icon(LucideIcons.link, color: AppColors.neonCyan, size: 19),
+              ),
+              title: Text(tr('k355'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+              onTap: _joinByCode,
             ),
             Divider(color: AppColors.glassBorder, height: 4),
             const SizedBox(height: 10),
