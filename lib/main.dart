@@ -25,14 +25,34 @@ void main() async {
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  await NotificationService.initialize();
-  // Пеш аз аввалин кашидан, то мавзӯъ назди чашм наҷаҳад.
-  await themeController.load();
-  await localeController.load();
-  await wallpaperController.load();
-  await textScaleController.load();
-  await draftStore.load();
+
+  // Танзимот ПЕШ АЗ огоҳиномаҳо хонда мешавад: номи каналҳои Android аз
+  // тарҷума гирифта мешавад ва пас аз сохта шудан дигар иваз намешавад —
+  // вагарна корбари русзабон ҳамеша номи тоҷикиро мебинад.
+  // Ҳамчунин пеш аз аввалин кашидан, то мавзӯъ назди чашм наҷаҳад.
+  await _safely(themeController.load);
+  await _safely(localeController.load);
+  await _safely(wallpaperController.load);
+  await _safely(textScaleController.load);
+  await _safely(draftStore.load);
+
+  // Огоҳиномаҳо дар баъзе дастгоҳҳо (масалан бе Google Play) истисно
+  // мепартоянд. Пештар ин истисно то `runApp` мерасид ва барнома умуман
+  // кушода намешуд — экрани сафед. Акнун барнома ҳатман оғоз мешавад.
+  await _safely(NotificationService.initialize);
+
   runApp(const ChatApp());
+}
+
+/// Қадами оғозро иҷро мекунад ва намегузорад, ки хатои он барномаро
+/// кушода нашуда монад.
+Future<void> _safely(Future<void> Function() step) async {
+  try {
+    await step();
+  } catch (error, stack) {
+    debugPrint('Хатои оғоз: $error');
+    debugPrintStack(stackTrace: stack);
+  }
 }
 
 class ChatApp extends StatefulWidget {

@@ -1,7 +1,12 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:video_player/video_player.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_scope.dart';
 
@@ -18,11 +23,31 @@ class VideoMessagePlayer extends StatefulWidget {
 class _VideoMessagePlayerState extends State<VideoMessagePlayer> {
   VideoPlayerController? _controller;
   bool _loading = false;
+  bool _failed = false;
 
   Future<void> _load() async {
-    setState(() => _loading = true);
-    final controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
-    await controller.initialize();
+    setState(() {
+      _loading = true;
+      _failed = false;
+    });
+
+    VideoPlayerController? controller;
+    try {
+      controller = await _createController();
+      await controller.initialize();
+    } catch (_) {
+      // Пештар ин истисно ҳељ гирифта намешуд: давра то абад чарх мезад ва
+      // корбар намедонист, ки видео кушода нашуд.
+      controller?.dispose();
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _failed = true;
+        });
+      }
+      return;
+    }
+
     if (!mounted) {
       controller.dispose();
       return;
@@ -32,6 +57,22 @@ class _VideoMessagePlayerState extends State<VideoMessagePlayer> {
       _loading = false;
     });
     await controller.play();
+  }
+
+  /// Агар видео аллакай дар кэш бошад, аз файл хонда мешавад — фавран ва бе
+  /// интернет. Вагарна аз шабака.
+  Future<VideoPlayerController> _createController() async {
+    try {
+      final cached = await DefaultCacheManager().getFileFromCache(widget.url);
+      if (cached != null && await cached.file.exists()) {
+        return VideoPlayerController.file(File(cached.file.path));
+      }
+      // Дар паси замина зеркашӣ мешавад, то дафъаи дигар аз кэш кушода шавад.
+      unawaited(DefaultCacheManager().downloadFile(widget.url));
+    } catch (_) {
+      // Кэш дастнорас — бевосита аз шабака.
+    }
+    return VideoPlayerController.networkUrl(Uri.parse(widget.url));
   }
 
   @override
@@ -58,15 +99,27 @@ class _VideoMessagePlayerState extends State<VideoMessagePlayer> {
           child: Center(
             child: _loading
                 ? CircularProgressIndicator(color: AppColors.neonEmerald, strokeWidth: 2)
-                : Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                    child: const Icon(LucideIcons.play, color: Colors.black, size: 22),
-                  ),
+                : _failed
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.triangle_alert, color: Colors.white70, size: 26),
+                          const SizedBox(height: 6),
+                          Text(
+                            tr('k383'),
+                            style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          ),
+                        ],
+                      )
+                    : Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                        child: const Icon(LucideIcons.play, color: Colors.black, size: 22),
+                      ),
           ),
         ),
       );

@@ -133,6 +133,15 @@ class _OtpScreenState extends State<OtpScreen> {
         _isVerifying = false;
         _errorText = e.message ?? tr('k128');
       });
+    } catch (e) {
+      // Ҳар хатои дигар (масалан навиштан ба Firestore ҳангоми набудани
+      // интернет) пештар гирифта намешуд: тугма то абад чарх мезад ва
+      // корбар дар экрани вуруд банд мемонд.
+      if (!mounted) return;
+      setState(() {
+        _isVerifying = false;
+        _errorText = tr('k128');
+      });
     }
   }
 

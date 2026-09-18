@@ -47,7 +47,13 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
     });
 
     final phone = _fullPhoneNumber;
-    final opened = await OtpBotService.openTelegramBot(phone);
+    bool opened;
+    try {
+      opened = await OtpBotService.openTelegramBot(phone);
+    } catch (_) {
+      // Бе ин тугма то абад чарх мезад ва корбар вориди барнома намешуд.
+      opened = false;
+    }
 
     if (!mounted) return;
     setState(() => _isOpeningBot = false);

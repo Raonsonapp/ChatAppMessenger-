@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 import '../theme/app_theme.dart';
 import '../services/media_service.dart';
 import '../theme/app_scope.dart';
+import '../l10n/l10n.dart';
 
 /// Паёми овозӣ дар чат: тугмаи пахш, хати пешравии кашидашаванда, вақт ва
 /// суръати пахш (1x / 1.5x / 2x).
@@ -84,8 +86,34 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
       if (mounted) setState(() => _playing = false);
       return;
     }
-    await _player.play(UrlSource(widget.url));
+
+    try {
+      await _player.play(await _source());
+    } catch (_) {
+      // Пештар ин истисно гирифта намешуд ва овоз хомӯшона кор намекард.
+      if (!mounted) return;
+      setState(() => _playing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('k384'))),
+      );
+      return;
+    }
     if (mounted) setState(() => _playing = true);
+  }
+
+  /// Агар файл дар кэш бошад, аз диск хонда мешавад — фавран ва бе интернет.
+  Future<Source> _source() async {
+    try {
+      final cached = await DefaultCacheManager().getFileFromCache(widget.url);
+      if (cached != null && await cached.file.exists()) {
+        return DeviceFileSource(cached.file.path);
+      }
+      // Дар паси замина зеркашӣ мешавад — гӯш кардани дубора фавран мешавад.
+      unawaited(DefaultCacheManager().downloadFile(widget.url));
+    } catch (_) {
+      // Кэш дастнорас — бевосита аз шабака.
+    }
+    return UrlSource(widget.url);
   }
 
   @override

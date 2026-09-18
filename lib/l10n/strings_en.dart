@@ -382,4 +382,6 @@ const Map<String, String> stringsEn = {
   'k380': 'Saving…',
   'k381': 'Saved to files',
   'k382': 'No internet — waiting to connect',
+  'k383': 'Tap to try again',
+  'k384': 'Could not play the voice message',
 };

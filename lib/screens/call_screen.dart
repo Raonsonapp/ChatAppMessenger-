@@ -66,8 +66,19 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   Future<void> _start() async {
+    // Ҳар хатои ин ҷо пештар ба ҳељ ҷо намерасид: экран дар ҳолати аввала
+    // мемонд ва корбар намедонист, ки чаро занг намеравад.
+    try {
+      await _startCall();
+    } catch (e) {
+      if (mounted) setState(() => _error = trf('k017', [e]));
+    }
+  }
+
+  Future<void> _startCall() async {
     final camGranted = widget.type == CallType.video ? await Permission.camera.request() : PermissionStatus.granted;
     final micGranted = await Permission.microphone.request();
+    if (!mounted) return;
     if (!camGranted.isGranted && widget.type == CallType.video) {
       setState(() => _error = tr('k013'));
       return;
@@ -95,10 +106,11 @@ class _CallScreenState extends State<CallScreen> {
       _callDoc = FirebaseFirestore.instance.collection('calls').doc(_channelId);
     }
 
+    if (!mounted) return;
     _watchCallDoc();
     await _joinChannel();
 
-    if (widget.isCaller) {
+    if (widget.isCaller && mounted) {
       setState(() => _stage = _CallStage.ringing);
       _ringTimeout = Timer(const Duration(seconds: 45), () {
         if (!_everConnected) _endCall(outcome: CallOutcome.missed);

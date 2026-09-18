@@ -71,9 +71,20 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
   }
 
   Future<void> _start() async {
+    // Ҳар хатои ин ҷо пештар ба ҳељ ҷо намерасид: экран дар ҳолати аввала
+    // мемонд ва корбар намедонист, ки чаро занг намеравад.
+    try {
+      await _startCall();
+    } catch (e) {
+      if (mounted) setState(() => _error = trf('k017', [e]));
+    }
+  }
+
+  Future<void> _startCall() async {
     final camGranted =
         widget.type == CallType.video ? await Permission.camera.request() : PermissionStatus.granted;
     final micGranted = await Permission.microphone.request();
+    if (!mounted) return;
     if (widget.type == CallType.video && !camGranted.isGranted) {
       setState(() => _error = tr('k013'));
       return;
@@ -87,6 +98,7 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
         'group_${widget.groupId}_${DateTime.now().millisecondsSinceEpoch}';
 
     if (widget.isStarter) await _ringMembers();
+    if (!mounted) return;
     await _joinChannel();
   }
 
