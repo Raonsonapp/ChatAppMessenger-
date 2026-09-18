@@ -321,4 +321,11 @@ const Map<String, String> stringsEn = {
   'k319': 'Nickname',
   'k320': 'Blocked contacts',
   'k321': 'The list is empty',
+  'k322': 'FONT SIZE',
+  'k323': 'Small',
+  'k324': 'Normal',
+  'k325': 'Large',
+  'k326': 'Slightly smaller message text',
+  'k327': 'Default size',
+  'k328': 'Larger message text',
 };

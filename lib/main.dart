@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 import 'theme/wallpaper_controller.dart';
+import 'theme/text_scale_controller.dart';
 import 'l10n/locale_controller.dart';
 import 'screens/auth_gate.dart';
 import 'services/notification_service.dart';
@@ -19,6 +20,7 @@ void main() async {
   await themeController.load();
   await localeController.load();
   await wallpaperController.load();
+  await textScaleController.load();
   runApp(const ChatApp());
 }
 
@@ -28,7 +30,7 @@ class ChatApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: Listenable.merge([themeController, localeController, wallpaperController]),
+      animation: Listenable.merge([themeController, localeController, wallpaperController, textScaleController]),
       builder: (context, _) {
         return MaterialApp(
           navigatorKey: navigatorKey,

@@ -4,6 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/theme_controller.dart';
 import '../../theme/wallpaper_controller.dart';
+import '../../theme/text_scale_controller.dart';
 import '../../services/media_service.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
@@ -32,6 +33,11 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
 
   Future<void> _clearWallpaper() async {
     await wallpaperController.clear();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _setTextScale(double value) async {
+    await textScaleController.setScale(value);
     if (mounted) setState(() {});
   }
 
@@ -137,6 +143,50 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                               showMark: false,
                             ),
                           ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 8),
+                      child: Text(
+                        tr('k322'),
+                        style: TextStyle(
+                          color: AppColors.textSecondary.withValues(alpha: 0.7),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                    GlassContainer(
+                      borderRadius: 18,
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      child: Column(
+                        children: [
+                          _option(
+                            icon: LucideIcons.type,
+                            label: tr('k323'),
+                            description: tr('k326'),
+                            selected: textScaleController.scale == 0.9,
+                            onTap: () => _setTextScale(0.9),
+                          ),
+                          Divider(color: AppColors.glassBorder, height: 1),
+                          _option(
+                            icon: LucideIcons.type,
+                            label: tr('k324'),
+                            description: tr('k327'),
+                            selected: textScaleController.scale == 1.0,
+                            onTap: () => _setTextScale(1.0),
+                          ),
+                          Divider(color: AppColors.glassBorder, height: 1),
+                          _option(
+                            icon: LucideIcons.type,
+                            label: tr('k325'),
+                            description: tr('k328'),
+                            selected: textScaleController.scale == 1.15,
+                            onTap: () => _setTextScale(1.15),
+                          ),
                         ],
                       ),
                     ),

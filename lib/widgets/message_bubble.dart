@@ -14,6 +14,7 @@ import '../models/chat_message.dart';
 import '../l10n/l10n.dart';
 import '../sheets/forward_sheet.dart';
 import '../screens/image_viewer_screen.dart';
+import '../theme/text_scale_controller.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -488,7 +489,7 @@ class MessageBubble extends StatelessWidget {
                             boxShadow: isAI ? [BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.15), blurRadius: 12)] : null,
                           ),
                     child: isSticker
-                        ? Text(message.text, style: const TextStyle(fontSize: 92))
+                        ? Text(message.text, style: TextStyle(fontSize: 92 * textScaleController.scale))
                         : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -598,7 +599,7 @@ class MessageBubble extends StatelessWidget {
                               message.deleted ? tr('k242') : message.text,
                               style: TextStyle(
                                 color: (isMe && !hasImage) ? AppColors.background : AppColors.textPrimary,
-                                fontSize: 14.5,
+                                fontSize: 14.5 * textScaleController.scale,
                                 height: 1.3,
                                 fontStyle: message.deleted ? FontStyle.italic : FontStyle.normal,
                                 fontWeight: (isMe && !hasImage) ? FontWeight.w600 : FontWeight.w400,
