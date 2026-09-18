@@ -37,6 +37,7 @@ import '../services/draft_store.dart';
 import 'create_poll_screen.dart';
 import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
+import '../widgets/upload_indicator.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -924,10 +925,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
               height: 44,
               decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
               child: _isUploading
-                  ? Padding(
-                      padding: const EdgeInsets.all(11),
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
-                    )
+                  ? Center(child: UploadIndicator(color: AppColors.background))
                   : AnimatedSwitcher(
                       duration: const Duration(milliseconds: 160),
                       transitionBuilder: (child, animation) =>

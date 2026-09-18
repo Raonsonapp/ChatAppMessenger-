@@ -38,6 +38,7 @@ import '../services/draft_store.dart';
 import 'create_poll_screen.dart';
 import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
+import '../widgets/upload_indicator.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -1175,10 +1176,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
               height: 44,
               decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
               child: _isUploading
-                  ? Padding(
-                      padding: const EdgeInsets.all(11),
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
-                    )
+                  ? Center(child: UploadIndicator(color: AppColors.background))
                   : AnimatedSwitcher(
                       duration: const Duration(milliseconds: 160),
                       transitionBuilder: (child, animation) =>

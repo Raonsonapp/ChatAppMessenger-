@@ -19,6 +19,7 @@ import '../widgets/sticker_picker_sheet.dart';
 import '../l10n/l10n.dart';
 import '../widgets/chat_wallpaper.dart';
 import '../theme/app_scope.dart';
+import '../widgets/upload_indicator.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final ChatConversation conversation;
@@ -498,10 +499,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               height: 44,
               decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
               child: _isUploading
-                  ? Padding(
-                      padding: EdgeInsets.all(11),
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
-                    )
+                  ? Center(child: UploadIndicator(color: AppColors.background))
                   : Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
             ),
           ),

@@ -40,6 +40,7 @@ import '../services/draft_store.dart';
 import 'create_poll_screen.dart';
 import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
+import '../widgets/upload_indicator.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -991,10 +992,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               height: 44,
               decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
               child: _isUploading
-                  ? Padding(
-                      padding: const EdgeInsets.all(11),
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
-                    )
+                  ? Center(child: UploadIndicator(color: AppColors.background))
                   : AnimatedSwitcher(
                       duration: const Duration(milliseconds: 160),
                       transitionBuilder: (child, animation) =>

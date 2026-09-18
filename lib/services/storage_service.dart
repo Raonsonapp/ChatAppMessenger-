@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/otp_server_config.dart';
@@ -13,6 +14,12 @@ import '../config/otp_server_config.dart';
 /// кӯтоҳмуддати имзошуда мегирад ва файлро БЕВОСИТА ба R2 мефиристад:
 /// ҳам бехатар, ҳам трафики сервер сарф намешавад.
 class StorageService {
+  /// Ҳиссаи боршудаи файли ҷорӣ (0…1). `null` — ҳоло чизе бор намешавад.
+  ///
+  /// Бе ин корбар ҳангоми фиристодани видеои калон танҳо як давраи
+  /// беохирро мебинад ва намедонад, ки кор пеш меравад ё не.
+  static final ValueNotifier<double?> progress = ValueNotifier<double?>(null);
+
   /// Файлро бор мекунад ва суроғаи ҷамъиятии онро бармегардонад.
   static Future<String> upload(File file, String name, String folder) async {
     if (!await file.exists()) {
@@ -36,7 +43,12 @@ class StorageService {
       size: length,
     );
 
-    await _put(file, length, ticket.uploadUrl, contentType);
+    progress.value = 0;
+    try {
+      await _put(file, length, ticket.uploadUrl, contentType);
+    } finally {
+      progress.value = null;
+    }
     return ticket.fileUrl;
   }
 
@@ -104,8 +116,15 @@ class StorageService {
       ..headers['Content-Type'] = contentType
       ..contentLength = length;
 
+    var sent = 0;
     file.openRead().listen(
-      request.sink.add,
+      (chunk) {
+        request.sink.add(chunk);
+        sent += chunk.length;
+        // Танҳо ҳиссаи хондашуда ҳисоб мешавад — ин ба фиристодани воқеӣ
+        // хеле наздик аст ва ба ҳељ плагини иловагӣ ниёз надорад.
+        if (length > 0) progress.value = (sent / length).clamp(0.0, 1.0);
+      },
       onDone: request.sink.close,
       onError: (Object _) => request.sink.close(),
       cancelOnError: true,
