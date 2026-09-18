@@ -36,6 +36,7 @@ import '../widgets/date_separator.dart';
 import '../widgets/scroll_to_bottom_button.dart';
 import '../sheets/forward_sheet.dart';
 import '../utils/message_grouping.dart';
+import '../services/draft_store.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -138,6 +139,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   @override
   void initState() {
     super.initState();
+    // Матни нофиристода барқарор мешавад — мисли WhatsApp.
+    final draft = draftStore.read(widget.groupId);
+    if (draft != null) {
+      _controller.text = draft;
+      _hasText = true;
+    }
     _clearMyUnread();
     _pinSub = _groupRef.snapshots().listen((snap) {
       final data = snap.data();
@@ -158,6 +165,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   @override
   void dispose() {
+    draftStore.write(widget.groupId, _controller.text);
     _pinSub?.cancel();
     _clearMyUnread();
     _controller.dispose();
@@ -346,6 +354,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (uid == null) return;
     final replying = _replyingTo;
     _controller.clear();
+    draftStore.write(widget.groupId, '');
     setState(() {
       _hasText = false;
       _replyingTo = null;

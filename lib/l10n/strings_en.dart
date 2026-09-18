@@ -340,4 +340,5 @@ const Map<String, String> stringsEn = {
   'k338': 'Your voice and video calls will show up here',
   'k339': 'No archived chats',
   'k340': 'No shared files yet',
+  'k341': 'Draft',
 };

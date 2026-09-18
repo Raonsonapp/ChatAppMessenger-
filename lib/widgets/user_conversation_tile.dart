@@ -10,6 +10,7 @@ import '../widgets/unread_badge.dart';
 import '../l10n/l10n.dart';
 import '../l10n/media_preview.dart';
 import '../utils/time_format.dart';
+import '../services/draft_store.dart';
 
 class UserConversationTile extends StatelessWidget {
   final AppConversation conversation;
@@ -98,6 +99,7 @@ class UserConversationTile extends StatelessWidget {
     final name = conversation.otherName(currentUid);
     final otherUid = conversation.otherUid(currentUid);
     final unread = conversation.unreadFor(currentUid);
+    final draft = draftStore.read(conversation.id);
     final muted = conversation.isMuted(currentUid);
 
     return Material(
@@ -150,6 +152,26 @@ class UserConversationTile extends StatelessWidget {
                     const SizedBox(height: 3),
                     Row(
                       children: [
+                        // Матни нофиристода аз паёми охирин муҳимтар аст —
+                        // ҳамон тавре ки WhatsApp нишон медиҳад.
+                        if (draft != null) ...[
+                          Text(
+                            '${tr('k341')}: ',
+                            style: TextStyle(
+                              color: AppColors.neonEmerald,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              draft,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
+                            ),
+                          ),
+                        ] else ...[
                         // Тирча — агар охирин паём аз ман бошад, мисли WhatsApp.
                         if (conversation.lastSenderId == currentUid &&
                             conversation.lastMessage.isNotEmpty) ...[
@@ -170,6 +192,7 @@ class UserConversationTile extends StatelessWidget {
                             style: TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
                           ),
                         ),
+                        ],
                         if (muted) ...[
                           const SizedBox(width: 6),
                           Icon(LucideIcons.bell_off, size: 14, color: AppColors.textSecondary),
