@@ -40,6 +40,10 @@ class MessageBubble extends StatelessWidget {
   /// Танҳо барои охирин паём фаъол мешавад — паёми нав нарм пайдо мешавад.
   final bool animateIn;
 
+  /// Паёми пешина аз ҳамон шахс ва дар ҳамон дақиқаҳо буд — он гоҳ паёмҳо
+  /// ба ҳам наздиктар кашида мешаванд ва номи фиристанда такрор намешавад.
+  final bool grouped;
+
   /// Ҳолати интихоби гурӯҳии паёмҳо.
   final bool selectionActive;
   final bool selected;
@@ -65,6 +69,7 @@ class MessageBubble extends StatelessWidget {
     this.onReplyPrivately,
     this.onPin,
     this.animateIn = false,
+    this.grouped = false,
     this.selectionActive = false,
     this.selected = false,
     this.onSelectToggle,
@@ -463,7 +468,7 @@ class MessageBubble extends StatelessWidget {
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
           constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
-          margin: const EdgeInsets.symmetric(vertical: 5),
+          margin: EdgeInsets.symmetric(vertical: grouped ? 1.5 : 5),
           padding: selected ? const EdgeInsets.all(4) : EdgeInsets.zero,
           decoration: selected
               ? BoxDecoration(
@@ -486,7 +491,7 @@ class MessageBubble extends StatelessWidget {
                     ],
                   ),
                 )
-              else if (!isMe && senderLabel != null && senderLabel!.isNotEmpty)
+              else if (!isMe && !grouped && senderLabel != null && senderLabel!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(left: 8, bottom: 3),
                   child: Text(

@@ -32,6 +32,7 @@ import '../widgets/user_avatar.dart';
 import '../widgets/date_separator.dart';
 import '../widgets/scroll_to_bottom_button.dart';
 import '../sheets/forward_sheet.dart';
+import '../utils/message_grouping.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -650,15 +651,16 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                       itemBuilder: (context, index) {
                         final message = ChatMessage.fromDoc(docs[index]);
                         final isMe = message.senderId == currentUid;
-                        final previous = index == 0
-                            ? null
-                            : ChatMessage.fromDoc(docs[index - 1]).timestamp;
+                        final previousMessage =
+                            index == 0 ? null : ChatMessage.fromDoc(docs[index - 1]);
+                        final previous = previousMessage?.timestamp;
                         final bubble = MessageBubble(
                           message: message,
                           isMe: isMe,
                           currentUid: currentUid,
                           senderLabel: isMe ? null : _memberNames[message.senderId],
                           animateIn: index == docs.length - 1,
+                          grouped: isGroupedWithPrevious(previousMessage, message),
                           selectionActive: _selected.isNotEmpty,
                           selected: _selected.containsKey(message.id),
                           onSelectToggle: _toggleSelect,

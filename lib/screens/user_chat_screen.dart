@@ -33,6 +33,7 @@ import '../widgets/pinned_message_bar.dart';
 import '../widgets/date_separator.dart';
 import '../widgets/scroll_to_bottom_button.dart';
 import '../sheets/forward_sheet.dart';
+import '../utils/message_grouping.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -678,15 +679,16 @@ class _UserChatScreenState extends State<UserChatScreen> {
                           itemCount: docs.length,
                           itemBuilder: (context, index) {
                             final message = ChatMessage.fromDoc(docs[index]);
-                            final previous = index == 0
-                                ? null
-                                : ChatMessage.fromDoc(docs[index - 1]).timestamp;
+                            final previousMessage =
+                                index == 0 ? null : ChatMessage.fromDoc(docs[index - 1]);
+                            final previous = previousMessage?.timestamp;
                             final bubble = MessageBubble(
                               message: message,
                               isMe: message.senderId == currentUid,
                               currentUid: currentUid,
                               showReadReceipts: readReceipts,
                               animateIn: index == docs.length - 1,
+                              grouped: isGroupedWithPrevious(previousMessage, message),
                               selectionActive: _selected.isNotEmpty,
                               selected: _selected.containsKey(message.id),
                               onSelectToggle: _toggleSelect,
