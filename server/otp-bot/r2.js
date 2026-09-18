@@ -24,16 +24,46 @@ function pick(...names) {
 
 const config = {
   accountId: pick('R2_ACCOUNT_ID', 'CLOUDFLARE_ACCOUNT_ID', 'CF_ACCOUNT_ID'),
-  accessKeyId: pick('R2_ACCESS_KEY_ID', 'R2_ACCESS_KEY', 'CLOUDFLARE_R2_ACCESS_KEY_ID', 'AWS_ACCESS_KEY_ID'),
+  accessKeyId: pick(
+    'R2_ACCESS_KEY_ID',
+    'R2_ACCESS_KEY',
+    'R2_KEY_ID',
+    'R2_TOKEN_ID',
+    'CLOUDFLARE_R2_ACCESS_KEY_ID',
+    'CLOUDFLARE_ACCESS_KEY_ID',
+    'AWS_ACCESS_KEY_ID',
+    'S3_ACCESS_KEY_ID',
+    'ACCESS_KEY_ID',
+  ),
   secretAccessKey: pick(
     'R2_SECRET_ACCESS_KEY',
     'R2_SECRET_KEY',
+    'R2_SECRET',
+    'R2_TOKEN',
     'CLOUDFLARE_R2_SECRET_ACCESS_KEY',
+    'CLOUDFLARE_SECRET_ACCESS_KEY',
     'AWS_SECRET_ACCESS_KEY',
+    'S3_SECRET_ACCESS_KEY',
+    'SECRET_ACCESS_KEY',
   ),
-  bucket: pick('R2_BUCKET', 'R2_BUCKET_NAME', 'CLOUDFLARE_R2_BUCKET'),
+  bucket: pick(
+    'R2_BUCKET',
+    'R2_BUCKET_NAME',
+    'CLOUDFLARE_R2_BUCKET',
+    'S3_BUCKET',
+    'BUCKET_NAME',
+    'BUCKET',
+  ),
   // Суроғаи ҷамъиятии бакет: домени r2.dev ё домени худӣ.
-  publicUrl: pick('R2_PUBLIC_URL', 'R2_PUBLIC_BASE_URL', 'R2_DOMAIN', 'R2_PUBLIC_DOMAIN'),
+  publicUrl: pick(
+    'R2_PUBLIC_URL',
+    'R2_PUBLIC_BASE_URL',
+    'R2_DOMAIN',
+    'R2_PUBLIC_DOMAIN',
+    'R2_DEV_URL',
+    'PUBLIC_BUCKET_URL',
+    'CDN_URL',
+  ),
   // Агар домени endpoint-и махсус дода шуда бошад (вагарна аз accountId сохта мешавад).
   endpoint: pick('R2_ENDPOINT', 'R2_S3_ENDPOINT'),
 };
@@ -61,9 +91,23 @@ function isConfigured() {
     && Boolean(config.bucket);
 }
 
+/**
+ * Номҳои тағйирёбандаҳои ба R2 монанд, ки дар муҳит ҳастанд.
+ *
+ * ТАНҲО НОМҲО бармегарданд — ҳељ гоҳ худи қиматҳо. Ин барои он аст, ки агар
+ * калид бо номи дигар гузошта шуда бошад, онро дидан ва ислоҳ кардан мумкин
+ * бошад, бе он ки сир ошкор шавад.
+ */
+function seenVariableNames() {
+  return Object.keys(process.env)
+    .filter((name) => /R2|CLOUDFLARE|^CF_|S3|BUCKET|ACCESS_KEY|SECRET|ENDPOINT/i.test(name))
+    .sort();
+}
+
 /** Барои саҳифаи ташхис — бе ҳељ сирре. */
 function status() {
   return {
+    seenVariableNames: seenVariableNames(),
     configured: isConfigured(),
     hasAccount: Boolean(config.accountId || config.endpoint),
     hasAccessKey: Boolean(config.accessKeyId),
