@@ -34,6 +34,7 @@ import 'dart:async';
 import '../widgets/user_avatar.dart';
 import '../widgets/date_separator.dart';
 import '../widgets/scroll_to_bottom_button.dart';
+import '../sheets/forward_sheet.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -62,6 +63,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// Номи аъзоён. Аз виҷет меояд, вале вақте чат аз огоҳинома кушода
   /// мешавад, он холӣ аст — он гоҳ рӯйхат аз худи ҳуҷҷат хонда мешавад.
   late Map<String, String> _memberNames = widget.memberNames;
+
+  /// Паёмҳои интихобшуда (ҳолати интихоби гурӯҳӣ).
+  final Map<String, ChatMessage> _selected = {};
 
   /// Матни паёми пиншуда (холӣ — пин нест).
   String _pinnedText = '';
@@ -450,6 +454,113 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
   }
 
+  /// Интихоби паём: зер кардан онро илова ё бармедорад.
+  void _toggleSelect(ChatMessage message) {
+    setState(() {
+      if (_selected.containsKey(message.id)) {
+        _selected.remove(message.id);
+      } else {
+        _selected[message.id] = message;
+      }
+    });
+  }
+
+  void _clearSelection() => setState(_selected.clear);
+
+  Future<void> _deleteSelectedForMe() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final items = _selected.values.toList();
+    _clearSelection();
+    for (final message in items) {
+      await _messagesRef.doc(message.id).update({
+        'deletedFor': FieldValue.arrayUnion([uid]),
+      }).catchError((_) {});
+    }
+  }
+
+  Future<void> _deleteSelectedForEveryone() async {
+    final items = _selected.values.toList();
+    _clearSelection();
+    for (final message in items) {
+      await _messagesRef.doc(message.id).update({'deleted': true}).catchError((_) {});
+    }
+  }
+
+  void _forwardSelected() {
+    final items = _selected.values.toList();
+    _clearSelection();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => ForwardSheet.multiple(messages: items),
+    );
+  }
+
+  void _confirmDeleteForEveryone() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(tr('k333'), style: TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(tr('k277'), style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _deleteSelectedForEveryone();
+            },
+            child: Text(tr('k334'), style: const TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Сарлавҳаи ҳолати интихоб — ба ҷои номи гурӯҳ.
+  Widget _buildSelectionHeader(String currentUid) {
+    final allMine = _selected.values.every((m) => m.senderId == currentUid);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(6, 10, 6, 10),
+      child: GlassContainer(
+        borderRadius: 18,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: _clearSelection,
+              icon: Icon(LucideIcons.x, color: AppColors.textPrimary, size: 20),
+            ),
+            Expanded(
+              child: Text(
+                trf('k332', [_selected.length]),
+                style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+              ),
+            ),
+            IconButton(
+              onPressed: _forwardSelected,
+              icon: Icon(LucideIcons.corner_up_right, color: AppColors.textSecondary, size: 19),
+            ),
+            IconButton(
+              onPressed: _deleteSelectedForMe,
+              icon: Icon(LucideIcons.eye_off, color: AppColors.textSecondary, size: 19),
+            ),
+            if (allMine)
+              IconButton(
+                onPressed: _confirmDeleteForEveryone,
+                icon: const Icon(LucideIcons.trash, color: Colors.redAccent, size: 19),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Пин кардани паём дар болои чат — барои ҳамаи аъзоён як хел.
   Future<void> _pinMessage(ChatMessage message) async {
     final preview = message.text.trim().isNotEmpty ? message.text.trim() : tr('k286');
@@ -498,7 +609,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              _buildHeader(),
+              if (_selected.isNotEmpty) _buildSelectionHeader(currentUid) else _buildHeader(),
               if (_pinnedText.isNotEmpty)
                 PinnedMessageBar(text: _pinnedText, onUnpin: _unpinMessage),
               Expanded(
@@ -553,6 +664,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           currentUid: currentUid,
                           senderLabel: isMe ? null : _memberNames[message.senderId],
                           animateIn: index == docs.length - 1,
+                          selectionActive: _selected.isNotEmpty,
+                          selected: _selected.containsKey(message.id),
+                          onSelectToggle: _toggleSelect,
                           showReadReceipts: false,
                           onReply: (m) => setState(() => _replyingTo = m),
                           onDelete: _deleteMessage,

@@ -39,6 +39,11 @@ class MessageBubble extends StatelessWidget {
 
   /// Танҳо барои охирин паём фаъол мешавад — паёми нав нарм пайдо мешавад.
   final bool animateIn;
+
+  /// Ҳолати интихоби гурӯҳии паёмҳо.
+  final bool selectionActive;
+  final bool selected;
+  final ValueChanged<ChatMessage>? onSelectToggle;
   final void Function(ChatMessage message, String emoji)? onReact;
 
   /// Ҳуҷҷати худи паём — барои ситорадор кардан лозим аст.
@@ -60,6 +65,9 @@ class MessageBubble extends StatelessWidget {
     this.onReplyPrivately,
     this.onPin,
     this.animateIn = false,
+    this.selectionActive = false,
+    this.selected = false,
+    this.onSelectToggle,
     this.onReact,
     this.messageRef,
     this.chatTitle,
@@ -132,6 +140,16 @@ class MessageBubble extends StatelessWidget {
                   onTap: () {
                     Navigator.pop(context);
                     onReplyPrivately?.call(message);
+                  },
+                ),
+              if (onSelectToggle != null)
+                _actionTile(
+                  context,
+                  icon: LucideIcons.check_check,
+                  label: tr('k331'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onSelectToggle?.call(message);
                   },
                 ),
               if (onPin != null)
@@ -418,7 +436,9 @@ class MessageBubble extends StatelessWidget {
   ) {
     return Dismissible(
       key: ValueKey('swipe_${message.id}'),
-      direction: (onReply == null || message.deleted)
+      // Ҳангоми интихоби гурӯҳӣ кашидан хомӯш аст — вагарна интихоб кардан
+      // ва ҷавоб додан бо ҳам омехта мешаванд.
+      direction: (onReply == null || message.deleted || selectionActive)
           ? DismissDirection.none
           : DismissDirection.startToEnd,
       dismissThresholds: const {DismissDirection.startToEnd: 0.25},
@@ -434,12 +454,23 @@ class MessageBubble extends StatelessWidget {
         ),
       ),
       child: GestureDetector(
-      onLongPress: () => _showActions(context),
+      // Дар ҳолати интихоб дарозфишорӣ низ интихобро иваз мекунад; вагарна
+      // менюи паём кушода мешавад (интихоб аз ҳамон ҷо оғоз мешавад).
+      onLongPress: () =>
+          selectionActive ? onSelectToggle?.call(message) : _showActions(context),
+      onTap: selectionActive ? () => onSelectToggle?.call(message) : null,
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
           constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
           margin: const EdgeInsets.symmetric(vertical: 5),
+          padding: selected ? const EdgeInsets.all(4) : EdgeInsets.zero,
+          decoration: selected
+              ? BoxDecoration(
+                  color: AppColors.neonEmerald.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(16),
+                )
+              : null,
           child: Column(
             crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [

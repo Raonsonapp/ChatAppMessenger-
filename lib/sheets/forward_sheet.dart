@@ -16,8 +16,14 @@ import '../l10n/media_preview.dart';
 /// Ҳам сӯҳбатҳои шахсӣ ва ҳам гурӯҳҳо нишон дода мешаванд — паём ба ҳамон
 /// сохтори `.../messages` нусхабардорӣ мешавад.
 class ForwardSheet extends StatelessWidget {
-  final ChatMessage message;
-  const ForwardSheet({super.key, required this.message});
+  /// Як ё якчанд паём — ҳангоми интихоби гурӯҳии паёмҳо якчанд мешавад.
+  final List<ChatMessage> messages;
+
+  ForwardSheet({super.key, required ChatMessage message}) : messages = [message];
+
+  const ForwardSheet.multiple({super.key, required this.messages});
+
+  ChatMessage get message => messages.first;
 
   Future<void> _forwardTo(
     BuildContext context, {
@@ -27,21 +33,27 @@ class ForwardSheet extends StatelessWidget {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    await parentRef.collection('messages').add({
-      'text': message.text,
-      'senderId': uid,
-      'isAI': false,
-      'createdAt': FieldValue.serverTimestamp(),
-      'read': false,
-      'forwarded': true,
-      if (message.mediaUrl != null) 'mediaUrl': message.mediaUrl,
-      if (message.mediaType != null) 'mediaType': message.mediaType,
-      if (message.mediaDuration != null) 'mediaDuration': message.mediaDuration,
-      if (message.mediaName != null) 'mediaName': message.mediaName,
-      if (message.mediaSize != null) 'mediaSize': message.mediaSize,
-    });
+    // Паёмҳо бо ҳамон тартиб фиристода мешаванд, ки интихоб шуда буданд.
+    for (final item in messages) {
+      await parentRef.collection('messages').add({
+        'text': item.text,
+        'senderId': uid,
+        'isAI': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'read': false,
+        'forwarded': true,
+        if (item.mediaUrl != null) 'mediaUrl': item.mediaUrl,
+        if (item.mediaType != null) 'mediaType': item.mediaType,
+        if (item.mediaDuration != null) 'mediaDuration': item.mediaDuration,
+        if (item.mediaName != null) 'mediaName': item.mediaName,
+        if (item.mediaSize != null) 'mediaSize': item.mediaSize,
+      });
+    }
+    final last = messages.last;
     await parentRef.set({
       'lastMessage': preview,
+      if (last.mediaType != null) 'lastMessageType': last.mediaType,
+      if (last.mediaName != null) 'lastMessageName': last.mediaName,
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
     }, SetOptions(merge: true));
@@ -53,8 +65,9 @@ class ForwardSheet extends StatelessWidget {
   }
 
   String get _preview {
-    if (message.text.isNotEmpty) return message.text;
-    return mediaPreviewLabel(message.mediaType, name: message.mediaName);
+    final last = messages.last;
+    if (last.text.isNotEmpty) return last.text;
+    return mediaPreviewLabel(last.mediaType, name: last.mediaName);
   }
 
   @override

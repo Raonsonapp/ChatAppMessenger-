@@ -330,4 +330,8 @@ const Map<String, String> stringsEn = {
   'k328': 'Larger message text',
   'k329': 'Today',
   'k330': 'Yesterday',
+  'k331': 'Select',
+  'k332': '{0} selected',
+  'k333': 'Delete for everyone?',
+  'k334': 'Delete',
 };
