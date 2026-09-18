@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
+import '../../services/notification_prefs.dart';
 
 class NotificationsSettingsScreen extends StatefulWidget {
   const NotificationsSettingsScreen({super.key});
@@ -35,6 +36,9 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
     if (uid == null) return;
     final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final settings = doc.data()?['settings'] as Map<String, dynamic>?;
+    // Танзимот метавонад дар дастгоҳи дигар иваз шуда бошад — нусхаи маҳаллиро
+    // ҳамоҳанг мекунем.
+    await NotificationPrefs.saveAll(settings);
     if (settings != null) {
       _messageNotifications = (settings['messageNotifications'] ?? true) as bool;
       _sound = (settings['notificationSound'] ?? true) as bool;
@@ -46,6 +50,9 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   }
 
   Future<void> _update(String key, bool value) async {
+    // Дар ҳофизаи дастгоҳ ҳам сабт мешавад — худи огоҳинома метавонад дар
+    // изоляти паснамо нишон дода шавад, ки Firestore-ро хонда наметавонад.
+    await NotificationPrefs.save(key, value);
     final uid = _uid;
     if (uid == null) return;
     await FirebaseFirestore.instance.collection('users').doc(uid).set({

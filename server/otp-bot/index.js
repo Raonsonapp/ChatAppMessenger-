@@ -225,6 +225,12 @@ app.post('/api/notify', async (req, res) => {
   const fcmToken = doc.data()?.fcmToken;
   if (!fcmToken) return res.json({ sent: false, reason: 'no-token' });
 
+  // Агар гиранда огоҳиномаи паёмро хомӯш карда бошад, чизе намефиристем —
+  // вагарна танзимот танҳо дар экран менамуд ва ҳељ кор намекард.
+  if (doc.data()?.settings?.messageNotifications === false) {
+    return res.json({ sent: false, reason: 'muted' });
+  }
+
   try {
     await getMessaging().send({
       token: fcmToken,

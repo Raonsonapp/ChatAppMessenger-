@@ -15,6 +15,7 @@ import '../screens/user_chat_screen.dart';
 import '../screens/group_chat_screen.dart';
 import '../screens/community_chat_screen.dart';
 import '../l10n/l10n.dart';
+import 'notification_prefs.dart';
 
 /// Калиди Navigator-и глобалӣ — барои кушодани чат/занг аз push-огоҳинома,
 /// новобаста аз он ки корбар дар кадом экран аст.
@@ -35,6 +36,13 @@ int _notificationId(Map<String, dynamic> data) {
 /// Огоҳиномаи паём вақте ки барнома дар пешзамина/паснамо кушода аст ё
 /// пурра баста аст — дар ҳарду ҳолат тавассути ин функсия намоён мешавад.
 Future<void> _showMessageNotification(Map<String, dynamic> data) async {
+  // Танзимоти корбар: агар огоҳиномаи паём хомӯш бошад, чизе нишон дода
+  // намешавад; садо, ларзиш ва нишон додани матн низ ба он тобеъанд.
+  if (!await NotificationPrefs.read('messageNotifications')) return;
+  final withSound = await NotificationPrefs.read('notificationSound');
+  final withVibration = await NotificationPrefs.read('notificationVibration');
+  final withPreview = await NotificationPrefs.read('notificationPreview');
+
   final senderName = data['senderName'] as String? ?? tr('k217');
   final text = data['text'] as String? ?? '';
   final payload = jsonEncode(data);
@@ -46,6 +54,8 @@ Future<void> _showMessageNotification(Map<String, dynamic> data) async {
     importance: Importance.high,
     priority: Priority.high,
     category: AndroidNotificationCategory.message,
+    playSound: withSound,
+    enableVibration: withVibration,
     actions: [
       AndroidNotificationAction(
         'reply',
@@ -58,8 +68,12 @@ Future<void> _showMessageNotification(Map<String, dynamic> data) async {
   await _localNotifications.show(
     id: _notificationId(data),
     title: senderName,
-    body: text.isEmpty ? tr('k222') : text,
-    notificationDetails: NotificationDetails(android: androidDetails, iOS: DarwinNotificationDetails()),
+    // «Нишон додани матн» хомӯш — танҳо «Паёми нав» навишта мешавад.
+    body: (!withPreview || text.isEmpty) ? tr('k222') : text,
+    notificationDetails: NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(presentSound: withSound),
+    ),
     payload: payload,
   );
 }

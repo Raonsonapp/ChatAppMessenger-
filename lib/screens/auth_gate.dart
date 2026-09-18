@@ -10,6 +10,7 @@ import '../services/presence_service.dart';
 import 'chat_list_screen.dart';
 import 'complete_profile_screen.dart';
 import 'welcome_screen.dart';
+import '../services/notification_prefs.dart';
 
 /// Гардиши воридшавӣ: агар корбар аллакай бо телефон ворид шуда бошад,
 /// мустақим ChatListScreen; акс ҳолат, WelcomeScreen (телефон → OTP).
@@ -78,6 +79,9 @@ class _ProfileGate extends StatelessWidget {
           );
         }
         final data = snapshot.data!.data();
+        // Танзимоти огоҳинома дар ҳофизаи дастгоҳ нусхабардорӣ мешавад — вақти
+        // нишон додани огоҳинома Firestore дастрас нест.
+        NotificationPrefs.saveAll(data?['settings'] as Map<String, dynamic>?);
         final name = (data?['name'] as String?)?.trim() ?? '';
         if (name.isEmpty) {
           final phone = (data?['phone'] as String?) ?? '';
