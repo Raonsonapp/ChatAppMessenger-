@@ -381,6 +381,95 @@ async function notifyMany({ sender, toUids, title, body, data }) {
   return { sent, skipped: skipped + (targets.length - sent) };
 }
 
+/**
+ * Нест кардани ҳисоб бо ҳамаи маълумоти шахсӣ.
+ *
+ * Google Play талаб мекунад, ки корбар ҳисоби худро аз дохили барнома нест
+ * карда тавонад. Ғайр аз ин, ин ҳаққи оддии корбар аст.
+ *
+ * Чӣ нест мешавад: профил, навсозиҳо (status), паёмҳои ситорадор, зангҳо,
+ * узвият дар гурӯҳ ва ҷамъиятҳо, рамзҳои даъвати сохтаи ӯ ва худи ҳисоби
+ * Firebase Auth.
+ *
+ * Чӣ боқӣ мемонад: паёмҳои дар чати дигарон навишташуда. Онҳо ба
+ * муколамаи шахси дигар тааллуқ доранд ва нест кардани онҳо таърихи ӯро
+ * вайрон мекунад — ҳамон тавре ки дар барномаҳои дигар аст.
+ */
+app.post('/api/delete-account', async (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!idToken) return res.status(401).json({ error: 'Authorization lozim ast' });
+
+  let user;
+  try {
+    // `true` — токени бекоршуда низ рад мешавад: ин амал бозгашт надорад.
+    user = await getAuth().verifyIdToken(idToken, true);
+  } catch {
+    return res.status(401).json({ error: 'Token nodurust ast' });
+  }
+
+  const uid = user.uid;
+  const db = getFirestore();
+
+  try {
+    // 1. Навсозиҳо (status) бо ҳамаи бандҳояшон.
+    const statusItems = await db.collection('statuses').doc(uid).collection('items').get();
+    await deleteDocs(db, statusItems.docs.map((d) => d.ref));
+    await db.collection('statuses').doc(uid).delete().catch(() => {});
+
+    // 2. Паёмҳои ситорадор.
+    const starred = await db.collection('users').doc(uid).collection('starred').get();
+    await deleteDocs(db, starred.docs.map((d) => d.ref));
+
+    // 3. Зангҳо — ҳам зангҳои кардашуда, ҳам қабулшуда.
+    for (const field of ['callerId', 'calleeId']) {
+      const calls = await db.collection('calls').where(field, '==', uid).get();
+      await deleteDocs(db, calls.docs.map((d) => d.ref));
+    }
+
+    // 4. Узвият дар гурӯҳҳо ва ҷамъиятҳо.
+    for (const collection of ['groups', 'communities']) {
+      const snap = await db.collection(collection).where('members', 'array-contains', uid).get();
+      await Promise.all(
+        snap.docs.map((doc) =>
+          doc.ref
+            .update({
+              members: FieldValue.arrayRemove(uid),
+              admins: FieldValue.arrayRemove(uid),
+              [`memberNames.${uid}`]: FieldValue.delete(),
+            })
+            .catch(() => {}),
+        ),
+      );
+    }
+
+    // 5. Рамзҳои даъвате, ки худи ӯ сохтааст.
+    const invites = await db.collection('groupInvites').where('createdBy', '==', uid).get();
+    await deleteDocs(db, invites.docs.map((d) => d.ref));
+
+    // 6. Профил.
+    await db.collection('users').doc(uid).delete().catch(() => {});
+
+    // 7. Худи ҳисоб. Ин охирин аст: агар қадамҳои боло ноком шаванд, корбар
+    // ҳанӯз вориди барнома шуда, боз кӯшиш карда метавонад.
+    await getAuth().deleteUser(uid);
+
+    res.json({ deleted: true });
+  } catch (err) {
+    console.error('Хатои нест кардани ҳисоб:', err?.message ?? err);
+    res.status(500).json({ error: 'hisob nest karda nashud' });
+  }
+});
+
+/** Ҳуҷҷатҳоро бо бастаҳои 400-то нест мекунад (ҳадди Firestore 500 аст). */
+async function deleteDocs(db, refs) {
+  for (let i = 0; i < refs.length; i += 400) {
+    const batch = db.batch();
+    for (const ref of refs.slice(i, i + 400)) batch.delete(ref);
+    await batch.commit().catch(() => {});
+  }
+}
+
 app.post('/api/notify', async (req, res) => {
   const authHeader = req.headers.authorization || '';
   const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;

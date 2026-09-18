@@ -11,6 +11,7 @@ import 'language_settings_screen.dart';
 import 'storage_settings_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
+import 'delete_account_screen.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/app_scope.dart';
 
@@ -118,6 +119,22 @@ class SettingsHomeScreen extends StatelessWidget {
                         showDivider: false,
                       ),
                     ]),
+                    const SizedBox(height: 14),
+                    // Нест кардани ҳисоб дар охир ва бо ранги сурх — то
+                    // тасодуфан пахш нашавад.
+                    _sectionCard(context, [
+                      _row(
+                        context,
+                        icon: LucideIcons.trash,
+                        label: tr('k385'),
+                        danger: true,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const DeleteAccountScreen()),
+                        ),
+                        showDivider: false,
+                      ),
+                    ]),
                   ],
                 ),
               ),
@@ -142,7 +159,10 @@ class SettingsHomeScreen extends StatelessWidget {
     required String label,
     required VoidCallback onTap,
     bool showDivider = true,
+    bool danger = false,
   }) {
+    final tint = danger ? Colors.redAccent : AppColors.neonCyan;
+    final labelColor = danger ? Colors.redAccent : AppColors.textPrimary;
     return Column(
       children: [
         Material(
@@ -154,10 +174,10 @@ class SettingsHomeScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
               child: Row(
                 children: [
-                  Icon(icon, color: AppColors.neonCyan, size: 19),
+                  Icon(icon, color: tint, size: 19),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text(label, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14.5)),
+                    child: Text(label, style: TextStyle(color: labelColor, fontWeight: FontWeight.w600, fontSize: 14.5)),
                   ),
                   Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 17),
                 ],

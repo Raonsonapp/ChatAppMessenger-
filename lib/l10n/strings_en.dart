@@ -384,4 +384,13 @@ const Map<String, String> stringsEn = {
   'k382': 'No internet — waiting to connect',
   'k383': 'Tap to try again',
   'k384': 'Could not play the voice message',
+  'k385': 'Delete account',
+  'k386': 'This cannot be undone',
+  'k387': 'Your profile, photo and phone number will be deleted',
+  'k388': 'Your status updates and starred messages will be deleted',
+  'k389': 'You will be removed from all groups and communities',
+  'k390': 'Messages you sent in other people\'s chats stay there — they are part of their conversation.',
+  'k391': 'DELETE',
+  'k392': 'Could not delete the account. Please try again.',
+  'k393': 'Type {0} to confirm',
 };
