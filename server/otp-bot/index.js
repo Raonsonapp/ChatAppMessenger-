@@ -10,6 +10,7 @@ const { getAuth } = require('firebase-admin/auth');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 const r2 = require('./r2');
+const { overQuota } = require('./quota');
 
 /** Вақти оғози ин нусхаи сервер. */
 const startedAt = new Date();
@@ -201,24 +202,18 @@ const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 const UPLOAD_QUOTA_PER_HOUR = 200;
 const uploadQuota = new Map();
 
+/**
+ * Ҳадди огоҳиномаҳо барои як корбар дар як соат.
+ *
+ * Ин ҷо на дархостҳо, балки ГИРАНДАГОН ҳисоб мешаванд: як дархост ба 500
+ * нафар аз як дархост ба як нафар хеле гаронтар аст, вагарна маҳдудиятро
+ * бо як дархости калон давр задан мумкин мебуд.
+ */
+const NOTIFY_QUOTA_PER_HOUR = 3000;
+const notifyQuota = new Map();
+
 function quotaExceeded(uid) {
-  const now = Date.now();
-  const hour = 60 * 60 * 1000;
-  const entry = uploadQuota.get(uid);
-
-  if (!entry || now - entry.since > hour) {
-    uploadQuota.set(uid, { since: now, count: 1 });
-    // Сабтҳои кӯҳна тоза карда мешаванд, то хотира нашъунамо накунад.
-    if (uploadQuota.size > 5000) {
-      for (const [key, value] of uploadQuota) {
-        if (now - value.since > hour) uploadQuota.delete(key);
-      }
-    }
-    return false;
-  }
-
-  entry.count += 1;
-  return entry.count > UPLOAD_QUOTA_PER_HOUR;
+  return overQuota(uploadQuota, uid, UPLOAD_QUOTA_PER_HOUR);
 }
 
 app.post('/api/upload-url', async (req, res) => {
@@ -483,6 +478,13 @@ app.post('/api/notify', async (req, res) => {
   }
 
   const { toUid, toUids, title, body, data } = req.body ?? {};
+
+  // Арзиш аз рӯи шумораи гирандагон ҳисоб мешавад, на дархостҳо: вагарна
+  // маҳдудиятро бо як дархости калон давр задан мумкин мебуд.
+  const recipientCount = Array.isArray(toUids) ? Math.max(toUids.length, 1) : 1;
+  if (overQuota(notifyQuota, sender.uid, NOTIFY_QUOTA_PER_HOUR, recipientCount)) {
+    return res.status(429).json({ error: 'too-many-notifications' });
+  }
 
   // Ҳолати гурӯҳӣ: як дархост ба ҷои даҳҳо. Барномаи телефон пештар барои
   // ҳар узв як дархости алоҳида мефиристод — дар гурӯҳи калон ин садҳо

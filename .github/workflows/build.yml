@@ -51,6 +51,9 @@ jobs:
       - name: Test server signing
         run: node --test server/otp-bot/r2.test.mjs
 
+      - name: Test server quota
+        run: node --test server/otp-bot/quota.test.mjs
+
       - name: Build release APK
         run: flutter build apk --release
 
