@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,6 +9,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
+import '../../services/media_cache.dart';
 import '../../theme/app_scope.dart';
 
 class StorageSettingsScreen extends StatefulWidget {
@@ -21,6 +24,8 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
   int? _groups;
   int? _communities;
   bool _loading = true;
+  int _diskCache = 0;
+  bool _clearing = false;
 
   @override
   void initState() {
@@ -28,7 +33,14 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
     _load();
   }
 
+  Future<void> _refreshDiskCache() async {
+    final size = await MediaCache.diskSizeBytes();
+    if (!mounted) return;
+    setState(() => _diskCache = size);
+  }
+
   Future<void> _load() async {
+    unawaited(_refreshDiskCache());
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       if (mounted) setState(() => _loading = false);
@@ -51,16 +63,22 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
     });
   }
 
-  void _clearImageCache() {
-    final cache = PaintingBinding.instance.imageCache;
-    final freed = cache.currentSizeBytes;
-    cache.clear();
-    cache.clearLiveImages();
+  Future<void> _clearImageCache() async {
+    if (_clearing) return;
+    setState(() => _clearing = true);
+
+    // Ҳам хотира, ҳам диск тоза мешавад — вагарна файлҳои зеркашишуда
+    // мемонанд ва «тозакунӣ» бесамар менамояд.
+    final freed = await MediaCache.clear();
+
     if (!mounted) return;
+    setState(() {
+      _clearing = false;
+      _diskCache = 0;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(trf('k184', [_formatBytes(freed)]))),
     );
-    setState(() {});
   }
 
   static String _formatBytes(int bytes) {
@@ -154,16 +172,32 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                             trf('k193', [cache.currentSize, _formatBytes(cache.currentSizeBytes)]),
                           ),
                           Divider(color: AppColors.glassBorder, height: 1),
+                          _statRowText(
+                            LucideIcons.hard_drive,
+                            tr('k375'),
+                            _formatBytes(_diskCache),
+                          ),
+                          Divider(color: AppColors.glassBorder, height: 1),
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
-                              onTap: _clearImageCache,
+                              onTap: _clearing ? null : _clearImageCache,
                               child: Padding(
                                 padding: EdgeInsets.symmetric(vertical: 14),
                                 child: Row(
                                   children: [
-                                    Icon(LucideIcons.trash, color: Colors.redAccent, size: 18),
+                                    if (_clearing)
+                                      SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.redAccent,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    else
+                                      Icon(LucideIcons.trash, color: Colors.redAccent, size: 18),
                                     SizedBox(width: 14),
                                     Text(
                                       tr('k194'),

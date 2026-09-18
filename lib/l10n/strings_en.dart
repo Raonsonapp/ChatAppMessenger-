@@ -374,4 +374,5 @@ const Map<String, String> stringsEn = {
   'k372': 'Upload failed, please try again',
   'k373': 'File is too large (up to 100 MB)',
   'k374': 'Too many uploads, try again later',
+  'k375': 'Downloaded files',
 };
