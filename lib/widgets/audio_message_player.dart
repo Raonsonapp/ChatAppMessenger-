@@ -7,7 +7,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import '../theme/app_theme.dart';
 import '../services/media_service.dart';
 
-/// Паёми овозӣ дар чат: тугмаи пахш, хати пешравӣ ва вақт.
+/// Паёми овозӣ дар чат: тугмаи пахш, хати пешравии кашидашаванда, вақт ва
+/// суръати пахш (1x / 1.5x / 2x).
 class AudioMessagePlayer extends StatefulWidget {
   final String url;
 
@@ -34,6 +35,10 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
   Duration? _total;
   bool _playing = false;
 
+  /// Суръати пахш — 1x, 1.5x, 2x, мисли WhatsApp.
+  static const List<double> _speeds = [1.0, 1.5, 2.0];
+  int _speedIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +59,22 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
         });
       }
     }));
+  }
+
+  Future<void> _cycleSpeed() async {
+    setState(() => _speedIndex = (_speedIndex + 1) % _speeds.length);
+    await _player.setPlaybackRate(_speeds[_speedIndex]);
+  }
+
+  /// Ба ҷои дилхоҳи паём гузаштан — кашидани хати пешравӣ.
+  Future<void> _seekTo(double fraction) async {
+    final total = _total;
+    if (total == null || total.inMilliseconds == 0) return;
+    final target = Duration(
+      milliseconds: (total.inMilliseconds * fraction.clamp(0.0, 1.0)).round(),
+    );
+    setState(() => _position = target);
+    await _player.seek(target);
   }
 
   Future<void> _toggle() async {
@@ -106,19 +127,56 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 4,
-                    backgroundColor: tint.withValues(alpha: 0.22),
-                    valueColor: AlwaysStoppedAnimation<Color>(tint),
-                  ),
+                // Хат ҳам пешравиро нишон медиҳад, ҳам барои гузаштан кашида мешавад.
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapDown: (d) => _seekTo(d.localPosition.dx / constraints.maxWidth),
+                      onHorizontalDragUpdate: (d) =>
+                          _seekTo(d.localPosition.dx / constraints.maxWidth),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 4,
+                            backgroundColor: tint.withValues(alpha: 0.22),
+                            valueColor: AlwaysStoppedAnimation<Color>(tint),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  MediaService.formatDuration(_playing || _position > Duration.zero ? _position : total),
-                  style: TextStyle(color: tint.withValues(alpha: 0.85), fontSize: 11.5),
+                Row(
+                  children: [
+                    Text(
+                      MediaService.formatDuration(
+                          _playing || _position > Duration.zero ? _position : total),
+                      style: TextStyle(color: tint.withValues(alpha: 0.85), fontSize: 11.5),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: _cycleSpeed,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: tint.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${_speeds[_speedIndex]}x'.replaceAll('.0x', 'x'),
+                          style: TextStyle(
+                            color: tint,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

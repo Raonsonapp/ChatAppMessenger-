@@ -150,6 +150,12 @@ class UserConversationTile extends StatelessWidget {
                     const SizedBox(height: 3),
                     Row(
                       children: [
+                        // Тирча — агар охирин паём аз ман бошад, мисли WhatsApp.
+                        if (conversation.lastSenderId == currentUid &&
+                            conversation.lastMessage.isNotEmpty) ...[
+                          Icon(LucideIcons.check, size: 13, color: AppColors.textSecondary),
+                          const SizedBox(width: 3),
+                        ],
                         Expanded(
                           child: Text(
                             conversation.lastMessage.isEmpty
