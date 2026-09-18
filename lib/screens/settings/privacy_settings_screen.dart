@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
+import 'blocked_users_screen.dart';
 
 /// Танзимоти воқеии махфият — ҳар тағйирот фавран дар
 /// `users/{uid}` (майдони `settings`) сабт мешавад ва пас аз
@@ -120,6 +121,27 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                                   showDivider: false,
                                 ),
                               ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          GlassContainer(
+                            borderRadius: 18,
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: ListTile(
+                              leading: Icon(LucideIcons.shield_off, color: AppColors.neonCyan, size: 20),
+                              title: Text(
+                                tr('k320'),
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              trailing: Icon(LucideIcons.chevron_right, color: AppColors.textSecondary, size: 17),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const BlockedUsersScreen()),
+                              ),
                             ),
                           ),
                         ],

@@ -319,4 +319,6 @@ const Map<String, String> stringsEn = {
   'k317': 'Microphone permission is required',
   'k318': 'Admin',
   'k319': 'Nickname',
+  'k320': 'Blocked contacts',
+  'k321': 'The list is empty',
 };
