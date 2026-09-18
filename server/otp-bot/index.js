@@ -306,6 +306,81 @@ app.post('/api/otp/verify', async (req, res) => {
 // ин барнома пас аз фиристодани паём худаш ин эндпоинтро даъво мекунад ва мо
 // push мефиристем. Даъватгар бо ID token тасдиқ мешавад, то бегона ба ҳар кас
 // огоҳинома фиристода натавонад.
+/** Ҳадди FCM барои як дархости multicast. */
+const FCM_MULTICAST_LIMIT = 500;
+
+/** Ҳадди гирандагон дар як дархост — то касе серверро бор накунад. */
+const NOTIFY_RECIPIENTS_LIMIT = 2000;
+
+/**
+ * Ба якчанд гиранда якбора огоҳинома мефиристад.
+ *
+ * Токенҳо дар як хониш гирифта мешаванд, фиристодан бо `sendEachForMulticast`
+ * анҷом меёбад ва токенҳои бекоршуда фавран тоза карда мешаванд.
+ */
+async function notifyMany({ sender, toUids, title, body, data }) {
+  const unique = [...new Set(toUids.map(String))]
+    .filter((uid) => uid && uid !== sender.uid)
+    .slice(0, NOTIFY_RECIPIENTS_LIMIT);
+
+  if (unique.length === 0) return { sent: 0, skipped: 0 };
+
+  const db = getFirestore();
+  const refs = unique.map((uid) => db.collection('users').doc(uid));
+  const docs = await db.getAll(...refs);
+
+  /** @type {{token: string, ref: FirebaseFirestore.DocumentReference}[]} */
+  const targets = [];
+  let skipped = 0;
+  for (const doc of docs) {
+    const info = doc.data();
+    // Огоҳиномаи хомӯшкарда ва корбари бе токен партофта мешаванд.
+    if (!info?.fcmToken || info?.settings?.messageNotifications === false) {
+      skipped += 1;
+      continue;
+    }
+    targets.push({ token: info.fcmToken, ref: doc.ref });
+  }
+
+  if (targets.length === 0) return { sent: 0, skipped };
+
+  const payload = {
+    notification: { title: title || 'ChatApp', body },
+    data: Object.fromEntries(
+      Object.entries({ ...(data || {}), senderUid: sender.uid }).map(([k, v]) => [k, String(v)]),
+    ),
+    android: { priority: 'high' },
+  };
+
+  let sent = 0;
+  const stale = [];
+
+  for (let i = 0; i < targets.length; i += FCM_MULTICAST_LIMIT) {
+    const chunk = targets.slice(i, i + FCM_MULTICAST_LIMIT);
+    const response = await getMessaging().sendEachForMulticast({
+      ...payload,
+      tokens: chunk.map((t) => t.token),
+    });
+
+    response.responses.forEach((item, index) => {
+      if (item.success) {
+        sent += 1;
+        return;
+      }
+      if (item.error?.code === 'messaging/registration-token-not-registered') {
+        stale.push(chunk[index].ref);
+      }
+    });
+  }
+
+  // Токенҳои бекоршуда тоза мешаванд, то дафъаи дигар бекор кӯшиш нашавад.
+  await Promise.all(
+    stale.map((ref) => ref.update({ fcmToken: FieldValue.delete() }).catch(() => {})),
+  );
+
+  return { sent, skipped: skipped + (targets.length - sent) };
+}
+
 app.post('/api/notify', async (req, res) => {
   const authHeader = req.headers.authorization || '';
   const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -318,7 +393,22 @@ app.post('/api/notify', async (req, res) => {
     return res.status(401).json({ error: 'Token nodurust ast' });
   }
 
-  const { toUid, title, body, data } = req.body ?? {};
+  const { toUid, toUids, title, body, data } = req.body ?? {};
+
+  // Ҳолати гурӯҳӣ: як дархост ба ҷои даҳҳо. Барномаи телефон пештар барои
+  // ҳар узв як дархости алоҳида мефиристод — дар гурӯҳи калон ин садҳо
+  // дархост, вақт ва трафик буд.
+  if (Array.isArray(toUids)) {
+    if (!body) return res.status(400).json({ error: 'body lozim ast' });
+    try {
+      const result = await notifyMany({ sender, toUids, title, body, data });
+      return res.json(result);
+    } catch (err) {
+      console.error('Хатои фиристодани push (гурӯҳӣ):', err?.message ?? err);
+      return res.status(500).json({ error: 'push firistoda nashud' });
+    }
+  }
+
   if (!toUid || !body) return res.status(400).json({ error: 'toUid va body lozimand' });
 
   // Ба худи худ огоҳинома намефиристем.

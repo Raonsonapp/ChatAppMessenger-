@@ -45,6 +45,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
 
   Future<void> _pick(bool fromCamera) async {
     final file = fromCamera ? await MediaService.pickFromCamera() : await MediaService.pickFromGallery();
+    if (!mounted) return;
     if (file != null) setState(() => _pickedImage = file);
   }
 

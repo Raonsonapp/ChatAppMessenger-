@@ -64,7 +64,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final file = await MediaService.pickFromGallery();
-    if (file == null) return;
+    if (file == null || !mounted) return;
     setState(() => _isUploadingPhoto = true);
     try {
       final url = await MediaService.uploadImage(file, 'avatars/$uid');

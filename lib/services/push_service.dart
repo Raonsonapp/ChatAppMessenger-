@@ -24,8 +24,9 @@ class PushService {
 
   /// Ба якчанд гиранда (масалан ҳамаи аъзои гурӯҳ).
   ///
-  /// Токен як маротиба гирифта мешавад ва дархостҳо дар як вақт мераванд —
-  /// вагарна дар гурӯҳи калон фиристодани паём даҳҳо сония мекашид.
+  /// ЯК дархост фиристода мешавад — сервер худаш ба ҳама мефиристад.
+  /// Пештар барои ҳар узв як дархости алоҳида мерафт: дар гурӯҳи калон ин
+  /// садҳо дархост, вақт, трафик ва батарея буд.
   static Future<void> notifyMany({
     required List<String> toUids,
     required String title,
@@ -37,28 +38,21 @@ class PushService {
       final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
       if (idToken == null) return;
 
-      final url = Uri.parse('${OtpServerConfig.baseUrl}/api/notify');
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $idToken',
-      };
-
-      await Future.wait(toUids.map((toUid) {
-        return http
-            .post(
-              url,
-              headers: headers,
-              body: jsonEncode({
-                'toUid': toUid,
-                'title': title,
-                'body': body,
-                if (data != null) 'data': data,
-              }),
-            )
-            .timeout(const Duration(seconds: 10))
-            // Як гиранда нарасид — дигарон бояд ба ҳар ҳол хабар гиранд.
-            .catchError((_) => http.Response('', 599));
-      }));
+      await http
+          .post(
+            Uri.parse('${OtpServerConfig.baseUrl}/api/notify'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $idToken',
+            },
+            body: jsonEncode({
+              'toUids': toUids,
+              'title': title,
+              'body': body,
+              if (data != null) 'data': data,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
     } catch (_) {
       // Огоҳинома нарасид — вале паём фиристода шуд, ин ҳалокатовар нест.
     }
