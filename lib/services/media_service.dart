@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'compression_service.dart';
 import 'storage_service.dart';
 
 /// Интихоби расм/видео/ҳуҷҷат ва боркунии воқеии онҳо.
@@ -49,14 +50,59 @@ class MediaService {
     return files.first;
   }
 
-  /// Боркунии расм ба Firebase Storage, бозгашти URL-и воқеӣ
+  /// Боркунии расм — пеш аз фиристодан фишурда мешавад.
   static Future<String> uploadImage(XFile file, String folderPath) async {
     return uploadFile(File(file.path), file.name, folderPath);
   }
 
-  /// Боркунии ҳар файл (овоз, видео, ҳуҷҷат) ва бозгашти URL.
-  static Future<String> uploadFile(File file, String name, String folderPath) {
-    return StorageService.upload(file, name, folderPath);
+  /// Боркунии ҳар файл (акс, овоз, видео, ҳуҷҷат) ва бозгашти URL.
+  ///
+  /// Акс ва видео пеш аз фиристодан фишурда мешаванд — мисли WhatsApp.
+  /// Ҳуҷҷат, овоз ва GIF дасторасӣ намешаванд: фишурдани онҳо ё маъно
+  /// надорад, ё файлро вайрон мекунад.
+  static Future<String> uploadFile(File file, String name, String folderPath) async {
+    final prepared = await _compressIfUseful(file, name);
+    return StorageService.upload(prepared.file, prepared.name, folderPath);
+  }
+
+  /// Файлро вобаста ба навъаш фишурда, номи навро бармегардонад.
+  static Future<({File file, String name})> _compressIfUseful(
+    File file,
+    String name,
+  ) async {
+    final ext = name.contains('.') ? name.split('.').last.toLowerCase() : '';
+
+    if (_imageExtensions.contains(ext)) {
+      final compressed = await CompressionService.compressImage(file);
+      if (identical(compressed, file)) return (file: file, name: name);
+      // Натиҷа ҳамеша JPEG аст, бинобар ин ном бояд мувофиқ бошад —
+      // вагарна Content-Type нодуруст мешавад ва браузер файлро
+      // зеркашӣ мекунад, на нишон медиҳад.
+      return (file: compressed, name: _withExtension(name, 'jpg'));
+    }
+
+    if (_videoExtensions.contains(ext)) {
+      final compressed = await CompressionService.compressVideo(file);
+      if (identical(compressed, file)) return (file: file, name: name);
+      return (file: compressed, name: _withExtension(name, 'mp4'));
+    }
+
+    return (file: file, name: name);
+  }
+
+  /// GIF дар рӯйхат нест: фишурдан анимацияро нобуд мекунад.
+  static const Set<String> _imageExtensions = {
+    'jpg', 'jpeg', 'png', 'heic', 'heif', 'webp',
+  };
+
+  static const Set<String> _videoExtensions = {
+    'mp4', 'mov', '3gp', 'mkv', 'avi', 'm4v', 'webm',
+  };
+
+  static String _withExtension(String name, String extension) {
+    final dot = name.lastIndexOf('.');
+    final base = dot <= 0 ? name : name.substring(0, dot);
+    return '$base.$extension';
   }
 
   /// Ҳаҷми файл ба шакли хондашаванда.
