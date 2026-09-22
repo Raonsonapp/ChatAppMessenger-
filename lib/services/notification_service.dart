@@ -9,6 +9,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../firebase_options.dart';
 import '../models/app_call.dart';
 import '../screens/call_screen.dart';
+import '../screens/group_call_screen.dart';
 import '../screens/chat_detail_screen.dart';
 import '../models/chat_conversation.dart';
 import '../screens/user_chat_screen.dart';
@@ -165,6 +166,27 @@ void _navigateFromPayload(Map<String, dynamic> data) {
     final callerName = data['callerName'] as String? ?? tr('k002');
     final callType = data['callType'] == 'video' ? CallType.video : CallType.audio;
     if (callId == null || callerId == null) return;
+
+    // Занги гурӯҳӣ ба канали умумӣ мебарад, на ба сӯҳбати шахсӣ бо
+    // зангзананда — вагарна қабулкунанда ба канали дигар меафтад ва ҳељ
+    // касро намешунавад.
+    final groupId = data['groupId'] as String?;
+    final channelId = data['channelId'] as String?;
+    if (groupId != null &&
+        groupId.isNotEmpty &&
+        channelId != null &&
+        channelId.isNotEmpty) {
+      navigator.push(MaterialPageRoute(
+        builder: (_) => GroupCallScreen(
+          groupId: groupId,
+          groupName: (data['groupName'] as String?) ?? tr('k293'),
+          type: callType,
+          joinChannelId: channelId,
+        ),
+      ));
+      return;
+    }
+
     navigator.push(MaterialPageRoute(
       builder: (_) => CallScreen(otherUserId: callerId, otherUserName: callerName, type: callType, existingCallId: callId),
     ));

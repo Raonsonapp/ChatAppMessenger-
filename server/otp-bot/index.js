@@ -301,6 +301,44 @@ app.post('/api/otp/verify', async (req, res) => {
 // ин барнома пас аз фиристодани паём худаш ин эндпоинтро даъво мекунад ва мо
 // push мефиристем. Даъватгар бо ID token тасдиқ мешавад, то бегона ба ҳар кас
 // огоҳинома фиристода натавонад.
+/**
+ * Пайкараи паёми FCM.
+ *
+ * Фарқи муҳим байни занг ва паёми оддӣ:
+ *
+ * Агар паём блоки `notification` дошта бошад, Android онро ХУДАШ дар лавҳаи
+ * огоҳиномаҳо нишон медиҳад ва ҳангоми пӯшида будани барнома коди мо
+ * (`onBackgroundMessage`) УМУМАН иҷро намешавад. Барои занг ин маънои онро
+ * дорад, ки экрани пурраи занг (fullScreenIntent) кушода намешавад ва
+ * корбар танҳо як сатри хомӯшро мебинад.
+ *
+ * Бинобар ин занг ҳамчун паёми ТАНҲО-МАЪЛУМОТӢ (data-only) фиристода
+ * мешавад: он ҳатман ба коди мо мерасад ва мо худамон экрани зангро
+ * мекушоем.
+ */
+function buildPayload({ isCall, title, body, data, senderUid }) {
+  const payload = {
+    data: Object.fromEntries(
+      Object.entries({ ...(data || {}), senderUid }).map(([k, v]) => [k, String(v)]),
+    ),
+    android: { priority: 'high' },
+  };
+
+  if (isCall) {
+    // Занг пас аз як дақиқа маъно надорад — беҳтар аст, ки умуман нарасад,
+    // назар ба он ки баъди даҳ дақиқа телефон занг занад.
+    payload.android.ttl = 60 * 1000;
+    payload.apns = {
+      headers: { 'apns-priority': '10', 'apns-push-type': 'voip' },
+      payload: { aps: { 'content-available': 1 } },
+    };
+    return payload;
+  }
+
+  payload.notification = { title: title || 'ChatApp', body };
+  return payload;
+}
+
 /** Ҳадди FCM барои як дархости multicast. */
 const FCM_MULTICAST_LIMIT = 500;
 
@@ -314,6 +352,7 @@ const NOTIFY_RECIPIENTS_LIMIT = 2000;
  * анҷом меёбад ва токенҳои бекоршуда фавран тоза карда мешаванд.
  */
 async function notifyMany({ sender, toUids, title, body, data }) {
+  const isCall = (data || {}).type === 'incoming_call';
   const unique = [...new Set(toUids.map(String))]
     .filter((uid) => uid && uid !== sender.uid)
     .slice(0, NOTIFY_RECIPIENTS_LIMIT);
@@ -330,7 +369,9 @@ async function notifyMany({ sender, toUids, title, body, data }) {
   for (const doc of docs) {
     const info = doc.data();
     // Огоҳиномаи хомӯшкарда ва корбари бе токен партофта мешаванд.
-    if (!info?.fcmToken || info?.settings?.messageNotifications === false) {
+    // Занг истисност: «огоҳиномаи паём» набояд зангро хомӯш кунад.
+    const muted = !isCall && info?.settings?.messageNotifications === false;
+    if (!info?.fcmToken || muted) {
       skipped += 1;
       continue;
     }
@@ -339,13 +380,13 @@ async function notifyMany({ sender, toUids, title, body, data }) {
 
   if (targets.length === 0) return { sent: 0, skipped };
 
-  const payload = {
-    notification: { title: title || 'ChatApp', body },
-    data: Object.fromEntries(
-      Object.entries({ ...(data || {}), senderUid: sender.uid }).map(([k, v]) => [k, String(v)]),
-    ),
-    android: { priority: 'high' },
-  };
+  const payload = buildPayload({
+    isCall: (data || {}).type === 'incoming_call',
+    title,
+    body,
+    data,
+    senderUid: sender.uid,
+  });
 
   let sent = 0;
   const stale = [];
@@ -509,20 +550,18 @@ app.post('/api/notify', async (req, res) => {
   const fcmToken = doc.data()?.fcmToken;
   if (!fcmToken) return res.json({ sent: false, reason: 'no-token' });
 
-  // Агар гиранда огоҳиномаи паёмро хомӯш карда бошад, чизе намефиристем —
-  // вагарна танзимот танҳо дар экран менамуд ва ҳељ кор намекард.
-  if (doc.data()?.settings?.messageNotifications === false) {
+  const isCall = (data || {}).type === 'incoming_call';
+
+  // Агар гиранда огоҳиномаи ПАЁМро хомӯш карда бошад, паём намефиристем.
+  // Вале занг паём нест: «огоҳиномаи паём» набояд зангро хомӯш кунад.
+  if (!isCall && doc.data()?.settings?.messageNotifications === false) {
     return res.json({ sent: false, reason: 'muted' });
   }
 
   try {
     await getMessaging().send({
       token: fcmToken,
-      notification: { title: title || 'ChatApp', body },
-      data: Object.fromEntries(
-        Object.entries({ ...(data || {}), senderUid: sender.uid }).map(([k, v]) => [k, String(v)]),
-      ),
-      android: { priority: 'high' },
+      ...buildPayload({ isCall, title, body, data, senderUid: sender.uid }),
     });
     res.json({ sent: true });
   } catch (err) {

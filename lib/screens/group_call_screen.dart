@@ -14,6 +14,8 @@ import '../widgets/group_avatar.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_scope.dart';
+import '../services/push_service.dart';
+import '../services/call_error.dart';
 
 /// Занги гурӯҳӣ — ҳамаи аъзоён ба як канали Agora ҳамроҳ мешаванд.
 ///
@@ -120,9 +122,36 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
           groupName: widget.groupName,
         ));
         _createdCalls.add(doc);
+
+        // Бе огоҳинома занг танҳо ба узве мерасад, ки барномаашро кушода
+        // истодааст — яъне дар амал қариб ба ҳељ кас.
+        unawaited(_ringMember(entry.key, doc.id, myName));
       } catch (_) {
         // Як узв ҷавоб надод — занг барои дигарон бояд идома ёбад.
       }
+    }
+  }
+
+  /// Ба як узв огоҳиномаи занги гурӯҳӣ мефиристад.
+  Future<void> _ringMember(String uid, String callId, String callerName) async {
+    try {
+      await PushService.notify(
+        toUid: uid,
+        title: widget.groupName,
+        body: widget.type == CallType.video ? tr('k121') : tr('k122'),
+        data: {
+          'type': 'incoming_call',
+          'callId': callId,
+          'callerId': _currentUid,
+          'callerName': callerName,
+          'callType': widget.type == CallType.video ? 'video' : 'audio',
+          'groupId': widget.groupId,
+          'groupName': widget.groupName,
+          'channelId': _channelId ?? '',
+        },
+      );
+    } catch (_) {
+      // Огоҳинома нарасид — занг ба ҳар ҳол давом мекунад.
     }
   }
 
@@ -164,8 +193,9 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
           setState(() => _remoteUids.remove(remoteUid));
         },
         onError: (err, msg) {
-          if (!mounted) return;
-          setState(() => _error = trf('k016', [msg]));
+          // Танҳо хатои ҷиддӣ зангро қатъ мекунад.
+          if (!mounted || !CallError.isFatal(err)) return;
+          setState(() => _error = CallError.describe(err, msg));
         },
       ));
 

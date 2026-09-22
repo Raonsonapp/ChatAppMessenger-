@@ -13,6 +13,8 @@ import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import '../theme/app_scope.dart';
+import '../services/push_service.dart';
+import '../services/call_error.dart';
 
 enum _CallStage { connecting, ringing, connected, ended }
 
@@ -101,6 +103,12 @@ class _CallScreenState extends State<CallScreen> {
       );
       _callDoc = doc;
       _channelId = doc.id;
+
+      // Бе ин занг ТАНҲО он вақт садо медиҳад, ки барномаи гиранда кушода
+      // бошад. Тамоми системаи огоҳиномаи занг (экрани пурра, тугмаҳои
+      // «Қабул»/«Рад») сохта шуда буд, вале ҳељ кас онро намефиристод —
+      // яъне дар ҳаёти воқеӣ занг ҳељ гоҳ намерасид.
+      unawaited(_ringCallee(doc.id, myName));
     } else {
       _channelId = widget.existingCallId;
       _callDoc = FirebaseFirestore.instance.collection('calls').doc(_channelId);
@@ -115,6 +123,29 @@ class _CallScreenState extends State<CallScreen> {
       _ringTimeout = Timer(const Duration(seconds: 45), () {
         if (!_everConnected) _endCall(outcome: CallOutcome.missed);
       });
+    }
+  }
+
+  /// Ба гиранда огоҳиномаи занг мефиристад.
+  ///
+  /// Хатогии он набояд худи зангро вайрон кунад: шояд гиранда барномаро
+  /// кушода бошад ва зангро аз IncomingCallListener гирад.
+  Future<void> _ringCallee(String callId, String callerName) async {
+    try {
+      await PushService.notify(
+        toUid: widget.otherUserId,
+        title: callerName,
+        body: widget.type == CallType.video ? tr('k121') : tr('k122'),
+        data: {
+          'type': 'incoming_call',
+          'callId': callId,
+          'callerId': _currentUid,
+          'callerName': callerName,
+          'callType': widget.type == CallType.video ? 'video' : 'audio',
+        },
+      );
+    } catch (_) {
+      // Огоҳинома нарасид — вале занг ба ҳар ҳол давом мекунад.
     }
   }
 
@@ -169,8 +200,11 @@ class _CallScreenState extends State<CallScreen> {
           _endCall(outcome: CallOutcome.completed);
         },
         onError: (err, msg) {
-          if (!mounted) return;
-          setState(() => _error = trf('k016', [msg]));
+          // Танҳо хатои ҷиддӣ зангро қатъ мекунад. Пештар ҳар огоҳии хурд
+          // (масалан гарнитураи Bluetooth) занги солимро «вайрон» нишон
+          // медод.
+          if (!mounted || !CallError.isFatal(err)) return;
+          setState(() => _error = CallError.describe(err, msg));
         },
       ));
 

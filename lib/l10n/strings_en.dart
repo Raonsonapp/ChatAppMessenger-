@@ -393,4 +393,8 @@ const Map<String, String> stringsEn = {
   'k391': 'DELETE',
   'k392': 'Could not delete the account. Please try again.',
   'k393': 'Type {0} to confirm',
+  'k394': 'Calling is not set up: the Agora App ID is invalid',
+  'k395': 'Calling needs a token: turn off the App Certificate in the Agora console, or add a token server',
+  'k396': 'Call channel name is invalid',
+  'k397': 'Agora rejected the call. Check the project status in the console.',
 };
