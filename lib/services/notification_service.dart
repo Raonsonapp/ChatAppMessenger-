@@ -167,6 +167,15 @@ void _navigateFromPayload(Map<String, dynamic> data) {
     final callType = data['callType'] == 'video' ? CallType.video : CallType.audio;
     if (callId == null || callerId == null) return;
 
+    // Занг ҳамчун ҷавобдодашуда қайд мешавад. Бе ин IncomingCallListener
+    // ҳуҷҷатро ҳанӯз `ringing` мебинад ва экрани занги воридотиро БОЛОИ
+    // экрани зангe ки ҳозир кушода шуд, як бори дигар мебарорад.
+    FirebaseFirestore.instance
+        .collection('calls')
+        .doc(callId)
+        .update({'outcome': CallOutcome.completed.name})
+        .catchError((_) {});
+
     // Занги гурӯҳӣ ба канали умумӣ мебарад, на ба сӯҳбати шахсӣ бо
     // зангзананда — вагарна қабулкунанда ба канали дигар меафтад ва ҳељ
     // касро намешунавад.

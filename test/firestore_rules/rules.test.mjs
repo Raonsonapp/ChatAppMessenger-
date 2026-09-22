@@ -188,6 +188,35 @@ await check('B занги воридотиро ҷавоб медиҳад', () =>
 await check('A паёми мӯҳлаташ гузаштаро нест мекунад', () =>
   assertSucceeds(deleteDoc(doc(a, 'conversations', convoId, 'messages', 'm1'))));
 
+// --- Манъкунӣ (block) ---
+// Манъкунӣ бояд ДУ ТАРАФА бошад. Пештар он танҳо дар экран буд: манъшуда
+// ба ҳар ҳол паём фиристода метавонист — яъне «манъ кардан» аз чизе ҳимоя
+// намекард.
+const blockConvo = [A, C].sort().join('_');
+await env.withSecurityRulesDisabled(async (ctx) => {
+  const db = ctx.firestore();
+  await setDoc(doc(db, 'conversations', blockConvo), {
+    participants: [A, C], participantNames: { [A]: 'A', [C]: 'C' },
+  });
+});
+
+await check('пеш аз манъкунӣ C ба A паём фиристода метавонад', () =>
+  assertSucceeds(addDoc(collection(c, 'conversations', blockConvo, 'messages'), { text: 'salom', senderId: C })));
+
+await env.withSecurityRulesDisabled(async (ctx) => {
+  // A шахси C-ро манъ мекунад.
+  await setDoc(ctx.firestore().collection('users').doc(A), { blockedUsers: [C] }, { merge: true });
+});
+
+await check('пас аз манъкунӣ C ба A паём фиристода НАМЕТАВОНАД', () =>
+  assertFails(addDoc(collection(c, 'conversations', blockConvo, 'messages'), { text: 'boz', senderId: C })));
+await check('манъкунанда худаш нависта метавонад', () =>
+  assertSucceeds(addDoc(collection(a, 'conversations', blockConvo, 'messages'), { text: 'ok', senderId: A })));
+await check('манъшуда паёмҳои кӯҳнаро ҳанӯз мехонад', () =>
+  assertSucceeds(getDocs(collection(c, 'conversations', blockConvo, 'messages'))));
+await check('манъкунӣ ба чати дигар таъсир намекунад', () =>
+  assertSucceeds(addDoc(collection(b, 'conversations', convoId, 'messages'), { text: 'x', senderId: B })));
+
 // --- Он чизе ки набояд иҷозат дошта бошад ---
 await check('C чати бегонаро хонда НАМЕТАВОНАД', () =>
   assertFails(getDoc(doc(c, 'conversations', convoId))));
