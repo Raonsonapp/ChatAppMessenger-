@@ -485,4 +485,9 @@ const Map<String, String> stringsEn = {
   'k483': 'No favorites yet',
   'k484': 'Add contacts from a chat menu',
   'k485': 'Scheduled calls',
+  'k486': 'Translation is not set up on the server',
+  'k487': 'Could not translate',
+  'k488': 'Translate',
+  'k489': 'Translating…',
+  'k490': 'Translation',
 };

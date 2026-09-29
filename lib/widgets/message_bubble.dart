@@ -25,6 +25,7 @@ import 'link_preview_card.dart';
 import 'linkified_text.dart';
 import '../services/report_service.dart';
 import '../sheets/report_sheet.dart';
+import '../services/translate_service.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -106,6 +107,86 @@ class MessageBubble extends StatelessWidget {
   });
 
   static const List<String> _quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+  /// Матнро тарҷума карда, дар варақаи поён нишон медиҳад.
+  ///
+  /// Матни аслӣ дар назди тарҷума мемонад: корбар бояд бубинад, ки чӣ
+  /// тарҷума шуд.
+  Future<void> _translate(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(SnackBar(content: Text(tr('k489'))));
+
+    String result;
+    try {
+      result = await TranslateService.translate(message.text);
+    } on TranslateFailure catch (failure) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(failure.message)));
+      return;
+    } catch (_) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(tr('k487'))));
+      return;
+    }
+
+    messenger.hideCurrentSnackBar();
+    if (!context.mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.glassBorder),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(LucideIcons.languages,
+                    size: 18, color: AppColors.neonCyan),
+                const SizedBox(width: 9),
+                Text(
+                  tr('k490'),
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SelectableText(
+              result,
+              style: TextStyle(
+                  color: AppColors.textPrimary, fontSize: 15, height: 1.35),
+            ),
+            const SizedBox(height: 14),
+            Divider(color: AppColors.glassBorder, height: 1),
+            const SizedBox(height: 12),
+            Text(
+              message.text,
+              style: TextStyle(
+                color: AppColors.textSecondary.withValues(alpha: 0.75),
+                fontSize: 12.5,
+                height: 1.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// Аввалин ҳаволаи матн — барои корти пешнамоиш.
   String? get _previewUrl {
@@ -198,6 +279,16 @@ class MessageBubble extends StatelessWidget {
                   onReply?.call(message);
                 },
               ),
+              if (message.text.trim().isNotEmpty && !message.deleted)
+                _actionTile(
+                  context,
+                  icon: LucideIcons.languages,
+                  label: tr('k488'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _translate(context);
+                  },
+                ),
               if (!isMe)
                 _actionTile(
                   context,

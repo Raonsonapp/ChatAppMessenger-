@@ -173,6 +173,89 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
+  /// Як банди навбар бо аниматсияи мулоим.
+  ///
+  /// Ҳангоми интихоб: андоза каме калон, каме боло меравад ва дурахш пайдо
+  /// мешавад — 260 мс, ба қадри кофӣ намоён, вале на дилгиркунанда.
+  Widget _navItem(int index, IconData icon, String label) {
+    final selected = _currentIndex == index;
+
+    return Expanded(
+      child: Semantics(
+        selected: selected,
+        button: true,
+        label: label,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            if (_currentIndex == index) return;
+            setState(() => _currentIndex = index);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(vertical: 7),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedSlide(
+                  offset: Offset(0, selected ? -0.10 : 0),
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOut,
+                  child: AnimatedScale(
+                    scale: selected ? 1.16 : 1,
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOut,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 260),
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: selected
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.neonEmerald
+                                      .withValues(alpha: 0.35),
+                                  blurRadius: 14,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Icon(
+                        icon,
+                        size: 21,
+                        color: selected
+                            ? AppColors.neonEmerald
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOut,
+                  style: TextStyle(
+                    color: selected
+                        ? AppColors.neonEmerald
+                        : AppColors.textSecondary.withValues(alpha: 0.85),
+                    fontSize: 11.5,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBottomNav() {
     return ClipRect(
       child: BackdropFilter(
@@ -184,22 +267,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
           child: SafeArea(
             top: false,
-            child: BottomNavigationBar(
-              currentIndex: _currentIndex,
-              onTap: (i) => setState(() => _currentIndex = i),
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: AppColors.neonEmerald,
-              unselectedItemColor: AppColors.textSecondary,
-              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11.5),
-              items: [
-                BottomNavigationBarItem(icon: Icon(LucideIcons.message_circle), label: tr('k044')),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.circle), label: tr('k045')),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.users), label: tr('k046')),
-                BottomNavigationBarItem(icon: Icon(LucideIcons.phone), label: tr('k047')),
-              ],
+            // Навбари худсохт: `BottomNavigationBar`-и стандартӣ дурахши
+            // нишонаи интихобшуда ва ҳаракати амудиро дастгирӣ намекунад.
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  _navItem(0, LucideIcons.message_circle, tr('k044')),
+                  _navItem(1, LucideIcons.circle_dashed, tr('k045')),
+                  _navItem(2, LucideIcons.users, tr('k046')),
+                  _navItem(3, LucideIcons.phone, tr('k047')),
+                ],
+              ),
             ),
           ),
         ),

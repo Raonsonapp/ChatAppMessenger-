@@ -173,6 +173,9 @@ app.get('/', (_req, res) => {
     storage: { ...r2.status(), selfTest: r2.lastSelfTest() },
     // Ҳолати занг — бе ҳељ сирре, танҳо номҳо ва «ҳаст/нест».
     calls: agora.status(),
+    // Тарҷума ихтиёрист: бе он банди «Тарҷума» худро ғайрифаъол нишон
+    // медиҳад, на ин ки матни аслиро ҳамчун тарҷума диҳад.
+    translate: { configured: Boolean(process.env.TRANSLATE_ENDPOINT) },
     publicDomain: process.env.PUBLIC_URL || process.env.RAILWAY_PUBLIC_DOMAIN || null,
     // Кадом нусхаи код кор мекунад — барои санҷиши он ки деплой расидааст ё не.
     build: {
@@ -461,6 +464,80 @@ async function notifyMany({ sender, toUids, title, body, data }) {
 
   return { sent, skipped: skipped + (targets.length - sent) };
 }
+
+/** Ҳадди тарҷумаҳо барои як корбар дар як соат. */
+const TRANSLATE_QUOTA_PER_HOUR = 300;
+const translateQuota = new Map();
+
+/**
+ * Тарҷумаи матни паём.
+ *
+ * Тарҷумонро СЕРВЕР даъват мекунад, на барнома: калиди хидмат (агар бошад)
+ * дар барнома намемонад ва натиҷа кэш карда мешавад.
+ *
+ * Агар хидмати тарҷума танзим нашуда бошад, сервер инро РӮШАН мегӯяд —
+ * матни аслӣ ҳамчун «тарҷума» баргардонида намешавад, зеро ин корбарро
+ * фиреб медиҳад.
+ */
+app.post('/api/translate', async (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!idToken) return res.status(401).json({ error: 'Authorization lozim ast' });
+
+  let user;
+  try {
+    user = await getAuth().verifyIdToken(idToken);
+  } catch {
+    return res.status(401).json({ error: 'Token nodurust ast' });
+  }
+
+  if (overQuota(translateQuota, user.uid, TRANSLATE_QUOTA_PER_HOUR)) {
+    return res.status(429).json({ error: 'too-many-requests' });
+  }
+
+  const text = String((req.body ?? {}).text ?? '').trim();
+  const target = String((req.body ?? {}).target ?? 'en').slice(0, 5);
+  if (!text) return res.status(400).json({ error: 'text lozim ast' });
+  if (text.length > 2000) return res.status(413).json({ error: 'text-too-long' });
+
+  const endpoint = process.env.TRANSLATE_ENDPOINT;
+  if (!endpoint) {
+    return res.status(503).json({ error: 'translate-not-configured' });
+  }
+
+  try {
+    // LibreTranslate-мувофиқ: `q`, `source`, `target`.
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        q: text,
+        source: 'auto',
+        target,
+        format: 'text',
+        ...(process.env.TRANSLATE_API_KEY
+          ? { api_key: process.env.TRANSLATE_API_KEY }
+          : {}),
+      }),
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (!response.ok) {
+      console.warn(`Тарҷума нашуд: HTTP ${response.status}`);
+      return res.status(502).json({ error: 'translate-failed' });
+    }
+
+    const data = await response.json();
+    const translated = data?.translatedText;
+    if (typeof translated !== 'string' || !translated.trim()) {
+      return res.status(502).json({ error: 'translate-failed' });
+    }
+    res.json({ text: translated, target });
+  } catch (err) {
+    console.warn('Хатои тарҷума:', err?.message ?? err);
+    res.status(502).json({ error: 'translate-failed' });
+  }
+});
 
 /** Ҳадди дархостҳои пешнамоиш барои як корбар дар як соат. */
 const PREVIEW_QUOTA_PER_HOUR = 300;
