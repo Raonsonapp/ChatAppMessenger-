@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,11 +11,13 @@ import 'group_call_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import '../theme/app_scope.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/ringtone_service.dart';
 
 /// Экрани занги воридотӣ — намоён мешавад вақте ки корбари дигар занг
 /// мезанад (тавассути IncomingCallListener). Қабул → CallScreen (ба ҳамон
 /// канали Agora ҳамроҳ мешавад); Рад → ҳуҷҷати calls/{id} 'declined' мешавад.
-class IncomingCallScreen extends StatelessWidget {
+class IncomingCallScreen extends StatefulWidget {
   final String callId;
   final String callerId;
   final String callerName;
@@ -35,16 +38,84 @@ class IncomingCallScreen extends StatelessWidget {
     this.groupName,
   });
 
-  bool get isGroupCall => groupId != null && channelId != null;
+  @override
+  State<IncomingCallScreen> createState() => _IncomingCallScreenState();
+}
 
-  Future<void> _decline(BuildContext context) async {
-    await FirebaseFirestore.instance.collection('calls').doc(callId).update({'outcome': 'declined'});
-    if (context.mounted) Navigator.of(context).pop();
+class _IncomingCallScreenState extends State<IncomingCallScreen> {
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _callSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _startRinging();
+    _watchCall();
   }
 
-  void _accept(BuildContext context) {
+  @override
+  void dispose() {
+    _callSub?.cancel();
+    // Ҳар роҳи хуруҷ садоро қатъ мекунад — рингтони бандмонда аз набудани
+    // рингтон бадтар аст.
+    RingtoneService.instance.stop();
+    super.dispose();
+  }
+
+  Future<void> _startRinging() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    var withSound = true;
+    var withVibration = true;
+    if (uid != null) {
+      try {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final settings = doc.data()?['settings'] as Map<String, dynamic>?;
+        withSound = (settings?['callSound'] ?? true) == true;
+        withVibration = (settings?['vibration'] ?? true) == true;
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    await RingtoneService.instance.start(
+      withSound: withSound,
+      withVibration: withVibration,
+    );
+  }
+
+  /// Агар зангзананда қатъ кунад, экран худаш пӯшида мешавад — вагарна
+  /// садо то 45 сония идома меёбад ва корбар «занги арвоҳ»-ро мебинад.
+  void _watchCall() {
+    _callSub = FirebaseFirestore.instance
+        .collection('calls')
+        .doc(widget.callId)
+        .snapshots()
+        .listen((snap) {
+      final outcome = snap.data()?['outcome'] as String?;
+      if (outcome == null || outcome == 'ringing') return;
+      if (!mounted) return;
+      RingtoneService.instance.stop();
+      Navigator.of(context).maybePop();
+    }, onError: (_) {});
+  }
+
+  bool get isGroupCall => widget.groupId != null && widget.channelId != null;
+
+  Future<void> _decline() async {
+    await RingtoneService.instance.stop();
+    try {
+      await FirebaseFirestore.instance
+          .collection('calls')
+          .doc(widget.callId)
+          .update({'outcome': 'declined'});
+    } catch (_) {}
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  void _accept() {
+    // Садо ПЕШ АЗ ҳама чиз қатъ мешавад: вагарна он ҳангоми кушода шудани
+    // экрани занг боз чанд сония садо медиҳад.
+    RingtoneService.instance.stop();
+    final context = this.context;
     // Занги гурӯҳӣ ба канали умумӣ мебарад, на ба ҳуҷҷати як занг.
-    FirebaseFirestore.instance.collection('calls').doc(callId).update({
+    FirebaseFirestore.instance.collection('calls').doc(widget.callId).update({
       'outcome': CallOutcome.completed.name,
     }).catchError((_) {});
 
@@ -52,16 +123,16 @@ class IncomingCallScreen extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) => isGroupCall
             ? GroupCallScreen(
-                groupId: groupId!,
-                groupName: groupName ?? tr('k293'),
-                type: type,
-                joinChannelId: channelId,
+                groupId: widget.groupId!,
+                groupName: widget.groupName ?? tr('k293'),
+                type: widget.type,
+                joinChannelId: widget.channelId,
               )
             : CallScreen(
-                otherUserId: callerId,
-                otherUserName: callerName,
-                type: type,
-                existingCallId: callId,
+                otherUserId: widget.callerId,
+                otherUserName: widget.callerName,
+                type: widget.type,
+                existingCallId: widget.callId,
               ),
       ),
     );
@@ -70,7 +141,7 @@ class IncomingCallScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     AppScope.watch(context);
-    final isVideo = type == CallType.video;
+    final isVideo = widget.type == CallType.video;
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -80,9 +151,9 @@ class IncomingCallScreen extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 50),
-                UserAvatar(name: callerName, uid: callerId, size: 120),
+                UserAvatar(name: widget.callerName, uid: widget.callerId, size: 120),
                 const SizedBox(height: 20),
-                Text(callerName, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 22)),
+                Text(widget.callerName, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 22)),
                 const SizedBox(height: 8),
                 Text(
                   isVideo ? tr('k121') : tr('k122'),
@@ -98,13 +169,13 @@ class IncomingCallScreen extends StatelessWidget {
                         icon: LucideIcons.phone_off,
                         color: Colors.redAccent,
                         label: tr('k123'),
-                        onTap: () => _decline(context),
+                        onTap: _decline,
                       ),
                       _actionButton(
                         icon: isVideo ? LucideIcons.video : LucideIcons.phone,
                         color: AppColors.neonEmerald,
                         label: tr('k124'),
-                        onTap: () => _accept(context),
+                        onTap: _accept,
                       ),
                     ],
                   ),

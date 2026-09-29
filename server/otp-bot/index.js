@@ -342,6 +342,24 @@ function buildPayload({ isCall, title, body, data, senderUid }) {
   return payload;
 }
 
+/**
+ * Ҳамаи токенҳои дастгоҳҳои корбар.
+ *
+ * Пештар танҳо ЯК токен нигоҳ дошта мешуд (`fcmToken`). Вақте корбар аз
+ * дастгоҳи дуюм ворид мешуд, токени аввал бо токени нав иваз мегардид ва
+ * дастгоҳи якум ХОМӮШОНА огоҳинома гирифтанро бас мекард.
+ *
+ * Майдони кӯҳна нигоҳ дошта шудааст, то корбароне ки ҳанӯз нусхаи нави
+ * барномаро надоранд, огоҳинома гиранд.
+ */
+function deviceTokens(info) {
+  const list = Array.isArray(info?.fcmTokens) ? info.fcmTokens : [];
+  const legacy = info?.fcmToken ? [info.fcmToken] : [];
+  return [...new Set([...list, ...legacy])].filter(
+    (t) => typeof t === 'string' && t.length > 0,
+  );
+}
+
 /** Ҳадди FCM барои як дархости multicast. */
 const FCM_MULTICAST_LIMIT = 500;
 
@@ -374,11 +392,13 @@ async function notifyMany({ sender, toUids, title, body, data }) {
     // Огоҳиномаи хомӯшкарда ва корбари бе токен партофта мешаванд.
     // Занг истисност: «огоҳиномаи паём» набояд зангро хомӯш кунад.
     const muted = !isCall && info?.settings?.messageNotifications === false;
-    if (!info?.fcmToken || muted) {
+    const tokens = deviceTokens(info);
+    if (tokens.length === 0 || muted) {
       skipped += 1;
       continue;
     }
-    targets.push({ token: info.fcmToken, ref: doc.ref });
+    // ҲАР дастгоҳи корбар огоҳинома мегирад, на танҳо охирин.
+    for (const token of tokens) targets.push({ token, ref: doc.ref });
   }
 
   if (targets.length === 0) return { sent: 0, skipped };
@@ -407,14 +427,22 @@ async function notifyMany({ sender, toUids, title, body, data }) {
         return;
       }
       if (item.error?.code === 'messaging/registration-token-not-registered') {
-        stale.push(chunk[index].ref);
+        stale.push(chunk[index]);
       }
     });
   }
 
   // Токенҳои бекоршуда тоза мешаванд, то дафъаи дигар бекор кӯшиш нашавад.
   await Promise.all(
-    stale.map((ref) => ref.update({ fcmToken: FieldValue.delete() }).catch(() => {})),
+    stale.map(({ ref, token }) =>
+      ref
+        .update({
+          // Танҳо ҳамин як дастгоҳ бардошта мешавад — дастгоҳҳои дигари
+          // ҳамон корбар бояд огоҳинома гирифтанро давом диҳанд.
+          fcmTokens: FieldValue.arrayRemove(token),
+        })
+        .catch(() => {}),
+    ),
   );
 
   return { sent, skipped: skipped + (targets.length - sent) };
@@ -608,32 +636,15 @@ app.post('/api/notify', async (req, res) => {
   // Ба худи худ огоҳинома намефиристем.
   if (toUid === sender.uid) return res.json({ sent: false, reason: 'self' });
 
-  const doc = await getFirestore().collection('users').doc(toUid).get();
-  const fcmToken = doc.data()?.fcmToken;
-  if (!fcmToken) return res.json({ sent: false, reason: 'no-token' });
-
-  const isCall = (data || {}).type === 'incoming_call';
-
-  // Агар гиранда огоҳиномаи ПАЁМро хомӯш карда бошад, паём намефиристем.
-  // Вале занг паём нест: «огоҳиномаи паём» набояд зангро хомӯш кунад.
-  if (!isCall && doc.data()?.settings?.messageNotifications === false) {
-    return res.json({ sent: false, reason: 'muted' });
-  }
-
+  // Як ҳамон мантиқ истифода мешавад, то роҳи якнафара ва гурӯҳӣ ҳељ гоҳ
+  // аз ҳам фарқ накунанд (масалан бисёрдастгоҳ дар яке кор кунад, дар
+  // дигаре не).
   try {
-    await getMessaging().send({
-      token: fcmToken,
-      ...buildPayload({ isCall, title, body, data, senderUid: sender.uid }),
-    });
-    res.json({ sent: true });
+    const result = await notifyMany({ sender, toUids: [toUid], title, body, data });
+    return res.json({ sent: result.sent > 0, ...result });
   } catch (err) {
-    // Токени кӯҳна/бекоршуда — онро тоза мекунем, то бори дигар кӯшиш нашавад.
-    if (err?.code === 'messaging/registration-token-not-registered') {
-      await doc.ref.update({ fcmToken: FieldValue.delete() }).catch(() => {});
-      return res.json({ sent: false, reason: 'stale-token' });
-    }
     console.error('Хатои фиристодани push:', err?.message ?? err);
-    res.status(500).json({ error: 'push firistoda nashud' });
+    return res.status(500).json({ error: 'push firistoda nashud' });
   }
 });
 

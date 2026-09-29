@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -312,17 +313,72 @@ class NotificationService {
     }
   }
 
-  /// Пас аз воридшавӣ даъват шавад — токени FCM-ро дар ҳуҷҷати корбар
-  /// сабт мекунад, то Cloud Function тавонад ба ӯ push фиристад.
+  /// Пас аз воридшавӣ даъват шавад — токени FCM-и ҲАМИН дастгоҳро сабт
+  /// мекунад, то сервер тавонад ба ӯ push фиристад.
+  ///
+  /// Токен ба РӮЙХАТ илова мешавад, на ба як майдон. Пештар як майдон буд ва
+  /// вақте корбар аз дастгоҳи дуюм ворид мешуд, токени аввал иваз мегардид —
+  /// дастгоҳи якум хомӯшона огоҳинома гирифтанро бас мекард.
   static Future<void> registerTokenForCurrentUser() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    final token = await FirebaseMessaging.instance.getToken();
-    if (token != null) {
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({'fcmToken': token}, SetOptions(merge: true));
+
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) await _saveToken(uid, token);
+    } catch (_) {
+      // Дар дастгоҳҳои бе Google Play токен нест — ин барномаро набояд
+      // вайрон кунад.
     }
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-      FirebaseFirestore.instance.collection('users').doc(uid).set({'fcmToken': newToken}, SetOptions(merge: true));
-    });
+
+    _tokenRefreshSub?.cancel();
+    _tokenRefreshSub = FirebaseMessaging.instance.onTokenRefresh.listen(
+      (newToken) => _saveToken(uid, newToken),
+      onError: (_) {},
+    );
+  }
+
+  static StreamSubscription<String>? _tokenRefreshSub;
+
+  static Future<void> _saveToken(String uid, String token) async {
+    _currentToken = token;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'fcmTokens': FieldValue.arrayUnion([token]),
+        // Майдони кӯҳна нигоҳ дошта мешавад, то сервери нусхаи кӯҳна низ
+        // кор кунад.
+        'fcmToken': token,
+      }, SetOptions(merge: true));
+    } catch (_) {}
+  }
+
+  static String? _currentToken;
+
+  /// Пеш аз баромадан даъват шавад.
+  ///
+  /// Бе ин дастгоҳи бароммада ҳанӯз огоҳиномаҳои паёмҳои шахсиро мегирад —
+  /// яъне касе ки телефонро мегирад, паёмҳои моро мебинад.
+  static Future<void> unregisterTokenForCurrentUser() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final token = _currentToken ?? await _safeToken();
+    _tokenRefreshSub?.cancel();
+    _tokenRefreshSub = null;
+    if (uid == null || token == null) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'fcmTokens': FieldValue.arrayRemove([token]),
+        'fcmToken': FieldValue.delete(),
+      }, SetOptions(merge: true));
+    } catch (_) {}
+    _currentToken = null;
+  }
+
+  static Future<String?> _safeToken() async {
+    try {
+      return await FirebaseMessaging.instance.getToken();
+    } catch (_) {
+      return null;
+    }
   }
 }

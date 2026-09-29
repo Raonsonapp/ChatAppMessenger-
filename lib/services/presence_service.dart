@@ -27,6 +27,20 @@ class PresenceService with WidgetsBindingObserver {
     _setOnline(true);
   }
 
+  /// Пеш аз баромадан: ҳолати «дар шабака»-ро мебардорад ва назоратро
+  /// қатъ мекунад — вагарна корбари бароммада то абад «дар шабака» менамояд.
+  Future<void> stopAndClear() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    stop();
+    _settingsCache = null;
+    if (uid == null) return;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'online': false,
+      }, SetOptions(merge: true));
+    } catch (_) {}
+  }
+
   void stop() {
     if (!_started) return;
     _started = false;
