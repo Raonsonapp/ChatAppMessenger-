@@ -39,6 +39,7 @@ import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
 import '../widgets/upload_indicator.dart';
 import '../services/message_status_service.dart';
+import '../theme/chat_theme_controller.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -653,6 +654,14 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityInfoScreen(communityId: widget.communityId)));
   }
 
+
+  /// Ранги ҳубобчаи паёмҳои ман — аз мавзӯи ҳамин чат.
+  Color? get _chatBubbleColor {
+    final style = chatThemeController.styleFor(widget.communityId);
+    final value = style.bubbleColor;
+    return value == null ? null : Color(value);
+  }
+
   @override
   Widget build(BuildContext context) {
     AppScope.watch(context);
@@ -723,6 +732,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                           message: message,
                           isMe: isMe,
                           currentUid: currentUid,
+                          bubbleColor: _chatBubbleColor,
                           senderLabel: isMe ? null : _memberNames[message.senderId],
                           animateIn: index == docs.length - 1,
                           grouped: isGroupedWithPrevious(previousMessage, message),

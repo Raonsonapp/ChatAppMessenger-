@@ -30,7 +30,15 @@ class ContactInfoScreen extends StatelessWidget {
 
   /// Паёмҳои муваққатӣ — мӯҳлат дар ҳуҷҷати сӯҳбат нигоҳ дошта мешавад,
   /// бинобар ин барои ҳар ду тараф яксон аст.
-  void _showDisappearOptions(BuildContext context, int current) {
+  /// Феҳристи паёмҳои муваққатӣ.
+  ///
+  /// Статикӣ аст, то экрани чат низ ҳамин феҳристро истифода барад —
+  /// вагарна ду нусхаи якхела пайдо мешуд.
+  static void showDisappearOptions(
+    BuildContext context,
+    String conversationId,
+    int current,
+  ) {
     const options = <int>[0, 86400, 604800, 7776000];
     showModalBottomSheet<void>(
       context: context,
@@ -239,8 +247,9 @@ class ContactInfoScreen extends StatelessWidget {
                                       style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                                     ),
                                     trailing: Icon(LucideIcons.chevron_right, color: AppColors.textSecondary, size: 17),
-                                    onTap: () => _showDisappearOptions(
+                                    onTap: () => showDisappearOptions(
                                       context,
+                                      conversationId,
                                       (convoSnapshot.data?.data()?['disappearIn'] as num?)?.toInt() ?? 0,
                                     ),
                                   ),

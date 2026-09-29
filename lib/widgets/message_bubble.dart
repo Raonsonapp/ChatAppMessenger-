@@ -33,6 +33,11 @@ class MessageBubble extends StatelessWidget {
   final String? senderLabel;
   final bool showReadReceipts;
 
+  /// Ранги ҳубобчаи паёмҳои ман — аз мавзӯи ҳамин чат.
+  ///
+  /// `null` — ранги пешфарзи барнома.
+  final Color? bubbleColor;
+
   /// Иштирокчиёни дигар — барои ҳисоби «расид»/«хонда шуд».
   ///
   /// Дар чати шахсӣ якто, дар гурӯҳ ҳамаи аъзоён ба ғайр аз ман. Дар гурӯҳ
@@ -82,6 +87,7 @@ class MessageBubble extends StatelessWidget {
     this.senderLabel,
     this.showReadReceipts = true,
     this.otherParticipants = const [],
+    this.bubbleColor,
     this.onReply,
     this.onDelete,
     this.onDeleteForMe,
@@ -617,8 +623,14 @@ class MessageBubble extends StatelessWidget {
                     decoration: isSticker
                         ? null
                         : BoxDecoration(
-                            gradient: (isMe && !message.deleted && !hasImage) ? AppColors.neonGradient : null,
-                            color: (isMe && !message.deleted && !hasImage) ? null : AppColors.glassFill,
+                            // Агар барои ин чат ранг интихоб шуда бошад, он
+                            // ба ҷои градиенти пешфарз истифода мешавад.
+                            gradient: (isMe && !message.deleted && !hasImage && bubbleColor == null)
+                                ? AppColors.neonGradient
+                                : null,
+                            color: (isMe && !message.deleted && !hasImage)
+                                ? bubbleColor
+                                : AppColors.glassFill,
                             border: isMe
                                 ? null
                                 : Border.all(color: isAI ? AppColors.neonCyan.withValues(alpha: 0.4) : AppColors.glassBorder),

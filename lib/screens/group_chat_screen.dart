@@ -42,6 +42,7 @@ import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
 import '../widgets/upload_indicator.dart';
 import '../services/message_status_service.dart';
+import '../theme/chat_theme_controller.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -670,6 +671,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => GroupInfoScreen(groupId: widget.groupId)));
   }
 
+
+  /// Ранги ҳубобчаи паёмҳои ман — аз мавзӯи ҳамин чат.
+  Color? get _chatBubbleColor {
+    final style = chatThemeController.styleFor(widget.groupId);
+    final value = style.bubbleColor;
+    return value == null ? null : Color(value);
+  }
+
   @override
   Widget build(BuildContext context) {
     AppScope.watch(context);
@@ -740,6 +749,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           message: message,
                           isMe: isMe,
                           currentUid: currentUid,
+                          bubbleColor: _chatBubbleColor,
                           senderLabel: isMe ? null : _memberNames[message.senderId],
                           animateIn: index == docs.length - 1,
                           grouped: isGroupedWithPrevious(previousMessage, message),

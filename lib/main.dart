@@ -8,6 +8,7 @@ import 'theme/app_theme.dart';
 import 'theme/app_scope.dart';
 import 'theme/theme_controller.dart';
 import 'theme/wallpaper_controller.dart';
+import 'theme/chat_theme_controller.dart';
 import 'theme/text_scale_controller.dart';
 import 'services/draft_store.dart';
 import 'l10n/locale_controller.dart';
@@ -35,6 +36,7 @@ void main() async {
   await _safely(wallpaperController.load);
   await _safely(textScaleController.load);
   await _safely(draftStore.load);
+  await _safely(chatThemeController.load);
 
   // Огоҳиномаҳо дар баъзе дастгоҳҳо (масалан бе Google Play) истисно
   // мепартоянд. Пештар ин истисно то `runApp` мерасид ва барнома умуман
@@ -73,6 +75,7 @@ class _ChatAppState extends State<ChatApp> {
     wallpaperController,
     textScaleController,
     draftStore,
+    chatThemeController,
   ]);
 
   @override

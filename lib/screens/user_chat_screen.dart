@@ -6,7 +6,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
@@ -40,6 +39,16 @@ import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
 import '../widgets/upload_indicator.dart';
 import '../services/message_status_service.dart';
+import '../sheets/chat_menu_sheet.dart';
+import '../services/chat_export_service.dart';
+import '../services/favorites_service.dart';
+import '../services/conversation_actions.dart';
+import 'chat_theme_screen.dart';
+import '../sheets/report_sheet.dart';
+import '../services/report_service.dart';
+import 'package:share_plus/share_plus.dart';
+import 'shared_media_screen.dart';
+import '../theme/chat_theme_controller.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -633,6 +642,19 @@ class _UserChatScreenState extends State<UserChatScreen> {
     );
   }
 
+
+  /// Нишонаи интихобкардаи ин чат, ё `null`.
+  IconData? get _chatIcon => ChatThemeScreen.iconByName(
+        chatThemeController.styleFor(widget.conversationId).icon,
+      );
+
+  /// Ранги ҳубобчаи паёмҳои ман — аз мавзӯи ҳамин чат.
+  Color? get _chatBubbleColor {
+    final style = chatThemeController.styleFor(widget.conversationId);
+    final value = style.bubbleColor;
+    return value == null ? null : Color(value);
+  }
+
   @override
   Widget build(BuildContext context) {
     AppScope.watch(context);
@@ -668,6 +690,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                     child: Stack(
                       children: [
                         ChatWallpaper(
+                        chatId: widget.conversationId,
                         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                       stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                       builder: (context, snapshot) {
@@ -740,6 +763,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                               message: message,
                               isMe: message.senderId == currentUid,
                               currentUid: currentUid,
+                              bubbleColor: _chatBubbleColor,
                               showReadReceipts: readReceipts,
                               // Дар чати шахсӣ як ҳамсӯҳбат — ✓✓ вақте
                               // пайдо мешавад, ки МАҲЗ ӯ гирифта/хонда бошад.
@@ -954,6 +978,244 @@ class _UserChatScreenState extends State<UserChatScreen> {
 
   void _openSearch() => setState(() => _searching = true);
 
+  /// Менюи сенуқтагии чат.
+  void _openChatMenu() {
+    ChatMenuSheet.show(
+      context,
+      title: widget.otherUserName,
+      actions: [
+        ChatMenuAction(
+          icon: LucideIcons.user,
+          label: tr('k444'),
+          onTap: _openContactInfo,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.search,
+          label: tr('k048'),
+          onTap: _openSearch,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.image,
+          label: tr('k445'),
+          onTap: _openSharedMedia,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.bell_off,
+          label: tr('k446'),
+          onTap: _toggleMute,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.timer,
+          label: tr('k447'),
+          onTap: _openDisappearing,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.palette,
+          label: tr('k429'),
+          onTap: _openChatTheme,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.ellipsis,
+          label: tr('k448'),
+          hasSubmenu: true,
+          onTap: _openMoreMenu,
+        ),
+      ],
+    );
+  }
+
+  /// Зермену «Боз».
+  void _openMoreMenu() {
+    ChatMenuSheet.show(
+      context,
+      title: tr('k448'),
+      actions: [
+        ChatMenuAction(
+          icon: LucideIcons.flag,
+          label: tr('k415'),
+          onTap: _openReport,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.slash,
+          label: tr('k076'),
+          danger: true,
+          onTap: _blockFromMenu,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.eraser,
+          label: tr('k449'),
+          danger: true,
+          onTap: _confirmClearChat,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.download,
+          label: tr('k450'),
+          onTap: _exportChat,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.star,
+          label: tr('k451'),
+          onTap: _toggleFavorite,
+        ),
+      ],
+    );
+  }
+
+  void _openDisappearing() =>
+      ContactInfoScreen.showDisappearOptions(
+        context,
+        widget.conversationId,
+        _disappearIn,
+      );
+
+  void _openSharedMedia() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SharedMediaScreen(
+          parentPath: _conversationRef.path,
+          title: widget.otherUserName,
+        ),
+      ),
+    );
+  }
+
+  void _openChatTheme() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatThemeScreen(
+          chatId: widget.conversationId,
+          title: widget.otherUserName,
+        ),
+      ),
+    );
+  }
+
+  void _openReport() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => ReportSheet(
+        target: ReportTarget.user,
+        targetId: widget.otherUserId,
+        contextPath: _conversationRef.path,
+      ),
+    );
+  }
+
+  Future<void> _toggleMute() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final snapshot = await _conversationRef.get();
+    final muted =
+        List<String>.from(snapshot.data()?['mutedBy'] as List? ?? const []);
+    final willMute = !muted.contains(uid);
+    await ConversationActions.setMuted(widget.conversationId, uid, willMute);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(willMute ? tr('k452') : tr('k453'))),
+    );
+  }
+
+  Future<void> _toggleFavorite() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final added = await FavoritesService.toggle(uid, widget.otherUserId);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(added ? tr('k454') : tr('k455'))),
+    );
+  }
+
+  Future<void> _blockFromMenu() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'blockedUsers': FieldValue.arrayUnion([widget.otherUserId]),
+    }, SetOptions(merge: true));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(tr('k456'))),
+    );
+  }
+
+  /// Тоза кардани чат бозгашт надорад, бинобар ин тасдиқ пурсида мешавад.
+  Future<void> _confirmClearChat() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(tr('k449'),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 17)),
+        content: Text(
+          tr('k457'),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(tr('k020'),
+                style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(tr('k449'),
+                style: const TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    // Паёмҳо танҳо БАРОИ МАН пинҳон мешаванд: ҳамсӯҳбат таърихи худро гум
+    // намекунад.
+    final docs = await _messagesRef.get();
+    for (var i = 0; i < docs.docs.length; i += 400) {
+      final batch = FirebaseFirestore.instance.batch();
+      for (final doc in docs.docs.skip(i).take(400)) {
+        batch.update(doc.reference, {
+          'deletedFor': FieldValue.arrayUnion([uid]),
+        });
+      }
+      await batch.commit().catchError((_) {});
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(tr('k458'))),
+    );
+  }
+
+  Future<void> _exportChat() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(tr('k459'))),
+    );
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+      final file = await ChatExportService.export(
+        messagesRef: _messagesRef,
+        chatTitle: widget.otherUserName,
+        nameByUid: {
+          uid: FirebaseAuth.instance.currentUser?.displayName ?? tr('k015'),
+          widget.otherUserId: widget.otherUserName,
+        },
+      );
+      if (!mounted) return;
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], text: widget.otherUserName),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('k460'))),
+      );
+    }
+  }
+
   void _closeSearch() {
     _searchController.clear();
     setState(() {
@@ -1027,10 +1289,26 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            widget.otherUserName,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  widget.otherUserName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                                ),
+                              ),
+                              // Нишонаи интихобкардаи ин чат — то корбар
+                              // фавран бинад, ки чат мавзӯи худро дорад.
+                              if (_chatIcon != null) ...[
+                                const SizedBox(width: 6),
+                                Icon(
+                                  _chatIcon,
+                                  size: 14,
+                                  color: _chatBubbleColor ?? AppColors.neonEmerald,
+                                ),
+                              ],
+                            ],
                           ),
                           // «дар шабака» / «2 соат пеш» — бо эҳтироми танзимоти
                           // махфияти худи ҳамсӯҳбат.
@@ -1089,6 +1367,11 @@ class _UserChatScreenState extends State<UserChatScreen> {
             IconButton(
               onPressed: () => _startCall(CallType.audio),
               icon: Icon(LucideIcons.phone, color: AppColors.textSecondary, size: 18),
+            ),
+            IconButton(
+              onPressed: _openChatMenu,
+              icon: Icon(LucideIcons.ellipsis_vertical,
+                  color: AppColors.textSecondary, size: 19),
             ),
           ],
         ),
