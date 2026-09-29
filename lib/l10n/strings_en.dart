@@ -400,4 +400,6 @@ const Map<String, String> stringsEn = {
   'k398': 'Calling is not set up on the server (AGORA_APP_ID)',
   'k399': 'You are not a participant of this call',
   'k400': 'Could not get a call token. Please try again.',
+  'k401': 'Missed video call',
+  'k402': 'Missed voice call',
 };

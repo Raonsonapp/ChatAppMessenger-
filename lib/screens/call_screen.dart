@@ -150,6 +150,27 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
+  /// Ба гиранда хабар медиҳад, ки занги ҷавобнадодашуда буд.
+  Future<void> _notifyMissed() async {
+    final myName = FirebaseAuth.instance.currentUser?.displayName ?? tr('k015');
+    try {
+      await PushService.notify(
+        toUid: widget.otherUserId,
+        title: myName,
+        body: widget.type == CallType.video ? tr('k401') : tr('k402'),
+        data: {
+          'type': 'missed_call',
+          'callId': _channelId ?? '',
+          'callerId': _currentUid,
+          'callerName': myName,
+          'callType': widget.type == CallType.video ? 'video' : 'audio',
+        },
+      );
+    } catch (_) {
+      // Огоҳинома нарасид — занг ба ҳар ҳол дар таърих мемонад.
+    }
+  }
+
   void _watchCallDoc() {
     _callDocSub = _callDoc?.snapshots().listen((snap) {
       final outcome = snap.data()?['outcome'] as String?;
@@ -283,10 +304,18 @@ class _CallScreenState extends State<CallScreen> {
 
     if (!alreadyFinalizedRemotely) {
       final finalOutcome = outcome ?? (_everConnected ? CallOutcome.completed : (widget.isCaller ? CallOutcome.missed : CallOutcome.declined));
-      await _callDoc?.update({
-        'outcome': finalOutcome.name,
-        'durationSeconds': _seconds,
-      });
+      try {
+        await _callDoc?.update({
+          'outcome': finalOutcome.name,
+          'durationSeconds': _seconds,
+        });
+      } catch (_) {}
+
+      // Занги ҷавобнадодашуда бояд НАМОЁН бошад: бе огоҳинома гиранда ҳељ
+      // гоҳ намефаҳмад, ки ба ӯ занг зада буданд.
+      if (finalOutcome == CallOutcome.missed && widget.isCaller) {
+        unawaited(_notifyMissed());
+      }
     }
 
     try {

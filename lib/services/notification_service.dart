@@ -18,6 +18,7 @@ import '../screens/group_chat_screen.dart';
 import '../screens/community_chat_screen.dart';
 import '../l10n/l10n.dart';
 import 'notification_prefs.dart';
+import '../models/app_conversation.dart';
 
 /// Калиди Navigator-и глобалӣ — барои кушодани чат/занг аз push-огоҳинома,
 /// новобаста аз он ки корбар дар кадом экран аст.
@@ -112,6 +113,39 @@ Future<void> _showIncomingCallNotification(Map<String, dynamic> data) async {
   );
 }
 
+/// Огоҳиномаи занги ҷавобнадодашуда.
+///
+/// Огоҳиномаи «занг зада истодааст» бекор карда мешавад: вагарна ду
+/// огоҳинома дар лавҳа мемонад — яке «занг зада истодааст», дигаре
+/// «ҷавоб надодед».
+Future<void> _showMissedCallNotification(Map<String, dynamic> data) async {
+  final callerName = data['callerName'] as String? ?? tr('k223');
+  final isVideo = data['callType'] == 'video';
+
+  await _localNotifications.cancel(id: _notificationId(data));
+
+  final androidDetails = AndroidNotificationDetails(
+    _callsChannelId,
+    tr('k047'),
+    channelDescription: tr('k224'),
+    importance: Importance.high,
+    priority: Priority.high,
+    category: AndroidNotificationCategory.missedCall,
+  );
+
+  await _localNotifications.show(
+    // Шиносаи дигар, то огоҳиномаи занг ва ҷавобнадодашуда омехта нашаванд.
+    id: _notificationId(data) + 1,
+    title: callerName,
+    body: isVideo ? tr('k401') : tr('k402'),
+    notificationDetails: NotificationDetails(
+      android: androidDetails,
+      iOS: const DarwinNotificationDetails(),
+    ),
+    payload: jsonEncode(data),
+  );
+}
+
 Future<void> _ensureFirebaseReady() async {
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -203,6 +237,22 @@ void _navigateFromPayload(Map<String, dynamic> data) {
     return;
   }
 
+  if (type == 'missed_call') {
+    // Занги ҷавобнадодашуда — ба сӯҳбат бо ҳамон шахс мебарад, то корбар
+    // фавран ҷавоб дода тавонад.
+    final callerId = data['callerId'] as String?;
+    final callerName = data['callerName'] as String? ?? tr('k002');
+    if (callerId == null) return;
+    navigator.push(MaterialPageRoute(
+      builder: (_) => UserChatScreen(
+        conversationId: AppConversation.idFor(callerId, FirebaseAuth.instance.currentUser?.uid ?? ''),
+        otherUserId: callerId,
+        otherUserName: callerName,
+      ),
+    ));
+    return;
+  }
+
   if (type == 'chat_message') {
     final kind = data['kind'] as String?;
     final threadId = data['threadId'] as String?;
@@ -263,6 +313,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final data = message.data;
   if (data['type'] == 'incoming_call') {
     await _showIncomingCallNotification(data);
+  } else if (data['type'] == 'missed_call') {
+    await _showMissedCallNotification(data);
   } else if (data['type'] == 'chat_message') {
     await _showMessageNotification(data);
   }
@@ -298,6 +350,8 @@ class NotificationService {
       final data = message.data;
       if (data['type'] == 'incoming_call') {
         await _showIncomingCallNotification(data);
+      } else if (data['type'] == 'missed_call') {
+        await _showMissedCallNotification(data);
       } else if (data['type'] == 'chat_message') {
         await _showMessageNotification(data);
       }

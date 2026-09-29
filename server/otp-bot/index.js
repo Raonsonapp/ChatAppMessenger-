@@ -305,6 +305,17 @@ app.post('/api/otp/verify', async (req, res) => {
 // push мефиристем. Даъватгар бо ID token тасдиқ мешавад, то бегона ба ҳар кас
 // огоҳинома фиристода натавонад.
 /**
+ * Оё ин ҳодисаи занг аст?
+ *
+ * Занги ҷавобнадодашуда низ ба ин ҷо дохил мешавад: «огоҳиномаи паём»-и
+ * хомӯшкарда набояд хабари зангро пинҳон кунад.
+ */
+function isCallEvent(data) {
+  const type = (data || {}).type;
+  return type === 'incoming_call' || type === 'missed_call';
+}
+
+/**
  * Пайкараи паёми FCM.
  *
  * Фарқи муҳим байни занг ва паёми оддӣ:
@@ -327,7 +338,9 @@ function buildPayload({ isCall, title, body, data, senderUid }) {
     android: { priority: 'high' },
   };
 
-  if (isCall) {
+  // Танҳо занги ЗИНДА бояд танҳо-маълумотӣ бошад — то коди мо экрани пурраро
+  // кушояд. Занги ҷавобнадодашуда огоҳиномаи оддист.
+  if (isCall && (data || {}).type === 'incoming_call') {
     // Занг пас аз як дақиқа маъно надорад — беҳтар аст, ки умуман нарасад,
     // назар ба он ки баъди даҳ дақиқа телефон занг занад.
     payload.android.ttl = 60 * 1000;
@@ -373,7 +386,7 @@ const NOTIFY_RECIPIENTS_LIMIT = 2000;
  * анҷом меёбад ва токенҳои бекоршуда фавран тоза карда мешаванд.
  */
 async function notifyMany({ sender, toUids, title, body, data }) {
-  const isCall = (data || {}).type === 'incoming_call';
+  const isCall = isCallEvent(data);
   const unique = [...new Set(toUids.map(String))]
     .filter((uid) => uid && uid !== sender.uid)
     .slice(0, NOTIFY_RECIPIENTS_LIMIT);
@@ -404,7 +417,7 @@ async function notifyMany({ sender, toUids, title, body, data }) {
   if (targets.length === 0) return { sent: 0, skipped };
 
   const payload = buildPayload({
-    isCall: (data || {}).type === 'incoming_call',
+    isCall,
     title,
     body,
     data,
