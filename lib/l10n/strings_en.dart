@@ -397,4 +397,7 @@ const Map<String, String> stringsEn = {
   'k395': 'Calling needs a token: turn off the App Certificate in the Agora console, or add a token server',
   'k396': 'Call channel name is invalid',
   'k397': 'Agora rejected the call. Check the project status in the console.',
+  'k398': 'Calling is not set up on the server (AGORA_APP_ID)',
+  'k399': 'You are not a participant of this call',
+  'k400': 'Could not get a call token. Please try again.',
 };

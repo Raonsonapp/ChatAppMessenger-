@@ -11,6 +11,7 @@ const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 const r2 = require('./r2');
 const { overQuota } = require('./quota');
+const agora = require('./agora');
 
 /** Вақти оғози ин нусхаи сервер. */
 const startedAt = new Date();
@@ -169,6 +170,8 @@ app.get('/', (_req, res) => {
     bot: botStatus,
     // Ҳолати анбори файлҳо — бе ҳељ сирре, танҳо «ҳаст/нест».
     storage: { ...r2.status(), selfTest: r2.lastSelfTest() },
+    // Ҳолати занг — бе ҳељ сирре, танҳо номҳо ва «ҳаст/нест».
+    calls: agora.status(),
     publicDomain: process.env.PUBLIC_URL || process.env.RAILWAY_PUBLIC_DOMAIN || null,
     // Кадом нусхаи код кор мекунад — барои санҷиши он ки деплой расидааст ё не.
     build: {
@@ -415,6 +418,84 @@ async function notifyMany({ sender, toUids, title, body, data }) {
   );
 
   return { sent, skipped: skipped + (targets.length - sent) };
+}
+
+/** Ҳадди дархостҳои token барои як корбар дар як соат. */
+const AGORA_QUOTA_PER_HOUR = 120;
+const agoraQuota = new Map();
+
+/**
+ * Token барои ҳамроҳ шудан ба канали Agora.
+ *
+ * ДАСТРАСӢ ҲАТМАН САНҶИДА МЕШАВАД. Бе ин ҳар корбари воридшуда метавонист
+ * барои ҲАР канал token гирад ва ба сӯҳбати бегона гӯш кунад — яъне
+ * махфияти зангҳо тамоман намебуд.
+ */
+app.post('/api/agora-token', async (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!idToken) return res.status(401).json({ error: 'Authorization lozim ast' });
+
+  let user;
+  try {
+    user = await getAuth().verifyIdToken(idToken);
+  } catch {
+    return res.status(401).json({ error: 'Token nodurust ast' });
+  }
+
+  if (overQuota(agoraQuota, user.uid, AGORA_QUOTA_PER_HOUR)) {
+    return res.status(429).json({ error: 'too-many-requests' });
+  }
+
+  if (!agora.hasAppId()) {
+    return res.status(503).json({ error: 'agora-not-configured', calls: agora.status() });
+  }
+
+  const channelName = String((req.body ?? {}).channelName ?? '').trim();
+  if (!channelName || channelName.length > 64) {
+    return res.status(400).json({ error: 'channelName lozim ast' });
+  }
+
+  try {
+    const allowed = await canJoinChannel(user.uid, channelName);
+    if (!allowed) return res.status(403).json({ error: 'not-a-participant' });
+  } catch (err) {
+    console.error('Хатои санҷиши дастрасии занг:', err?.message ?? err);
+    return res.status(500).json({ error: 'dastrasi santida nashud' });
+  }
+
+  try {
+    const built = agora.buildToken(channelName, user.uid);
+    res.json(built);
+  } catch (err) {
+    console.error('Хатои сохтани token-и Agora:', err?.message ?? err);
+    res.status(500).json({ error: 'token sohta nashud' });
+  }
+});
+
+/**
+ * Оё ин корбар ҳақ дорад ба ин канал дарояд?
+ *
+ * Ду шакли канал вуҷуд дорад:
+ * - занги гурӯҳӣ: `group_<groupId>_<вақт>` — корбар бояд узви гурӯҳ бошад;
+ * - занги шахсӣ: номи канал худи id-и ҳуҷҷати `calls/{id}` аст — корбар
+ *   бояд дар `participants` бошад.
+ */
+async function canJoinChannel(uid, channelName) {
+  const db = getFirestore();
+
+  const groupId = agora.groupIdFromChannel(channelName);
+  if (groupId) {
+    const group = await db.collection('groups').doc(groupId).get();
+    if (!group.exists) return false;
+    const members = group.data()?.members;
+    return Array.isArray(members) && members.includes(uid);
+  }
+
+  const call = await db.collection('calls').doc(channelName).get();
+  if (!call.exists) return false;
+  const participants = call.data()?.participants;
+  return Array.isArray(participants) && participants.includes(uid);
 }
 
 /**

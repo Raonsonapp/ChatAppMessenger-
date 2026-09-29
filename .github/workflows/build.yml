@@ -54,6 +54,12 @@ jobs:
       - name: Test server quota
         run: node --test server/otp-bot/quota.test.mjs
 
+      - name: Test server Agora token
+        run: |
+          cd server/otp-bot
+          npm install --no-audit --no-fund --silent
+          node --test agora.test.mjs
+
       - name: Build release APK
         run: flutter build apk --release
 

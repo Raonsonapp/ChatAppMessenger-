@@ -8,13 +8,14 @@ import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 
 import '../theme/app_theme.dart';
 import '../models/app_call.dart';
-import '../services/agora_config.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import '../theme/app_scope.dart';
 import '../services/push_service.dart';
 import '../services/call_error.dart';
+import '../services/agora_token_service.dart';
+import '../utils/agora_token_error.dart';
 
 enum _CallStage { connecting, ringing, connected, ended }
 
@@ -158,6 +159,21 @@ class _CallScreenState extends State<CallScreen> {
     });
   }
 
+  /// Token-и нав мегирад ва ба Agora медиҳад.
+  ///
+  /// Бе ин занги аз як соат дарозтар дар миёна қатъ мешавад.
+  Future<void> _renewToken() async {
+    final channelId = _channelId;
+    if (channelId == null) return;
+    try {
+      final fresh = await AgoraTokenService.fetch(channelId);
+      final token = fresh.token;
+      if (token != null) await _engine?.renewToken(token);
+    } catch (_) {
+      // Навкунӣ нашуд — занг то мӯҳлати token давом мекунад.
+    }
+  }
+
   /// Хатои гузоштани роҳи садо набояд худи зангро вайрон кунад.
   Future<void> _applySpeakerRoute() async {
     try {
@@ -169,10 +185,22 @@ class _CallScreenState extends State<CallScreen> {
 
   Future<void> _joinChannel() async {
     try {
+      // Token ва App ID аз сервер гирифта мешаванд: App Certificate калиди
+      // махфист ва дар барнома намемонад. Сервер ҳамчунин месанҷад, ки оё ин
+      // корбар ҳақ дорад ба ин канал дарояд.
+      final AgoraCredentials credentials;
+      try {
+        credentials = await AgoraTokenService.fetch(_channelId!);
+      } on AgoraTokenFailure catch (failure) {
+        if (mounted) setState(() => _error = describeAgoraTokenError(failure));
+        return;
+      }
+      if (!mounted) return;
+
       final engine = createAgoraRtcEngine();
       _engine = engine;
       await engine.initialize(RtcEngineContext(
-        appId: kAgoraAppId,
+        appId: credentials.appId,
         channelProfile: ChannelProfileType.channelProfileCommunication,
       ));
 
@@ -182,6 +210,10 @@ class _CallScreenState extends State<CallScreen> {
         // ERR_NOT_READY (-3) медиҳад — маҳз ҳамин занг заданро вайрон мекард.
         onJoinChannelSuccess: (connection, elapsed) {
           _applySpeakerRoute();
+        },
+        // Token мӯҳлат дорад. Занги дароз бе навкунӣ дар миёна қатъ мешуд.
+        onTokenPrivilegeWillExpire: (connection, token) {
+          _renewToken();
         },
         onUserJoined: (connection, remoteUid, elapsed) {
           _ringTimeout?.cancel();
@@ -215,9 +247,9 @@ class _CallScreenState extends State<CallScreen> {
       }
 
       await engine.joinChannel(
-        token: '',
+        token: credentials.tokenOrEmpty,
         channelId: _channelId!,
-        uid: 0,
+        uid: credentials.uid,
         options: ChannelMediaOptions(
           channelProfile: ChannelProfileType.channelProfileCommunication,
           clientRoleType: ClientRoleType.clientRoleBroadcaster,
