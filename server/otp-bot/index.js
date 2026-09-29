@@ -12,6 +12,7 @@ const { getMessaging } = require('firebase-admin/messaging');
 const r2 = require('./r2');
 const { overQuota } = require('./quota');
 const agora = require('./agora');
+const linkPreview = require('./link_preview');
 
 /** Вақти оғози ин нусхаи сервер. */
 const startedAt = new Date();
@@ -460,6 +461,73 @@ async function notifyMany({ sender, toUids, title, body, data }) {
 
   return { sent, skipped: skipped + (targets.length - sent) };
 }
+
+/** Ҳадди дархостҳои пешнамоиш барои як корбар дар як соат. */
+const PREVIEW_QUOTA_PER_HOUR = 300;
+const previewQuota = new Map();
+
+/** Пешнамоиш як шабонарӯз кэш карда мешавад. */
+const PREVIEW_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Пешнамоиши ҳавола — сарлавҳа, тавсиф, акс.
+ *
+ * Дархостро сервер мефиристад, на барнома: натиҷа кэш мешавад (як ҳавола
+ * дар гурӯҳи калон 200 бор кашида намешавад) ва IP-и корбар ба сайти бегона
+ * дода намешавад.
+ */
+app.post('/api/link-preview', async (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!idToken) return res.status(401).json({ error: 'Authorization lozim ast' });
+
+  let user;
+  try {
+    user = await getAuth().verifyIdToken(idToken);
+  } catch {
+    return res.status(401).json({ error: 'Token nodurust ast' });
+  }
+
+  if (overQuota(previewQuota, user.uid, PREVIEW_QUOTA_PER_HOUR)) {
+    return res.status(429).json({ error: 'too-many-requests' });
+  }
+
+  const url = String((req.body ?? {}).url ?? '').trim();
+  if (!url || url.length > 2048) return res.status(400).json({ error: 'url lozim ast' });
+
+  const db = getFirestore();
+  const ref = db.collection('linkPreviews').doc(linkPreview.cacheKey(url));
+
+  try {
+    const cached = await ref.get();
+    if (cached.exists) {
+      const data = cached.data();
+      const age = Date.now() - (data.fetchedAt?.toMillis?.() ?? 0);
+      if (age < PREVIEW_TTL_MS) {
+        // Ҳаволае ки пештар натиҷа надод, дубора кашида намешавад.
+        return res.json({ preview: data.preview ?? null, cached: true });
+      }
+    }
+  } catch (err) {
+    console.warn('Кэши пешнамоиш хонда нашуд:', err?.message ?? err);
+  }
+
+  let preview = null;
+  try {
+    preview = await linkPreview.fetchPreview(url);
+  } catch (err) {
+    // Сайт ҷавоб надод ё дохилӣ аст — ин хатои барнома нест.
+    console.warn(`Пешнамоиш нашуд (${url}): ${err?.message ?? err}`);
+  }
+
+  // Натиҷаи холӣ низ кэш мешавад — вагарна ҳар кушодани чат боз кӯшиш
+  // мекунад.
+  try {
+    await ref.set({ preview, fetchedAt: FieldValue.serverTimestamp() });
+  } catch (_) {}
+
+  res.json({ preview, cached: false });
+});
 
 /** Ҳадди дархостҳои token барои як корбар дар як соат. */
 const AGORA_QUOTA_PER_HOUR = 120;

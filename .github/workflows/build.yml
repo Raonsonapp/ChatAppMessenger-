@@ -54,11 +54,22 @@ jobs:
       - name: Test server quota
         run: node --test server/otp-bot/quota.test.mjs
 
+      - name: Test server link preview
+        run: node --test server/otp-bot/link_preview.test.mjs
+
       - name: Test server Agora token
         run: |
           cd server/otp-bot
           npm install --no-audit --no-fund --silent
           node --test agora.test.mjs
+
+      # Эмулятори Firestore JDK 21 талаб мекунад; Java-и пешфарзи коргар
+      # кӯҳнатар аст ва эмулятор бе ин қадам оғоз намешавад.
+      - name: Setup Java for the emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
 
       # Санҷиши дастрасӣ ба канали занг дар эмулятори ВОҚЕИИ Firestore.
       # Маҳз ин мантиқ вақте мешиканад, ки занг бо «хатои token» меафтад.

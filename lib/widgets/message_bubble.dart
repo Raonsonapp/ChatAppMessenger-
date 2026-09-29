@@ -20,6 +20,9 @@ import '../theme/text_scale_controller.dart';
 import 'poll_card.dart';
 import '../theme/app_scope.dart';
 import 'net_image.dart';
+import '../services/link_preview_service.dart';
+import 'link_preview_card.dart';
+import 'linkified_text.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -95,6 +98,12 @@ class MessageBubble extends StatelessWidget {
   });
 
   static const List<String> _quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+  /// Аввалин ҳаволаи матн — барои корти пешнамоиш.
+  String? get _previewUrl {
+    if (message.text.isEmpty) return null;
+    return LinkPreviewService.firstUrl(message.text);
+  }
 
   /// Оё ин паёмро ба дастгоҳ нигоҳ доштан мумкин аст?
   bool get _isSavable {
@@ -707,16 +716,43 @@ class MessageBubble extends StatelessWidget {
                         if (message.text.isNotEmpty || message.deleted)
                           Padding(
                             padding: hasImage ? const EdgeInsets.fromLTRB(8, 6, 8, 4) : EdgeInsets.zero,
-                            child: Text(
-                              message.deleted ? tr('k242') : message.text,
-                              style: TextStyle(
+                            child: Builder(builder: (context) {
+                              final textStyle = TextStyle(
                                 color: (isMe && !hasImage) ? AppColors.background : AppColors.textPrimary,
                                 fontSize: 14.5 * textScaleController.scale,
                                 height: 1.3,
                                 fontStyle: message.deleted ? FontStyle.italic : FontStyle.normal,
                                 fontWeight: (isMe && !hasImage) ? FontWeight.w600 : FontWeight.w400,
-                              ),
-                            ),
+                              );
+                              if (message.deleted) {
+                                return Text(tr('k242'), style: textStyle);
+                              }
+                              // Ҳаволаҳо пахшшаванда мешаванд — пештар онҳо
+                              // матни оддӣ буданд ва кушода намешуданд.
+                              return LinkifiedText(
+                                text: message.text,
+                                style: textStyle,
+                                linkStyle: textStyle.copyWith(
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: (isMe && !hasImage)
+                                      ? AppColors.background
+                                      : AppColors.neonCyan,
+                                  color: (isMe && !hasImage)
+                                      ? AppColors.background
+                                      : AppColors.neonCyan,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              );
+                            }),
+                          ),
+                        // Пешнамоиш танҳо барои паёми матнӣ: дар назди акс ё
+                        // ҳуҷҷат он ҷои зиёдро мегирад ва фоида намедиҳад.
+                        if (!message.deleted &&
+                            message.mediaUrl == null &&
+                            _previewUrl != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: LinkPreviewCard(url: _previewUrl!, isMe: isMe),
                           ),
                       ],
                     ),

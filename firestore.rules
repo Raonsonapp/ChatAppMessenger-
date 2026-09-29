@@ -225,6 +225,14 @@ service cloud.firestore {
     // занги воридотӣ бо `calleeId == uid`. Firestore дархостро танҳо вақте
     // қабул мекунад, ки филтрҳояш қоидаро кафолат диҳанд, бинобар ин ҳар ду
     // ҳолат бояд дар қоида бошанд.
+    // Кэши пешнамоиши ҳавола — ҳама мехонанд, менависад ТАНҲО сервер
+    // (тавассути Admin SDK, ки қоидаҳоро дур мезанад). Корбар набояд
+    // пешнамоиши қалбакӣ гузошта тавонад.
+    match /linkPreviews/{key} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
     match /calls/{callId} {
       allow read: if signedIn() && (
         uid() in resource.data.participants
