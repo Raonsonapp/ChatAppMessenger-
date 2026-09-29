@@ -12,6 +12,14 @@
  * ЭЗОҲ: Cloud Functions (насли 2) ба нақшаи Blaze (pay-as-you-go) ниёз
  * дорад — нақшаи ройгони Spark кофӣ нест, ҳарчанд истифодаи воқеӣ дар
  * доираи ҳадди ройгони Blaze низ бепул мемонад.
+ *
+ * ДИҚҚАТ: ин роҳи ИВАЗКУНАНДА аст. Барнома аллакай огоҳиномаҳоро тавассути
+ * сервери худамон (server/otp-bot, `POST /api/notify`) мефиристад, ки ба
+ * Blaze ниёз надорад. Агар ин функсияҳо ҷойгир карда шаванд, корбар ДУ
+ * огоҳинома мегирад — якеро интихоб кунед:
+ *   • сервери худамон (ҳозир фаъол) — ин файлро ҷойгир НАКУНЕД;
+ *   • ё Cloud Functions — он гоҳ даъватҳои `PushService`-ро аз барнома
+ *     бардоред.
  */
 
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
@@ -24,28 +32,48 @@ setGlobalOptions({ region: 'us-central1', maxInstances: 10 });
 const db = admin.firestore();
 const messaging = admin.messaging();
 
-/** Токени FCM-и корбарро аз ҳуҷҷати users/{uid} мегирад. */
-async function getFcmToken(uid) {
+/**
+ * Ҳамаи токенҳои дастгоҳҳои корбар.
+ *
+ * Корбар метавонад аз якчанд дастгоҳ ворид шавад. Пештар танҳо як майдон
+ * хонда мешуд ва дастгоҳҳои дигар огоҳинома намегирифтанд.
+ */
+async function getFcmTokens(uid) {
   const doc = await db.collection('users').doc(uid).get();
-  return doc.exists ? doc.data().fcmToken : null;
+  if (!doc.exists) return [];
+  const info = doc.data();
+  const list = Array.isArray(info.fcmTokens) ? info.fcmTokens : [];
+  const legacy = info.fcmToken ? [info.fcmToken] : [];
+  return [...new Set([...list, ...legacy])].filter((t) => typeof t === 'string' && t);
 }
 
-/** Паёми маълумотии (data-only) FCM-ро ба як корбар мефиристад. */
+/** Паёми маълумотии (data-only) FCM-ро ба ҲАМАИ дастгоҳҳои корбар мефиристад. */
 async function sendDataMessage(uid, data) {
-  const token = await getFcmToken(uid);
-  if (!token) return;
-  try {
-    await messaging.send({
-      token,
-      data,
-      android: { priority: 'high' },
-      apns: {
-        headers: { 'apns-priority': '10', 'apns-push-type': 'background' },
-        payload: { aps: { 'content-available': 1 } },
-      },
-    });
-  } catch (err) {
-    console.error(`Хатои фиристодани push ба ${uid}:`, err.message);
+  const tokens = await getFcmTokens(uid);
+  if (tokens.length === 0) return;
+
+  const response = await messaging.sendEachForMulticast({
+    tokens,
+    data,
+    android: { priority: 'high' },
+    apns: {
+      headers: { 'apns-priority': '10', 'apns-push-type': 'background' },
+      payload: { aps: { 'content-available': 1 } },
+    },
+  });
+
+  // Токенҳои бекоршуда тоза мешаванд — танҳо ҳамон дастгоҳ, на ҳама.
+  const stale = [];
+  response.responses.forEach((item, index) => {
+    if (!item.success &&
+        item.error?.code === 'messaging/registration-token-not-registered') {
+      stale.push(tokens[index]);
+    }
+  });
+  if (stale.length > 0) {
+    await db.collection('users').doc(uid).update({
+      fcmTokens: admin.firestore.FieldValue.arrayRemove(...stale),
+    }).catch(() => {});
   }
 }
 
