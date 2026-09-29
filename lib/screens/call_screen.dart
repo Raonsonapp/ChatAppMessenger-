@@ -16,6 +16,7 @@ import '../services/push_service.dart';
 import '../services/call_error.dart';
 import '../services/agora_token_service.dart';
 import '../utils/agora_token_error.dart';
+import '../services/agora_engine_manager.dart';
 
 enum _CallStage { connecting, ringing, connected, ended }
 
@@ -180,6 +181,17 @@ class _CallScreenState extends State<CallScreen> {
     });
   }
 
+  /// Оё аллакай як бори дигар кӯшиш кардем? Бознамоии беохир лозим нест.
+  bool _retriedJoin = false;
+
+  /// Муҳаррикро пурра озод карда, аз нав ҳамроҳ мешавад.
+  Future<void> _retryJoin() async {
+    _engine = null;
+    await AgoraEngineManager.disposeActive();
+    if (!mounted || _finalized) return;
+    await _joinChannel();
+  }
+
   /// Token-и нав мегирад ва ба Agora медиҳад.
   ///
   /// Бе ин занги аз як соат дарозтар дар миёна қатъ мешавад.
@@ -218,12 +230,18 @@ class _CallScreenState extends State<CallScreen> {
       }
       if (!mounted) return;
 
-      final engine = createAgoraRtcEngine();
-      _engine = engine;
-      await engine.initialize(RtcEngineContext(
+      // Муҳаррик тавассути идоракунанда сохта мешавад: он кӯҳнаро ҲАМЕША
+      // озод мекунад. Бе ин занги дуюм хатои -17 мегирифт — Agora мегӯяд
+      // «аллакай дар канал».
+      final engine = await AgoraEngineManager.create(RtcEngineContext(
         appId: credentials.appId,
         channelProfile: ChannelProfileType.channelProfileCommunication,
       ));
+      if (!mounted) {
+        await AgoraEngineManager.disposeActive();
+        return;
+      }
+      _engine = engine;
 
       engine.registerEventHandler(RtcEngineEventHandler(
         // Роҳи садо (динамик) танҳо ПАС АЗ ҳамроҳ шудан ба канал гузошта
@@ -263,6 +281,15 @@ class _CallScreenState extends State<CallScreen> {
           // (масалан гарнитураи Bluetooth) занги солимро «вайрон» нишон
           // медод.
           if (!mounted || !CallError.isFatal(err)) return;
+
+          // «Аллакай дар канал» — ҳолати боқимондаи муҳаррик. Як бор
+          // худкор аз нав кӯшиш мекунем: барои корбар ин назар ба
+          // хатои фаҳмонашаванда хеле беҳтар аст.
+          if (err == ErrorCodeType.errJoinChannelRejected && !_retriedJoin) {
+            _retriedJoin = true;
+            _retryJoin();
+            return;
+          }
           setState(() => _error = CallError.describe(err, msg));
         },
       ));
@@ -318,10 +345,8 @@ class _CallScreenState extends State<CallScreen> {
       }
     }
 
-    try {
-      await _engine?.leaveChannel();
-      await _engine?.release();
-    } catch (_) {}
+    _engine = null;
+    await AgoraEngineManager.disposeActive();
 
     if (mounted) {
       setState(() => _stage = _CallStage.ended);
@@ -340,9 +365,14 @@ class _CallScreenState extends State<CallScreen> {
         'outcome': (_everConnected ? CallOutcome.completed : (widget.isCaller ? CallOutcome.missed : CallOutcome.declined)).name,
         'durationSeconds': _seconds,
       });
-      _engine?.leaveChannel();
-      _engine?.release();
     }
+    // Муҳаррик ҲАМЕША озод карда мешавад, на танҳо ҳангоми қатъи оддӣ.
+    //
+    // Пештар он танҳо дар дохили `if (!_finalized)` озод мешуд: агар экран
+    // пас аз қатъи занг ё ҳангоми хато пӯшида мешуд, муҳаррик зинда мемонд
+    // ва занги оянда хатои -17 мегирифт.
+    _engine = null;
+    AgoraEngineManager.disposeActiveUnawaited();
     super.dispose();
   }
 

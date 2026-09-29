@@ -491,4 +491,5 @@ const Map<String, String> stringsEn = {
   'k489': 'Translating…',
   'k490': 'Translation',
   'k491': 'Event',
+  'k492': 'Could not join the call. Close the app and try again.',
 };

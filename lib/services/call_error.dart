@@ -62,7 +62,7 @@ class CallError {
       ErrorCodeType.errInvalidAppId => tr('k394'),
       ErrorCodeType.errInvalidToken || ErrorCodeType.errTokenExpired => tr('k395'),
       ErrorCodeType.errInvalidChannelName => tr('k396'),
-      ErrorCodeType.errJoinChannelRejected => tr('k397'),
+      ErrorCodeType.errJoinChannelRejected => tr('k492'),
       ErrorCodeType.errNoPermission => tr('k014'),
       _ => trf('k016', [message.isEmpty ? code.name : message]),
     };

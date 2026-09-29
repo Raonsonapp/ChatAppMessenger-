@@ -17,6 +17,7 @@ import '../services/push_service.dart';
 import '../services/call_error.dart';
 import '../services/agora_token_service.dart';
 import '../utils/agora_token_error.dart';
+import '../services/agora_engine_manager.dart';
 
 /// Занги гурӯҳӣ — ҳамаи аъзоён ба як канали Agora ҳамроҳ мешаванд.
 ///
@@ -191,12 +192,18 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
       }
       if (!mounted) return;
 
-      final engine = createAgoraRtcEngine();
-      _engine = engine;
-      await engine.initialize(RtcEngineContext(
+      // Муҳаррик тавассути идоракунанда сохта мешавад: он кӯҳнаро ҲАМЕША
+      // озод мекунад. Бе ин занги дуюм хатои -17 мегирифт — Agora мегӯяд
+      // «аллакай дар канал».
+      final engine = await AgoraEngineManager.create(RtcEngineContext(
         appId: credentials.appId,
         channelProfile: ChannelProfileType.channelProfileCommunication,
       ));
+      if (!mounted) {
+        await AgoraEngineManager.disposeActive();
+        return;
+      }
+      _engine = engine;
 
       engine.registerEventHandler(RtcEngineEventHandler(
         onJoinChannelSuccess: (connection, elapsed) {
@@ -273,8 +280,8 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
     }
 
     try {
-      await _engine?.leaveChannel();
-      await _engine?.release();
+      _engine = null;
+      await AgoraEngineManager.disposeActive();
     } catch (_) {}
 
     if (mounted) Navigator.of(context).pop();
@@ -291,9 +298,11 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
           'durationSeconds': _seconds,
         }).catchError((_) {});
       }
-      _engine?.leaveChannel();
-      _engine?.release();
     }
+    // Муҳаррик ҲАМЕША озод карда мешавад — вагарна занги оянда хатои -17
+    // мегирад («аллакай дар канал»).
+    _engine = null;
+    AgoraEngineManager.disposeActiveUnawaited();
     super.dispose();
   }
 
