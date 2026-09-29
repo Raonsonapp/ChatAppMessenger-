@@ -188,6 +188,56 @@ await check('B занги воридотиро ҷавоб медиҳад', () =>
 await check('A паёми мӯҳлаташ гузаштаро нест мекунад', () =>
   assertSucceeds(deleteDoc(doc(a, 'conversations', convoId, 'messages', 'm1'))));
 
+// --- Иҷозатҳои гурӯҳ ---
+// Пештар ҲАР узв метавонист номи гурӯҳ, рӯйхати аъзоён ва ҳатто рӯйхати
+// администраторҳоро иваз кунад — яъне худашро администратор таъин карда,
+// дигаронро бароварда метавонист.
+// Ҳар санҷиш гурӯҳи ХУДашро истифода мебарад: вагарна санҷиши аввал
+// ҳолатро тағйир дода, натиҷаи санҷиши баъдиро вайрон мекунад.
+async function freshGroup(id) {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'groups', id), {
+      name: 'G', members: [A, B], memberNames: { [A]: 'A', [B]: 'B' }, admins: [A],
+    });
+  });
+}
+
+await freshGroup('gp1');
+await check('администратор номи гурӯҳро иваз мекунад', () =>
+  assertSucceeds(updateDoc(doc(a, 'groups', 'gp1'), { name: 'Нав' })));
+
+await freshGroup('gp2');
+await check('узви оддӣ номи гурӯҳро иваз карда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(b, 'groups', 'gp2'), { name: 'Ман иваз кардам' })));
+
+await freshGroup('gp3');
+await check('узви оддӣ ХУДашро администратор карда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(b, 'groups', 'gp3'), { admins: [A, B] })));
+
+await freshGroup('gp4');
+await check('узви оддӣ каси ДИГАРро бароварда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(b, 'groups', 'gp4'), {
+    members: [B], memberNames: { [B]: 'B' }, admins: [], unread: {},
+  })));
+
+await freshGroup('gp5');
+await check('узви оддӣ ХУДаш баромада метавонад', () =>
+  assertSucceeds(updateDoc(doc(b, 'groups', 'gp5'), {
+    members: [A], memberNames: { [A]: 'A' }, admins: [A], unread: {},
+  })));
+
+await freshGroup('gp6');
+await check('ҳангоми баромадан ХУДро администратор карда НАМЕШАВАД', () =>
+  assertFails(updateDoc(doc(b, 'groups', 'gp6'), {
+    members: [A], memberNames: { [A]: 'A' }, admins: [A, B], unread: {},
+  })));
+
+await freshGroup('gp7');
+await check('узви оддӣ гурӯҳро нест карда НАМЕТАВОНАД', () =>
+  assertFails(deleteDoc(doc(b, 'groups', 'gp7'))));
+await check('администратор гурӯҳро нест карда метавонад', () =>
+  assertSucceeds(deleteDoc(doc(a, 'groups', 'gp7'))));
+
 // --- Ҳолати паём: расид / хонда шуд ---
 await env.withSecurityRulesDisabled(async (ctx) => {
   await setDoc(doc(ctx.firestore(), 'conversations', convoId, 'messages', 'st1'), {
