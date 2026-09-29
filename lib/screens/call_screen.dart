@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:floating/floating.dart';
 
 import '../theme/app_theme.dart';
 import '../models/app_call.dart';
@@ -186,6 +187,7 @@ class _CallScreenState extends State<CallScreen> {
 
   /// Муҳаррикро пурра озод карда, аз нав ҳамроҳ мешавад.
   Future<void> _retryJoin() async {
+    await _cancelPip();
     _engine = null;
     await AgoraEngineManager.disposeActive();
     if (!mounted || _finalized) return;
@@ -249,6 +251,8 @@ class _CallScreenState extends State<CallScreen> {
         // ERR_NOT_READY (-3) медиҳад — маҳз ҳамин занг заданро вайрон мекард.
         onJoinChannelSuccess: (connection, elapsed) {
           _applySpeakerRoute();
+          // PiP танҳо пас аз ҳамроҳ шудан маъно дорад.
+          _preparePip();
         },
         // Token мӯҳлат дорад. Занги дароз бе навкунӣ дар миёна қатъ мешуд.
         onTokenPrivilegeWillExpire: (connection, token) {
@@ -366,6 +370,8 @@ class _CallScreenState extends State<CallScreen> {
         'durationSeconds': _seconds,
       });
     }
+    // Бе ин барнома пас аз занг ҳам ҳангоми баромадан хурд мешавад.
+    _cancelPip();
     // Муҳаррик ҲАМЕША озод карда мешавад, на танҳо ҳангоми қатъи оддӣ.
     //
     // Пештар он танҳо дар дохили `if (!_finalized)` озод мешуд: агар экран
@@ -393,19 +399,23 @@ class _CallScreenState extends State<CallScreen> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _endCall();
       },
-      child: Scaffold(
+      // Дар реҷаи тирезаи хурд танҳо видео нишон дода мешавад: тугмаҳо дар
+      // чунин андоза истифоданашавандаанд ва танҳо ҷойро мегиранд.
+      child: PiPSwitcher(
+        childWhenEnabled: Container(
+          color: Colors.black,
+          child: (isVideo && connected && _remoteUid != null && _engine != null)
+              ? _videoView(large: true)
+              : const SizedBox.expand(),
+        ),
+        childWhenDisabled: Scaffold(
         backgroundColor: Colors.black,
         body: Stack(
           fit: StackFit.expand,
           children: [
             if (isVideo && connected && _remoteUid != null && _engine != null)
-              AgoraVideoView(
-                controller: VideoViewController.remote(
-                  rtcEngine: _engine!,
-                  canvas: VideoCanvas(uid: _remoteUid),
-                  connection: RtcConnection(channelId: _channelId),
-                ),
-              )
+              // Зер кардани тирезаи хурд ҷойҳоро иваз мекунад.
+              _videoView(large: true)
             else
               const NeonBackdrop(child: SizedBox.expand()),
             SafeArea(
@@ -437,28 +447,6 @@ class _CallScreenState extends State<CallScreen> {
                     ),
                   ),
                   const Spacer(),
-                  if (isVideo && connected && _videoOn && _engine != null)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 16, bottom: 16),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Container(
-                          width: 100,
-                          height: 140,
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.white24),
-                          ),
-                          child: AgoraVideoView(
-                            controller: VideoViewController(
-                              rtcEngine: _engine!,
-                              canvas: const VideoCanvas(uid: 0),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Row(
@@ -512,7 +500,146 @@ class _CallScreenState extends State<CallScreen> {
                 ],
               ),
             ),
+            // Тирезаи хурд дар БОЛОИ ҳама: онро кашидан ва зер кардан
+            // мумкин аст, бинобар ин он набояд зери тугмаҳо монад.
+            if (isVideo && connected && _videoOn && _engine != null)
+              _floatingVideo(context),
           ],
+        ),
+        ),
+      ),
+    );
+  }
+
+  /// Реҷаи тирезаи хурди система (PiP).
+  ///
+  /// Ба корбар имкон медиҳад, ки ҳангоми занг барномаро тарк кунад ва
+  /// видео дар гӯшаи экран боқӣ монад — мисли WhatsApp.
+  final Floating _floating = Floating();
+  bool _pipReady = false;
+
+  /// Реҷаи PiP-ро омода мекунад: ҳангоми баромадан аз барнома система
+  /// худаш тирезаро хурд мекунад.
+  Future<void> _preparePip() async {
+    if (widget.type != CallType.video) return;
+    try {
+      if (!await _floating.isPipAvailable) return;
+      await _floating.enable(const OnLeavePiP(
+        // 9:16 — видеои занг амудӣ аст.
+        aspectRatio: Rational(9, 16),
+      ));
+      _pipReady = true;
+    } catch (_) {
+      // Дар баъзе дастгоҳҳо PiP нест — занг ба ҳар ҳол кор мекунад.
+    }
+  }
+
+  Future<void> _cancelPip() async {
+    if (!_pipReady) return;
+    _pipReady = false;
+    try {
+      await _floating.cancelOnLeavePiP();
+    } catch (_) {}
+  }
+
+  /// Кадом видео дар тирезаи калон аст — худам ё ҳамсӯҳбат.
+  ///
+  /// Зер кардани тирезаи хурд ҷойҳоро иваз мекунад, ҳамон тавре ки дар
+  /// WhatsApp.
+  bool _selfIsLarge = false;
+
+  /// Гӯшаи тирезаи хурд: 0 — рости боло, 1 — рости поён, 2 — чапи поён,
+  /// 3 — чапи боло.
+  int _corner = 1;
+
+  Widget _videoView({required bool large}) {
+    final engine = _engine;
+    if (engine == null) return const SizedBox.shrink();
+
+    // Тирезаи калон: агар ҷойҳо иваз шуда бошанд, дар он ҷо ХУДАМ ҳастам.
+    final showSelf = large ? _selfIsLarge : !_selfIsLarge;
+
+    if (showSelf) {
+      return AgoraVideoView(
+        controller: VideoViewController(
+          rtcEngine: engine,
+          canvas: const VideoCanvas(uid: 0),
+        ),
+      );
+    }
+
+    return AgoraVideoView(
+      controller: VideoViewController.remote(
+        rtcEngine: engine,
+        canvas: VideoCanvas(uid: _remoteUid),
+        connection: RtcConnection(channelId: _channelId),
+      ),
+    );
+  }
+
+  /// Тирезаи хурди видео — кашиданашаванда ва зершаванда.
+  Widget _floatingVideo(BuildContext context) {
+    const width = 104.0;
+    const height = 146.0;
+    const margin = 16.0;
+
+    final padding = MediaQuery.of(context).padding;
+
+    // Ҷойгиршавӣ аз гӯша ҳисоб мешавад, на аз координатаҳои сахт — вагарна
+    // дар экранҳои гуногун ҷои нодуруст мешавад.
+    final top = _corner == 0 || _corner == 3;
+    final left = _corner == 2 || _corner == 3;
+
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+      top: top ? padding.top + margin + 56 : null,
+      bottom: top ? null : padding.bottom + margin + 150,
+      left: left ? margin : null,
+      right: left ? null : margin,
+      child: GestureDetector(
+        // Зер кардан — иваз кардани ҷойҳо.
+        onTap: () => setState(() => _selfIsLarge = !_selfIsLarge),
+        // Кашидан — гузаштан ба гӯшаи наздиктарин.
+        onPanEnd: (details) {
+          final velocity = details.velocity.pixelsPerSecond;
+          setState(() {
+            final goLeft = velocity.dx < -120 || (velocity.dx <= 120 && left);
+            final goTop = velocity.dy < -120 || (velocity.dy <= 120 && top);
+            _corner = goTop ? (goLeft ? 3 : 0) : (goLeft ? 2 : 1);
+          });
+        },
+        child: Container(
+          width: width,
+          height: height,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white24),
+            boxShadow: const [
+              BoxShadow(color: Colors.black38, blurRadius: 12),
+            ],
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _videoView(large: false),
+              // Ишораи хурд, ки тирезаро зер кардан мумкин аст.
+              Positioned(
+                right: 4,
+                top: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(LucideIcons.repeat,
+                      size: 11, color: Colors.white70),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

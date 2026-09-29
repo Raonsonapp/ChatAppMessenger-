@@ -60,6 +60,7 @@ dependencies:
   video_compress: ^3.1.4
   vibration: ^3.2.1
   share_plus: ^13.3.0
+  floating: ^6.0.0
 
 dev_dependencies:
   flutter_test:
