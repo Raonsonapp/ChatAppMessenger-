@@ -93,7 +93,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
   /// Сарлавҳаи ҷамъиятро нав мекунад ва ҳисоби нохондашударо зиёд мекунад.
   /// Ба ҳамаи аъзоён огоҳинома мефиристад. Хатогӣ фиристодани паёмро вайрон
   /// намекунад — паём аллакай дар Firestore аст.
-  Future<void> _notifyMembers(String preview) async {
+  Future<void> _notifyMembers(String preview, {String? mediaType}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final myName = _memberNames[uid] ?? tr('k002');
@@ -108,6 +108,10 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         'threadName': widget.communityName,
         'senderId': uid,
         'senderName': myName,
+        // Бе матн ва навъ огоҳиномае ки барнома месозад, ҳамеша
+        // «Паёми нав» менависад.
+        'text': preview,
+        if (mediaType != null) 'mediaType': mediaType,
       },
     );
   }
@@ -121,12 +125,14 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     await _communityRef.set({
       'lastMessage': preview,
       // Навъи паём — то гиранда матни кӯтоҳро бо забони худаш бубинад.
-      if (type != null) 'lastMessageType': type,
+      // Барои паёми матнӣ майдон бардошта мешавад — вагарна пас аз як
+      // паёми овозӣ ҳамаи паёмҳои матнӣ низ «Паёми овозӣ» менамуданд.
+      'lastMessageType': type ?? FieldValue.delete(),
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
       if (counters.isNotEmpty) 'unread': counters,
     }, SetOptions(merge: true));
-    _notifyMembers(preview);
+    _notifyMembers(preview, mediaType: type);
   }
 
   /// Ҳангоми кушодани ҷамъият ҳисоби нохондашудаи ман сифр мешавад.

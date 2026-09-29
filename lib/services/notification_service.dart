@@ -21,6 +21,7 @@ import '../screens/community_chat_screen.dart';
 import '../l10n/l10n.dart';
 import 'notification_prefs.dart';
 import '../models/app_conversation.dart';
+import '../l10n/media_preview.dart';
 
 /// Калиди Navigator-и глобалӣ — барои кушодани чат/занг аз push-огоҳинома,
 /// новобаста аз он ки корбар дар кадом экран аст.
@@ -28,6 +29,9 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 const String _messagesChannelId = 'messages_channel';
 const String _callsChannelId = 'calls_channel';
+
+/// Ранги неони ChatApp дар огоҳиномаҳо.
+const Color _brandColor = Color(0xFF00E5A0);
 
 final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
@@ -40,6 +44,18 @@ int _notificationId(Map<String, dynamic> data) {
 
 /// Огоҳиномаи паём вақте ки барнома дар пешзамина/паснамо кушода аст ё
 /// пурра баста аст — дар ҳарду ҳолат тавассути ин функсия намоён мешавад.
+/// Матни кӯтоҳи паём барои огоҳинома.
+String _previewText(Map<String, dynamic> data) {
+  final type = data['mediaType'] as String?;
+  final text = (data['text'] as String?)?.trim() ?? '';
+
+  // Паёми матнӣ — худи матн.
+  if (type == null || type.isEmpty) return text;
+
+  // Медиа — тавсиф бо забони худи гиранда, на бо забони фиристанда.
+  return mediaPreviewLabel(type, fallback: text, name: data['mediaName'] as String?);
+}
+
 Future<void> _showMessageNotification(Map<String, dynamic> data) async {
   // Танзимоти корбар: агар огоҳиномаи паём хомӯш бошад, чизе нишон дода
   // намешавад; садо, ларзиш ва нишон додани матн низ ба он тобеъанд.
@@ -49,7 +65,12 @@ Future<void> _showMessageNotification(Map<String, dynamic> data) async {
   final withPreview = await NotificationPrefs.read('notificationPreview');
 
   final senderName = data['senderName'] as String? ?? tr('k217');
-  final text = data['text'] as String? ?? '';
+
+  // Матни намоишӣ: худи матн, ё тавсифи медиа бо забони ГИРАНДА.
+  //
+  // Пештар танҳо `data['text']` хонда мешуд, вале он умуман фиристода
+  // намешуд — бинобар ин ҳар огоҳинома «Паёми нав» менавишт.
+  final text = _previewText(data);
   final payload = jsonEncode(data);
 
   final androidDetails = AndroidNotificationDetails(
@@ -59,6 +80,8 @@ Future<void> _showMessageNotification(Map<String, dynamic> data) async {
     importance: Importance.high,
     priority: Priority.high,
     category: AndroidNotificationCategory.message,
+    icon: '@drawable/ic_notification',
+    color: _brandColor,
     playSound: withSound,
     enableVibration: withVibration,
     actions: [
@@ -97,6 +120,8 @@ Future<void> _showIncomingCallNotification(Map<String, dynamic> data) async {
     importance: Importance.max,
     priority: Priority.max,
     category: AndroidNotificationCategory.call,
+    icon: '@drawable/ic_notification',
+    color: _brandColor,
     fullScreenIntent: true,
     ongoing: true,
     timeoutAfter: 45000,
@@ -133,6 +158,8 @@ Future<void> _showMissedCallNotification(Map<String, dynamic> data) async {
     importance: Importance.high,
     priority: Priority.high,
     category: AndroidNotificationCategory.missedCall,
+    icon: '@drawable/ic_notification',
+    color: _brandColor,
   );
 
   await _localNotifications.show(
@@ -337,7 +364,8 @@ class NotificationService {
       }
     }
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Нишонаи якранги ChatApp. Логотипи ранга ҳамчун мураббаи сафед менамуд.
+    const androidSettings = AndroidInitializationSettings('@drawable/ic_notification');
     const iosSettings = DarwinInitializationSettings();
     await _localNotifications.initialize(
       settings: const InitializationSettings(android: androidSettings, iOS: iosSettings),

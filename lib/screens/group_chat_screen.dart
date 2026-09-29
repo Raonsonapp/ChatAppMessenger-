@@ -95,7 +95,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// нохондашударо як воҳид зиёд мекунад.
   /// Ба ҳамаи аъзоён огоҳинома мефиристад. Хатогӣ фиристодани паёмро вайрон
   /// намекунад — паём аллакай дар Firestore аст.
-  Future<void> _notifyMembers(String preview) async {
+  Future<void> _notifyMembers(String preview, {String? mediaType}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final myName = _memberNames[uid] ?? tr('k002');
@@ -110,6 +110,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         'threadName': widget.groupName,
         'senderId': uid,
         'senderName': myName,
+        // Бе матн ва навъ огоҳиномае ки барнома месозад, ҳамеша
+        // «Паёми нав» менависад.
+        'text': preview,
+        if (mediaType != null) 'mediaType': mediaType,
       },
     );
   }
@@ -124,12 +128,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await _groupRef.set({
       'lastMessage': preview,
       // Навъи паём — то гиранда матни кӯтоҳро бо забони худаш бубинад.
-      if (type != null) 'lastMessageType': type,
+      // Барои паёми матнӣ майдон бардошта мешавад — вагарна пас аз як
+      // паёми овозӣ ҳамаи паёмҳои матнӣ низ «Паёми овозӣ» менамуданд.
+      'lastMessageType': type ?? FieldValue.delete(),
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
       if (counters.isNotEmpty) 'unread': counters,
     }, SetOptions(merge: true));
-    _notifyMembers(preview);
+    _notifyMembers(preview, mediaType: type);
   }
 
   /// Ҳамаи аъзоён ба ғайр аз худам — барои ҳисоби нохондашуда.

@@ -121,7 +121,11 @@ class _UserChatScreenState extends State<UserChatScreen> {
     await _conversationRef.set({
       'lastMessage': preview,
       // Навъи паём — то гиранда матни кӯтоҳро бо забони худаш бубинад.
-      if (type != null) 'lastMessageType': type,
+      //
+      // Барои паёми МАТНӢ майдон бардошта мешавад. Пештар он танҳо ҳангоми
+      // мавҷуд будани навъ навишта мешуд, бинобар ин пас аз як паёми овозӣ
+      // ҳамаи паёмҳои матнӣ низ «Паёми овозӣ» менамуданд.
+      'lastMessageType': type ?? FieldValue.delete(),
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
       'unread': {widget.otherUserId: FieldValue.increment(1)},
@@ -334,7 +338,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
       'mediaType': 'sticker',
     });
     await _touchConversation(tr('k314'), type: 'sticker');
-    _notifyOther('$sticker Стикер');
+    _notifyOther('$sticker Стикер', mediaType: 'sticker');
     _scrollToBottom();
   }
 
@@ -381,7 +385,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         'mediaType': mediaType,
       });
       await _touchConversation(tr('k311'), type: 'image');
-      _notifyOther(tr('k311'));
+      _notifyOther(tr('k311'), mediaType: 'image');
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
@@ -415,6 +419,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         disappearInSeconds: _disappearIn,
       ),
       tr('k286'),
+      mediaType: 'location',
     );
   }
 
@@ -455,11 +460,15 @@ class _UserChatScreenState extends State<UserChatScreen> {
     });
   }
 
-  Future<void> _sendMedia(Future<bool> Function() send, String preview) async {
+  Future<void> _sendMedia(
+    Future<bool> Function() send,
+    String preview, {
+    String? mediaType,
+  }) async {
     setState(() => _isUploading = true);
     try {
       if (await send()) {
-        _notifyOther(preview);
+        _notifyOther(preview, mediaType: mediaType);
         _scrollToBottom();
       }
     } catch (e) {
@@ -483,6 +492,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         disappearInSeconds: _disappearIn,
         ),
         tr('k313'),
+        mediaType: 'video',
       );
 
   Future<void> _sendDocumentMessage(PlatformFile picked) => _sendMedia(
@@ -495,6 +505,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         disappearInSeconds: _disappearIn,
         ),
         trf('k316', [picked.name]),
+        mediaType: 'document',
       );
 
   Future<void> _sendVoiceMessage(File file, Duration duration) {
@@ -510,6 +521,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         disappearInSeconds: _disappearIn,
       ),
       tr('k312'),
+      mediaType: 'audio',
     );
   }
 
@@ -547,7 +559,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
 
   /// Ба ҳамсӯҳбат огоҳиномаи push мефиристад. Номи фиристанда аз ҳуҷҷати
   /// сӯҳбат гирифта мешавад, то дар огоҳинома номи воқеӣ намоён шавад.
-  Future<void> _notifyOther(String preview) async {
+  Future<void> _notifyOther(String preview, {String? mediaType}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final convo = await _conversationRef.get();
@@ -569,6 +581,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
         'threadName': myName,
         'senderId': uid,
         'senderName': myName,
+        // Матн ва навъ ҲАТМАН фиристода мешаванд: бе онҳо огоҳиномае ки
+        // барнома худаш месозад, ҳамеша «Паёми нав» менависад.
+        'text': preview,
+        if (mediaType != null) 'mediaType': mediaType,
       },
     );
   }

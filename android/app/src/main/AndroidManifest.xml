@@ -57,6 +57,16 @@
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="messages_channel" />
 
+        <!-- Нишона ва ранги огоҳиномаҳои FCM.
+             Бе нишонаи ҷудогона Android логотипи рангаи барномаро якранг
+             мекунад ва он ҳамчун мураббаи сафед менамояд. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/chatapp_neon" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

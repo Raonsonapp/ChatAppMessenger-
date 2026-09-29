@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Нишонаи огоҳиномаи ChatApp — барқ (⚡), ҳамон нишонаи логотип.
+
+  Android нишонаи огоҳиномаро ҲАМЕША якранг мекунад: танҳо шакл (альфа)
+  муҳим аст, ранг сарфи назар мешавад. Бинобар ин нишонаи ранга (логотипи
+  барнома) ҳамчун мураббаи сафед менамояд — маҳз ҳамин пештар буд.
+
+  Ранги худи нишона аз `color` дар танзимоти огоҳинома меояд.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M13.5,2 L4.5,13.2 C4.2,13.6 4.5,14.2 5,14.2 L10.2,14.2 L9.3,21.4 C9.2,22.1 10.1,22.5 10.5,21.9 L19.5,10.7 C19.8,10.3 19.5,9.7 19,9.7 L13.8,9.7 L14.7,2.5 C14.8,1.8 13.9,1.4 13.5,2 Z" />
+</vector>
