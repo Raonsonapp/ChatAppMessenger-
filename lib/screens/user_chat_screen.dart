@@ -39,6 +39,7 @@ import 'create_poll_screen.dart';
 import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
 import '../widgets/upload_indicator.dart';
+import '../services/message_status_service.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -601,18 +602,11 @@ class _UserChatScreenState extends State<UserChatScreen> {
   }
 
   void _markIncomingAsReadInner(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, String currentUid) {
-    final unread = docs.where((d) {
-      final data = d.data();
-      return data['senderId'] != currentUid && (data['read'] != true);
-    }).toList();
-    if (unread.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _clearMyUnread(currentUid));
-      return;
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      for (final d in unread) {
-        d.reference.update({'read': true});
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Аввал «расид»: паём ба дастгоҳ омад, ҳарчанд корбар ҳанӯз чатро
+      // кушода набошад. Баъд «хонда шуд» — чат кушода аст.
+      await MessageStatusService.markDelivered(docs);
+      await MessageStatusService.markRead(docs);
       _clearMyUnread(currentUid);
     });
   }
@@ -747,6 +741,9 @@ class _UserChatScreenState extends State<UserChatScreen> {
                               isMe: message.senderId == currentUid,
                               currentUid: currentUid,
                               showReadReceipts: readReceipts,
+                              // Дар чати шахсӣ як ҳамсӯҳбат — ✓✓ вақте
+                              // пайдо мешавад, ки МАҲЗ ӯ гирифта/хонда бошад.
+                              otherParticipants: [widget.otherUserId],
                               animateIn: index == docs.length - 1,
                               grouped: isGroupedWithPrevious(previousMessage, message),
                               selectionActive: _selected.isNotEmpty,

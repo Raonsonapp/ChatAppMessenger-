@@ -188,6 +188,39 @@ await check('B занги воридотиро ҷавоб медиҳад', () =>
 await check('A паёми мӯҳлаташ гузаштаро нест мекунад', () =>
   assertSucceeds(deleteDoc(doc(a, 'conversations', convoId, 'messages', 'm1'))));
 
+// --- Ҳолати паём: расид / хонда шуд ---
+await env.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'conversations', convoId, 'messages', 'st1'), {
+    text: 'salom', senderId: A, deliveredTo: [], readBy: [],
+  });
+});
+
+await check('гиранда худро ҳамчун «расид» қайд мекунад', () =>
+  assertSucceeds(updateDoc(doc(b, 'conversations', convoId, 'messages', 'st1'), {
+    deliveredTo: [B],
+  })));
+await check('гиранда худро ҳамчун «хонда» қайд мекунад', () =>
+  assertSucceeds(updateDoc(doc(b, 'conversations', convoId, 'messages', 'st1'), {
+    readBy: [B], read: true,
+  })));
+await check('гиранда матни паёмро иваз карда НАМЕТАВОНАД', () =>
+  // Бе ин маҳдудият қайди «хонда шуд» роҳи иваз кардани матни бегона мешуд.
+  assertFails(updateDoc(doc(b, 'conversations', convoId, 'messages', 'st1'), {
+    readBy: [B], text: 'иваз шуд',
+  })));
+await check('гиранда каси дигарро ҳамчун «хонда» қайд карда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(b, 'conversations', convoId, 'messages', 'st1'), {
+    readBy: [B, C],
+  })));
+await check('соҳиб паёми худро тағйир дода метавонад', () =>
+  assertSucceeds(updateDoc(doc(a, 'conversations', convoId, 'messages', 'st1'), {
+    text: 'нав', edited: true,
+  })));
+await check('аксуламал гузоштан мумкин аст', () =>
+  assertSucceeds(updateDoc(doc(b, 'conversations', convoId, 'messages', 'st1'), {
+    reactions: { [B]: '❤️' },
+  })));
+
 // --- Манъкунӣ (block) ---
 // Манъкунӣ бояд ДУ ТАРАФА бошад. Пештар он танҳо дар экран буд: манъшуда
 // ба ҳар ҳол паём фиристода метавонист — яъне «манъ кардан» аз чизе ҳимоя

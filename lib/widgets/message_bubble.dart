@@ -27,6 +27,12 @@ class MessageBubble extends StatelessWidget {
   final String currentUid;
   final String? senderLabel;
   final bool showReadReceipts;
+
+  /// Иштирокчиёни дигар — барои ҳисоби «расид»/«хонда шуд».
+  ///
+  /// Дар чати шахсӣ якто, дар гурӯҳ ҳамаи аъзоён ба ғайр аз ман. Дар гурӯҳ
+  /// ✓✓ танҳо вақте нишон дода мешавад, ки ҲАМА гирифта бошанд.
+  final List<String> otherParticipants;
   final ValueChanged<ChatMessage>? onReply;
   final ValueChanged<ChatMessage>? onDelete;
 
@@ -70,6 +76,7 @@ class MessageBubble extends StatelessWidget {
     required this.currentUid,
     this.senderLabel,
     this.showReadReceipts = true,
+    this.otherParticipants = const [],
     this.onReply,
     this.onDelete,
     this.onDeleteForMe,
@@ -765,13 +772,39 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
-  /// Feather надорад иконаи "ду галочка"-и WhatsApp — бо ду
-  /// LucideIcons.check-и рӯйиҳамафтода шабеҳсозӣ мешавад.
+  /// Нишонаи ҳолати паём — мисли WhatsApp:
+  ///
+  ///   🕘  фиристода мешавад
+  ///   ✓   фиристода шуд
+  ///   ✓✓  расид
+  ///   ✓✓  (сабз) хонда шуд
+  ///   ⚠   нарафт
+  ///
+  /// Lucide иконаи «ду галочка» надорад, бинобар ин ду `check`-и
+  /// рӯйиҳамафтода истифода мешавад.
   Widget _buildReadReceipt() {
-    final color = message.read ? AppColors.neonEmerald : AppColors.textSecondary.withValues(alpha: 0.6);
-    if (!message.read) {
-      return Icon(LucideIcons.check, size: 13, color: color);
+    final faded = AppColors.textSecondary.withValues(alpha: 0.6);
+
+    switch (message.deliveryStatus(otherParticipants)) {
+      case MessageStatus.sending:
+        return Icon(LucideIcons.clock, size: 12, color: faded);
+
+      case MessageStatus.failed:
+        // Хатогӣ бояд НАМОЁН бошад: паём набояд хомӯшона гум шавад.
+        return Icon(LucideIcons.circle_alert, size: 13, color: Colors.redAccent);
+
+      case MessageStatus.sent:
+        return Icon(LucideIcons.check, size: 13, color: faded);
+
+      case MessageStatus.delivered:
+        return _doubleCheck(faded);
+
+      case MessageStatus.read:
+        return _doubleCheck(AppColors.neonEmerald);
     }
+  }
+
+  Widget _doubleCheck(Color color) {
     return SizedBox(
       width: 16,
       height: 13,

@@ -41,6 +41,7 @@ import 'create_poll_screen.dart';
 import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
 import '../widgets/upload_indicator.dart';
+import '../services/message_status_service.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -719,7 +720,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         ),
                       );
                     }
-                    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                    WidgetsBinding.instance.addPostFrameCallback((_) async {
+                      _scrollToBottom();
+                      // «Расид», баъд «хонда шуд» — ҳамон мантиқи чати шахсӣ.
+                      await MessageStatusService.markDelivered(docs);
+                      await MessageStatusService.markRead(docs);
+                    });
                     return ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -740,7 +746,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           selectionActive: _selected.isNotEmpty,
                           selected: _selected.containsKey(message.id),
                           onSelectToggle: _toggleSelect,
-                          showReadReceipts: false,
+                          // Дар гурӯҳ ✓✓ вақте пайдо мешавад, ки ҲАМАИ
+                          // аъзоён гирифта/хонда бошанд — мисли WhatsApp.
+                          showReadReceipts: isMe,
+                          otherParticipants: _others,
                           onReply: (m) => setState(() => _replyingTo = m),
                           onDelete: _deleteMessage,
                           onReact: _reactToMessage,

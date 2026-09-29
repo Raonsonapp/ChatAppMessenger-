@@ -16,6 +16,23 @@ class ChatMessage {
   final String? replyToSenderId;
   final bool deleted;
   final bool read;
+
+  /// Кӣ паёмро гирифт ва кӣ хонд.
+  ///
+  /// Рӯйхат нигоҳ дошта мешавад, на танҳо «ҳа/не»: дар гурӯҳ фарқ кардан
+  /// лозим аст, ки кадом узв паёмро гирифт ва кадомаш хонд.
+  final List<String> deliveredTo;
+  final List<String> readBy;
+
+  /// Ҳолати фиристодан — танҳо дар дастгоҳи ФИРИСТАНДА маъно дорад.
+  final MessageStatus status;
+
+  /// Шиносаи маҳаллӣ, ки пеш аз фиристодан сохта мешавад.
+  ///
+  /// Бе он такрори паём ҳангоми бозфиристодан пешгирӣ намешавад: агар
+  /// навиштан ноком шавад, вале дар асл ба сервер расида бошад, кӯшиши дуюм
+  /// нусхаи дуюмро месозад.
+  final String? clientId;
   final String? mediaUrl;
   final String? mediaType;
 
@@ -54,6 +71,10 @@ class ChatMessage {
     this.replyToSenderId,
     this.deleted = false,
     this.read = false,
+    this.deliveredTo = const [],
+    this.readBy = const [],
+    this.status = MessageStatus.sent,
+    this.clientId,
     this.mediaUrl,
     this.mediaType,
     this.mediaDuration,
@@ -81,6 +102,11 @@ class ChatMessage {
       replyToSenderId: data['replyToSenderId'] as String?,
       deleted: (data['deleted'] ?? false) as bool,
       read: (data['read'] ?? false) as bool,
+      deliveredTo: List<String>.from(data['deliveredTo'] as List? ?? const []),
+      readBy: List<String>.from(data['readBy'] as List? ?? const []),
+      clientId: data['clientId'] as String?,
+      // Ҳуҷҷат дар Firestore аст, яъне фиристодан аллакай муваффақ шуд.
+      status: MessageStatus.sent,
       mediaUrl: data['mediaUrl'] as String?,
       mediaType: data['mediaType'] as String?,
       mediaDuration: (data['mediaDuration'] as num?)?.toInt(),
@@ -95,5 +121,40 @@ class ChatMessage {
           .map((k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0)),
       reactions: rawReactions.map((k, v) => MapEntry(k, v as String)),
     );
+  }
+}
+
+
+/// Ҳолати фиристодани паём — мисли WhatsApp.
+///
+/// `sending` ва `failed` танҳо дар дастгоҳи фиристанда вуҷуд доранд: паёме
+/// ки ҳанӯз ба сервер нарасидааст, дар Firestore ҳуҷҷат надорад.
+enum MessageStatus { sending, sent, delivered, read, failed }
+
+extension MessageDelivery on ChatMessage {
+  /// Ҳолати воқеӣ барои нишонаҳои ✓/✓✓ дар назди паёми ХУДАМ.
+  ///
+  /// [others] — иштирокчиёни дигар (дар чати шахсӣ якто, дар гурӯҳ ҳама).
+  /// Дар гурӯҳ ✓✓ вақте нишон дода мешавад, ки ҲАМА гирифта/хонда бошанд —
+  /// ҳамон тавре ки WhatsApp мекунад.
+  MessageStatus deliveryStatus(List<String> others) {
+    if (status == MessageStatus.sending || status == MessageStatus.failed) {
+      return status;
+    }
+    if (others.isEmpty) return MessageStatus.sent;
+
+    final everyoneRead = others.every(readBy.contains);
+    if (everyoneRead) return MessageStatus.read;
+
+    // Хондан гирифтанро дар бар мегирад: агар корбар хонда бошад, вале дар
+    // `deliveredTo` набошад (масалан навсозии кӯҳна), ӯ ба ҳар ҳол гирифтааст.
+    final everyoneGot = others.every(
+      (uid) => deliveredTo.contains(uid) || readBy.contains(uid),
+    );
+    if (everyoneGot) return MessageStatus.delivered;
+
+    // Майдонҳои кӯҳна: паёмҳои пеш аз ин навсозӣ `readBy` надоранд.
+    if (read) return MessageStatus.read;
+    return MessageStatus.sent;
   }
 }

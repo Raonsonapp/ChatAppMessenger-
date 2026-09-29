@@ -60,9 +60,39 @@ service cloud.firestore {
           ).data.get('blockedUsers', []));
         }
 
+        /// Танҳо худро ба рӯйхати додашуда илова мекунад.
+        ///
+        /// Бе ин маҳдудият гиранда метавонист ҳангоми қайди «хонда шуд»
+        /// матни паёмро низ иваз кунад.
+        function onlyAddsSelf(fields) {
+          return request.resource.data.diff(resource.data)
+                   .affectedKeys().hasOnly(fields)
+            && request.resource.data.get('deliveredTo', [])
+                 .removeAll(resource.data.get('deliveredTo', [])).hasOnly([uid()])
+            && request.resource.data.get('readBy', [])
+                 .removeAll(resource.data.get('readBy', [])).hasOnly([uid()]);
+        }
+
+        function changesOnly(fields) {
+          return request.resource.data.diff(resource.data)
+                   .affectedKeys().hasOnly(fields);
+        }
+
         allow read: if signedIn() && isParticipant();
-        allow update, delete: if signedIn() && isParticipant();
         allow create: if signedIn() && isParticipant() && notBlockedByOther();
+
+        allow update: if signedIn() && isParticipant() && (
+          // Соҳиби паём онро тағйир дода метавонад.
+          resource.data.senderId == uid()
+          // Гиранда худро ҳамчун «расид»/«хонда» қайд мекунад.
+          || onlyAddsSelf(['deliveredTo', 'readBy', 'read'])
+          // Аксуламал, овоз дар пурсиш, пинҳон кардан барои худам.
+          || changesOnly(['reactions'])
+          || changesOnly(['pollVotes'])
+          || changesOnly(['deletedFor'])
+        );
+
+        allow delete: if signedIn() && isParticipant();
       }
     }
 

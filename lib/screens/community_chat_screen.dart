@@ -38,6 +38,7 @@ import 'create_poll_screen.dart';
 import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
 import '../widgets/upload_indicator.dart';
+import '../services/message_status_service.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -702,7 +703,12 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                         ),
                       );
                     }
-                    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                    WidgetsBinding.instance.addPostFrameCallback((_) async {
+                      _scrollToBottom();
+                      // «Расид», баъд «хонда шуд» — ҳамон мантиқи чати шахсӣ.
+                      await MessageStatusService.markDelivered(docs);
+                      await MessageStatusService.markRead(docs);
+                    });
                     return ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
