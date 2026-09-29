@@ -12,6 +12,10 @@ import '../../widgets/user_avatar.dart';
 import '../../widgets/group_avatar.dart';
 import '../../widgets/empty_state.dart';
 import '../../theme/app_scope.dart';
+import '../dial_pad_screen.dart';
+import '../schedule_call_screen.dart';
+import '../favorites_screen.dart';
+import '../contact_picker_screen.dart';
 
 class CallsTab extends StatelessWidget {
   const CallsTab({super.key});
@@ -22,6 +26,15 @@ class CallsTab extends StatelessWidget {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
     if (currentUid == null) return const SizedBox.shrink();
 
+    return Column(
+      children: [
+        const _CallActionsRow(),
+        Expanded(child: _history(currentUid)),
+      ],
+    );
+  }
+
+  Widget _history(String currentUid) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('calls')
@@ -119,6 +132,120 @@ class CallsTab extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+
+/// Чор амали болои таърихи зангҳо.
+class _CallActionsRow extends StatelessWidget {
+  const _CallActionsRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+      child: Row(
+        children: [
+          _CallAction(
+            icon: LucideIcons.phone,
+            label: tr('k480'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ContactPickerScreen()),
+            ),
+          ),
+          _CallAction(
+            icon: LucideIcons.calendar_plus,
+            label: tr('k481'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ScheduleCallScreen()),
+            ),
+          ),
+          _CallAction(
+            icon: LucideIcons.grid_2x2,
+            label: tr('k462'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const DialPadScreen()),
+            ),
+          ),
+          _CallAction(
+            icon: LucideIcons.star,
+            label: tr('k482'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Як амал бо аниматсияи сабуки зеркунӣ.
+class _CallAction extends StatefulWidget {
+  const _CallAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  State<_CallAction> createState() => _CallActionState();
+}
+
+class _CallActionState extends State<_CallAction> {
+  bool _down = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _down = true),
+        onTapUp: (_) => setState(() => _down = false),
+        onTapCancel: () => setState(() => _down = false),
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _down ? 0.93 : 1,
+          duration: const Duration(milliseconds: 130),
+          curve: Curves.easeOut,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+            child: Column(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: AppColors.glassFill,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.glassBorder),
+                  ),
+                  child: Icon(widget.icon, color: AppColors.neonEmerald, size: 20),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  widget.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

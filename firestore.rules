@@ -281,6 +281,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Зангҳои банақшагирифташуда — танҳо иштирокчиён.
+    match /scheduledCalls/{callId} {
+      allow read: if signedIn() && uid() in resource.data.participants;
+      allow create: if signedIn()
+        && request.resource.data.ownerId == uid()
+        && uid() in request.resource.data.participants;
+      // Тағйир ва нест кардан — танҳо соҳиб.
+      allow update, delete: if signedIn() && resource.data.ownerId == uid();
+    }
+
     match /calls/{callId} {
       allow read: if signedIn() && (
         uid() in resource.data.participants
