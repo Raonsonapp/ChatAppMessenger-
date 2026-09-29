@@ -12,6 +12,8 @@ import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import 'shared_media_screen.dart';
 import '../theme/app_scope.dart';
+import '../services/report_service.dart';
+import '../sheets/report_sheet.dart';
 
 /// Маълумоти воқеии контакт — mute/манъ/тоза кардани чат ҳама воқеан
 /// дар Firestore сабт мешаванд.
@@ -85,6 +87,16 @@ class ContactInfoScreen extends StatelessWidget {
     await FirebaseFirestore.instance.collection('conversations').doc(conversationId).update({
       'mutedBy': currentlyMuted ? FieldValue.arrayRemove([uid]) : FieldValue.arrayUnion([uid]),
     });
+  }
+
+  /// Манъ мекунад, вале экранро намепӯшад — варақаи шикоят инро худаш
+  /// идора мекунад.
+  Future<void> _blockSilently() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'blockedUsers': FieldValue.arrayUnion([otherUserId]),
+    }, SetOptions(merge: true));
   }
 
   Future<void> _toggleBlock(BuildContext context, bool currentlyBlocked) async {
@@ -271,6 +283,32 @@ class ContactInfoScreen extends StatelessWidget {
                                       ),
                                     ),
                                     onTap: () => _toggleBlock(context, isBlocked),
+                                  ),
+                                  Divider(color: AppColors.glassBorder, height: 1),
+                                  ListTile(
+                                    leading: Icon(LucideIcons.flag, color: Colors.redAccent, size: 20),
+                                    title: Text(
+                                      tr('k415'),
+                                      style: const TextStyle(
+                                        color: Colors.redAccent,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    onTap: () => showModalBottomSheet(
+                                      context: context,
+                                      backgroundColor: Colors.transparent,
+                                      isScrollControlled: true,
+                                      builder: (_) => ReportSheet(
+                                        target: ReportTarget.user,
+                                        targetId: otherUserId,
+                                        // Шикоят кардан аксар вақт маънои
+                                        // манъ карданро низ дорад.
+                                        onBlockAlso: isBlocked
+                                            ? null
+                                            : () => _blockSilently(),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),

@@ -23,6 +23,8 @@ import 'net_image.dart';
 import '../services/link_preview_service.dart';
 import 'link_preview_card.dart';
 import 'linkified_text.dart';
+import '../services/report_service.dart';
+import '../sheets/report_sheet.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -190,6 +192,30 @@ class MessageBubble extends StatelessWidget {
                   onReply?.call(message);
                 },
               ),
+              if (!isMe)
+                _actionTile(
+                  context,
+                  icon: LucideIcons.flag,
+                  label: tr('k415'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      isScrollControlled: true,
+                      builder: (_) => ReportSheet(
+                        target: ReportTarget.message,
+                        targetId: message.id,
+                        contextPath: messageRef?.path,
+                        // Нусхаи матн нигоҳ дошта мешавад: агар муаллиф
+                        // паёмро нест кунад, шикоят бе далел мемонад.
+                        contentSnapshot: message.text.isEmpty
+                            ? message.mediaType
+                            : message.text,
+                      ),
+                    );
+                  },
+                ),
               if (_isSavable)
                 _actionTile(
                   context,

@@ -225,6 +225,18 @@ service cloud.firestore {
     // занги воридотӣ бо `calleeId == uid`. Firestore дархостро танҳо вақте
     // қабул мекунад, ки филтрҳояш қоидаро кафолат диҳанд, бинобар ин ҳар ду
     // ҳолат бояд дар қоида бошанд.
+    // Гузоришҳо (шикоят). Корбар менависад, вале ҲЕҶ КАС намехонад:
+    // касе набояд бубинад, ки кӣ ба ӯ шикоят кардааст. Модератор онҳоро
+    // тавассути консол ё Admin SDK мебинад.
+    match /reports/{reportId} {
+      allow read: if false;
+      allow update, delete: if false;
+      allow create: if signedIn()
+        && request.resource.data.reporterId == uid()
+        && request.resource.data.targetId is string
+        && request.resource.data.reason is string;
+    }
+
     // Кэши пешнамоиши ҳавола — ҳама мехонанд, менависад ТАНҲО сервер
     // (тавассути Admin SDK, ки қоидаҳоро дур мезанад). Корбар набояд
     // пешнамоиши қалбакӣ гузошта тавонад.
