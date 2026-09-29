@@ -22,6 +22,9 @@ class AttachmentSheet extends StatelessWidget {
   final ValueChanged<PlatformFile>? onDocumentPicked;
   final VoidCallback? onLocationTap;
   final VoidCallback? onPollTap;
+
+  /// Банақшагирии занг ҳамчун «чорабинӣ».
+  final VoidCallback? onEventTap;
   const AttachmentSheet({
     super.key,
     required this.onImagePicked,
@@ -32,6 +35,7 @@ class AttachmentSheet extends StatelessWidget {
     this.onDocumentPicked,
     this.onLocationTap,
     this.onPollTap,
+    this.onEventTap,
   });
 
   Future<void> _pickGallery(BuildContext context) async {
@@ -154,6 +158,16 @@ class AttachmentSheet extends StatelessWidget {
                     onTap: () {
                       Navigator.pop(context);
                       onPollTap!();
+                    },
+                  ),
+                if (onEventTap != null)
+                  _item(
+                    icon: LucideIcons.calendar_plus,
+                    color: const Color(0xFF0E7C86),
+                    label: tr('k491'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      onEventTap!();
                     },
                   ),
                 if (onGifPicked != null)

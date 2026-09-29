@@ -43,6 +43,7 @@ import '../utils/upload_error.dart';
 import '../widgets/upload_indicator.dart';
 import '../services/message_status_service.dart';
 import '../theme/chat_theme_controller.dart';
+import 'schedule_call_screen.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -233,6 +234,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         onDocumentPicked: _sendDocumentMessage,
         onLocationTap: _sendLocationMessage,
         onPollTap: _sendPoll,
+        onEventTap: _openScheduleCall,
       ),
     );
   }
@@ -678,6 +680,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final value = style.bubbleColor;
     return value == null ? null : Color(value);
   }
+
+
+  /// Банақшагирии занг аз феҳристи замима.
+  void _openScheduleCall() => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ScheduleCallScreen()),
+      );
 
   @override
   Widget build(BuildContext context) {

@@ -490,4 +490,5 @@ const Map<String, String> stringsEn = {
   'k488': 'Translate',
   'k489': 'Translating…',
   'k490': 'Translation',
+  'k491': 'Event',
 };

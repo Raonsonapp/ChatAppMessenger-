@@ -40,6 +40,7 @@ import '../utils/upload_error.dart';
 import '../widgets/upload_indicator.dart';
 import '../services/message_status_service.dart';
 import '../theme/chat_theme_controller.dart';
+import 'schedule_call_screen.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -216,6 +217,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         onDocumentPicked: _sendDocumentMessage,
         onLocationTap: _sendLocationMessage,
         onPollTap: _sendPoll,
+        onEventTap: _openScheduleCall,
       ),
     );
   }
@@ -661,6 +663,13 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     final value = style.bubbleColor;
     return value == null ? null : Color(value);
   }
+
+
+  /// Банақшагирии занг аз феҳристи замима.
+  void _openScheduleCall() => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ScheduleCallScreen()),
+      );
 
   @override
   Widget build(BuildContext context) {

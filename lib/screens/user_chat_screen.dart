@@ -49,6 +49,7 @@ import '../services/report_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'shared_media_screen.dart';
 import '../theme/chat_theme_controller.dart';
+import 'schedule_call_screen.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -306,6 +307,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         onDocumentPicked: _sendDocumentMessage,
         onLocationTap: _sendLocationMessage,
         onPollTap: _sendPoll,
+        onEventTap: _openScheduleCall,
         onStickerTap: _openStickerPicker,
       ),
     );
@@ -654,6 +656,13 @@ class _UserChatScreenState extends State<UserChatScreen> {
     final value = style.bubbleColor;
     return value == null ? null : Color(value);
   }
+
+
+  /// Банақшагирии занг аз феҳристи замима.
+  void _openScheduleCall() => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ScheduleCallScreen()),
+      );
 
   @override
   Widget build(BuildContext context) {
