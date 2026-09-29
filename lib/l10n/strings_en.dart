@@ -415,4 +415,5 @@ const Map<String, String> stringsEn = {
   'k413': 'Also block this user',
   'k414': 'Send report',
   'k415': 'Report',
+  'k416': 'Mark as unread',
 };

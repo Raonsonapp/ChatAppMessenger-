@@ -57,4 +57,14 @@ class ConversationActions {
       'unread': {uid: 0},
     }, SetOptions(merge: true));
   }
+
+  /// Чатро ҳамчун нохонда қайд мекунад — то корбар баъдтар ба он баргардад.
+  ///
+  /// Як нишони нохонда гузошта мешавад, на ҳисоби воқеӣ: ҳадаф хотиррасон
+  /// кардан аст, на ҳисоб кардани паёмҳо.
+  static Future<void> markUnread(String conversationId, String uid) {
+    return _ref(conversationId).set({
+      'unread': {uid: 1},
+    }, SetOptions(merge: true));
+  }
 }

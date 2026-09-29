@@ -63,6 +63,13 @@ class UserConversationTile extends StatelessWidget {
                   icon: LucideIcons.check_check,
                   label: tr('k271'),
                   onTap: () => ConversationActions.markRead(conversation.id, currentUid),
+                )
+              else
+                _actionTile(
+                  sheetContext,
+                  icon: LucideIcons.mail,
+                  label: tr('k416'),
+                  onTap: () => ConversationActions.markUnread(conversation.id, currentUid),
                 ),
               _actionTile(
                 sheetContext,
