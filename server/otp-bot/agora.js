@@ -1,6 +1,5 @@
 'use strict';
 
-const crypto = require('node:crypto');
 const { RtcTokenBuilder, RtcRole } = require('agora-token');
 
 /**
@@ -32,6 +31,9 @@ const config = {
 
 /** Мӯҳлати token — як соат. Занги дарозтар token-и навро мегирад. */
 const TOKEN_TTL_SECONDS = 60 * 60;
+
+/** Ҳадди Agora барои номи канал. */
+const MAX_CHANNEL_BYTES = 64;
 
 function hasAppId() {
   return Boolean(config.appId);
@@ -70,19 +72,20 @@ function status() {
 }
 
 /**
- * Аз uid-и Firebase рақами устувори 32-бита месозад.
+ * uid барои token ва барои `joinChannel`.
  *
- * Agora uid-и рақамӣ талаб мекунад. Он бояд устувор бошад: агар ҳар бор
- * рақами нав дода шавад, token ба корбари дигар баста мешавад.
- * 0 гузошта намешавад — дар Agora он маънои «ҳар корбар»-ро дорад, яъне
- * token-и умумӣ мешавад ва ҳимояи худро гум мекунад.
+ * ҲАРДУ бояд АЙНАН ЯКХЕЛА бошанд, вагарна Agora token-ро рад мекунад ва
+ * занг бо хатои «token нодуруст» меафтад — маҳз ҳамин хатои аз ҳама
+ * маъмул аст.
+ *
+ * 0 истифода мешавад: token ба канал баста мешавад, на ба корбар. Ин роҳи
+ * санҷидашуда аст ва як синфи томи хатогиро — номувофиқатии uid — тамоман
+ * барҳам медиҳад.
+ *
+ * Ин ҳимояро суст намекунад: token танҳо ба корбари ИҶОЗАТДОДАШУДА дода
+ * мешавад (ниг. `checkChannelAccess`) ва як соат эътибор дорад.
  */
-function numericUid(firebaseUid) {
-  const hash = crypto.createHash('sha256').update(String(firebaseUid)).digest();
-  // 31 бит — то дар доираи int32-и мусбат монад.
-  const value = hash.readUInt32BE(0) & 0x7fffffff;
-  return value === 0 ? 1 : value;
-}
+const CHANNEL_BOUND_UID = 0;
 
 /**
  * Token барои канал.
@@ -94,7 +97,13 @@ function numericUid(firebaseUid) {
 function buildToken(channelName, firebaseUid) {
   if (!hasAppId()) throw new Error('AGORA_APP_ID гузошта нашудааст');
 
-  const uid = numericUid(firebaseUid);
+  // Agora номи каналро то 64 байт қабул мекунад. Номи дарозтар хомӯшона рад
+  // мешавад ва ҳарду тараф то абад «Пайваст мешавад…» мебинанд.
+  if (Buffer.byteLength(channelName) > MAX_CHANNEL_BYTES) {
+    throw new Error('Номи канал аз 64 байт дарозтар аст');
+  }
+
+  const uid = CHANNEL_BOUND_UID;
 
   // Бе Certificate token лозим нест ва сохта ҳам намешавад.
   if (!config.appCertificate) {
@@ -127,12 +136,47 @@ function groupIdFromChannel(channelName) {
   return match ? match[1] : null;
 }
 
+/**
+ * Оё ин корбар ҳақ дорад ба ин канал дарояд?
+ *
+ * Бе ин санҷиш ҳар корбари воридшуда метавонист барои ҲАР канал token гирад
+ * ва ба сӯҳбати бегона гӯш кунад.
+ *
+ * Сабаб баргардонда мешавад, на танҳо «ҳа/не»: вақте занг кор намекунад,
+ * «token нашуд» ҳељ чиз намефаҳмонад, вале «ҳуҷҷати занг ёфт нашуд» маҳз он
+ * чизест, ки ҷустан лозим аст.
+ *
+ * @returns {Promise<{allowed: boolean, reason: string}>}
+ */
+async function checkChannelAccess(db, uid, channelName) {
+  const groupId = groupIdFromChannel(channelName);
+
+  if (groupId) {
+    const group = await db.collection('groups').doc(groupId).get();
+    if (!group.exists) return { allowed: false, reason: 'group-not-found' };
+    const members = group.data()?.members;
+    if (!Array.isArray(members) || !members.includes(uid)) {
+      return { allowed: false, reason: 'not-a-member' };
+    }
+    return { allowed: true, reason: 'group-member' };
+  }
+
+  const call = await db.collection('calls').doc(channelName).get();
+  if (!call.exists) return { allowed: false, reason: 'call-not-found' };
+  const participants = call.data()?.participants;
+  if (!Array.isArray(participants) || !participants.includes(uid)) {
+    return { allowed: false, reason: 'not-a-participant' };
+  }
+  return { allowed: true, reason: 'call-participant' };
+}
+
 module.exports = {
   isConfigured,
   hasAppId,
   status,
   buildToken,
-  numericUid,
   groupIdFromChannel,
+  checkChannelAccess,
   TOKEN_TTL_SECONDS,
+  MAX_CHANNEL_BYTES,
 };

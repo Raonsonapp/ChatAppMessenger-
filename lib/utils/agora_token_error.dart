@@ -7,7 +7,10 @@ String describeAgoraTokenError(AgoraTokenFailure failure) {
     AgoraTokenFailureKind.notSignedIn => tr('k366'),
     AgoraTokenFailureKind.network => tr('k367'),
     AgoraTokenFailureKind.notConfigured => tr('k398'),
-    AgoraTokenFailureKind.notAllowed => tr('k399'),
+    // Сабаби сервер ҳамроҳ карда мешавад: бе он маълум намешавад, ки
+    // ҳуҷҷати занг ёфт нашуд ё корбар воқеан иштирокчӣ нест.
+    AgoraTokenFailureKind.notAllowed =>
+      failure.reason == null ? tr('k399') : '${tr('k399')} (${failure.reason})',
     AgoraTokenFailureKind.server => tr('k400'),
   };
 }

@@ -33,28 +33,36 @@ test('token сохта мешавад ва шакли AccessToken2 дорад', 
   assert.ok(built.expiresInSeconds > 0);
 });
 
-test('uid устувор аст', () => {
-  // Агар uid ҳар бор тағйир ёбад, token ба корбари дигар баста мешавад ва
-  // ҳамроҳ шудан ноком мегардад.
-  const a = agora.buildToken('ch', 'firebase-uid-1').uid;
-  const b = agora.buildToken('ch', 'firebase-uid-1').uid;
-  assert.equal(a, b);
+test('uid ҳамеша 0 аст — барои ҳамаи корбарон', () => {
+  // Token ба КАНАЛ баста мешавад, на ба корбар.
+  //
+  // Сабаб амалӣ аст: uid дар token ва uid дар `joinChannel` бояд АЙНАН
+  // якхела бошанд, вагарна Agora token-ро рад мекунад ва занг бо хатои
+  // «token нодуруст» меафтад. 0 дар ҳар ду ҷо як синфи томи хатогиро —
+  // номувофиқатии uid — тамоман барҳам медиҳад.
+  //
+  // Ҳимоя аз ин суст намешавад: token танҳо ба корбари иҷозатдодашуда
+  // дода мешавад (ниг. checkChannelAccess) ва як соат эътибор дорад.
+  assert.equal(agora.buildToken('ch', 'firebase-uid-1').uid, 0);
+  assert.equal(agora.buildToken('ch', 'firebase-uid-2').uid, 0);
 });
 
-test('корбарони гуногун uid-и гуногун доранд', () => {
-  const a = agora.buildToken('ch', 'firebase-uid-1').uid;
-  const b = agora.buildToken('ch', 'firebase-uid-2').uid;
-  assert.notEqual(a, b);
+test('як канал барои ҳар ду тараф token-и кории якхела медиҳад', () => {
+  // Зангзананда ва гиранда бояд ҳар ду ба ҲАМОН канал дароянд.
+  const caller = agora.buildToken('call-xyz', 'uid-caller');
+  const callee = agora.buildToken('call-xyz', 'uid-callee');
+  assert.equal(caller.uid, callee.uid);
+  assert.equal(caller.appId, callee.appId);
+  assert.match(caller.token, /^007/);
+  assert.match(callee.token, /^007/);
 });
 
-test('uid ҳељ гоҳ сифр нест ва дар доираи int32 аст', () => {
-  // Дар Agora uid=0 маънои «ҳар корбар»-ро дорад — яъне token ҳимояи худро
-  // гум мекунад.
-  for (let i = 0; i < 200; i++) {
-    const uid = agora.numericUid(`user-${i}`);
-    assert.ok(uid > 0, `uid=${uid}`);
-    assert.ok(uid <= 0x7fffffff, `uid=${uid}`);
-  }
+test('номи канали аз 64 байт дарозтар рад мешавад', () => {
+  // Дар барномаи дигари ҳамин муаллиф маҳз ҳамин хатогӣ зангро мешикаст:
+  // номи канали 73-аломата хомӯшона рад мешуд ва ҳарду тараф то абад
+  // «Пайваст мешавад…» медиданд. Беҳтар аст, ки хатогӣ намоён бошад.
+  assert.throws(() => agora.buildToken('x'.repeat(65), 'u1'));
+  assert.doesNotThrow(() => agora.buildToken('x'.repeat(64), 'u1'));
 });
 
 test('канали дигар token-и дигар медиҳад', () => {

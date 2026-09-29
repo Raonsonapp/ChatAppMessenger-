@@ -60,6 +60,18 @@ jobs:
           npm install --no-audit --no-fund --silent
           node --test agora.test.mjs
 
+      # Санҷиши дастрасӣ ба канали занг дар эмулятори ВОҚЕИИ Firestore.
+      # Маҳз ин мантиқ вақте мешиканад, ки занг бо «хатои token» меафтад.
+      - name: Test call access (Firestore emulator)
+        run: |
+          npm install -g firebase-tools --silent
+          cd server/otp-bot
+          firebase emulators:exec \
+            --only firestore \
+            --project demo-chatapp \
+            --config ../../firebase.emulator.json \
+            "node --test agora_access.test.mjs"
+
       - name: Build release APK
         run: flutter build apk --release
 

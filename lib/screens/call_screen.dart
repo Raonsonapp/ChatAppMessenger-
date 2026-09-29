@@ -231,6 +231,12 @@ class _CallScreenState extends State<CallScreen> {
           if (!mounted) return;
           _endCall(outcome: CallOutcome.completed);
         },
+        // Agora хатои token-ро аксар вақт маҳз аз ин ҷо хабар медиҳад,
+        // на аз `onError`. Бе ин экран то абад «Пайваст мешавад…» мемонад.
+        onConnectionStateChanged: (connection, state, reason) {
+          if (!mounted || !CallError.isFatalReason(reason)) return;
+          setState(() => _error = CallError.describeReason(reason));
+        },
         onError: (err, msg) {
           // Танҳо хатои ҷиддӣ зангро қатъ мекунад. Пештар ҳар огоҳии хурд
           // (масалан гарнитураи Bluetooth) занги солимро «вайрон» нишон

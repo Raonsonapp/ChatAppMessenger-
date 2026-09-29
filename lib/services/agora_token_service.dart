@@ -41,7 +41,14 @@ class AgoraTokenService {
       throw const AgoraTokenFailure(AgoraTokenFailureKind.notConfigured);
     }
     if (response.statusCode == 403) {
-      throw const AgoraTokenFailure(AgoraTokenFailureKind.notAllowed);
+      // Сервер сабаби аниқро мегӯяд: `call-not-found`, `not-a-participant`,
+      // `group-not-found`, `not-a-member`. Бе он «token нашуд» ҳељ чиз
+      // намефаҳмонад ва хатогиро ёфтан душвор мешавад.
+      String? reason;
+      try {
+        reason = (jsonDecode(response.body) as Map<String, dynamic>)['error'] as String?;
+      } catch (_) {}
+      throw AgoraTokenFailure(AgoraTokenFailureKind.notAllowed, reason);
     }
     if (response.statusCode == 401) {
       throw const AgoraTokenFailure(AgoraTokenFailureKind.notSignedIn);
@@ -94,8 +101,13 @@ enum AgoraTokenFailureKind {
 
 class AgoraTokenFailure implements Exception {
   final AgoraTokenFailureKind kind;
-  const AgoraTokenFailure(this.kind);
+
+  /// Сабаби аниқи сервер — барои ташхис.
+  final String? reason;
+
+  const AgoraTokenFailure(this.kind, [this.reason]);
 
   @override
-  String toString() => 'AgoraTokenFailure(${kind.name})';
+  String toString() =>
+      'AgoraTokenFailure(${kind.name}${reason == null ? '' : ', $reason'})';
 }

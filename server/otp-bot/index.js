@@ -457,8 +457,14 @@ app.post('/api/agora-token', async (req, res) => {
   }
 
   try {
-    const allowed = await canJoinChannel(user.uid, channelName);
-    if (!allowed) return res.status(403).json({ error: 'not-a-participant' });
+    const access = await agora.checkChannelAccess(getFirestore(), user.uid, channelName);
+    if (!access.allowed) {
+      // Сабаби аниқ баргардонда мешавад: «token нашуд» ҳељ чиз
+      // намефаҳмонад, вале «ҳуҷҷати занг ёфт нашуд» роҳи ҷустуҷӯро нишон
+      // медиҳад.
+      console.warn(`Дастрасии занг рад шуд: ${access.reason} (channel=${channelName})`);
+      return res.status(403).json({ error: access.reason });
+    }
   } catch (err) {
     console.error('Хатои санҷиши дастрасии занг:', err?.message ?? err);
     return res.status(500).json({ error: 'dastrasi santida nashud' });
@@ -472,31 +478,6 @@ app.post('/api/agora-token', async (req, res) => {
     res.status(500).json({ error: 'token sohta nashud' });
   }
 });
-
-/**
- * Оё ин корбар ҳақ дорад ба ин канал дарояд?
- *
- * Ду шакли канал вуҷуд дорад:
- * - занги гурӯҳӣ: `group_<groupId>_<вақт>` — корбар бояд узви гурӯҳ бошад;
- * - занги шахсӣ: номи канал худи id-и ҳуҷҷати `calls/{id}` аст — корбар
- *   бояд дар `participants` бошад.
- */
-async function canJoinChannel(uid, channelName) {
-  const db = getFirestore();
-
-  const groupId = agora.groupIdFromChannel(channelName);
-  if (groupId) {
-    const group = await db.collection('groups').doc(groupId).get();
-    if (!group.exists) return false;
-    const members = group.data()?.members;
-    return Array.isArray(members) && members.includes(uid);
-  }
-
-  const call = await db.collection('calls').doc(channelName).get();
-  if (!call.exists) return false;
-  const participants = call.data()?.participants;
-  return Array.isArray(participants) && participants.includes(uid);
-}
 
 /**
  * Нест кардани ҳисоб бо ҳамаи маълумоти шахсӣ.

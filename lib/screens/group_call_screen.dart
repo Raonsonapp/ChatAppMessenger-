@@ -221,6 +221,12 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
           if (!mounted) return;
           setState(() => _remoteUids.remove(remoteUid));
         },
+        // Agora хатои token-ро аксар вақт маҳз аз ин ҷо хабар медиҳад,
+        // на аз `onError`. Бе ин экран то абад «Пайваст мешавад…» мемонад.
+        onConnectionStateChanged: (connection, state, reason) {
+          if (!mounted || !CallError.isFatalReason(reason)) return;
+          setState(() => _error = CallError.describeReason(reason));
+        },
         onError: (err, msg) {
           // Танҳо хатои ҷиддӣ зангро қатъ мекунад.
           if (!mounted || !CallError.isFatal(err)) return;

@@ -22,6 +22,36 @@ class CallError {
     ErrorCodeType.errNoPermission,
   };
 
+  /// Оё ин сабаби тағйири ҳолати пайваст ҷиддӣ аст?
+  ///
+  /// Agora хатои token-ро аксар вақт МАҲЗ АЗ ИН ҶО хабар медиҳад, на аз
+  /// `onError`. Бе гӯш кардани ин ҳодиса экран то абад «Пайваст мешавад…»
+  /// мемонад ва корбар намедонад, ки чӣ шуд.
+  static bool isFatalReason(ConnectionChangedReasonType reason) =>
+      _fatalReasons.contains(reason);
+
+  static const Set<ConnectionChangedReasonType> _fatalReasons = {
+    ConnectionChangedReasonType.connectionChangedInvalidToken,
+    ConnectionChangedReasonType.connectionChangedTokenExpired,
+    ConnectionChangedReasonType.connectionChangedInvalidAppId,
+    ConnectionChangedReasonType.connectionChangedInvalidChannelName,
+    ConnectionChangedReasonType.connectionChangedBannedByServer,
+    ConnectionChangedReasonType.connectionChangedRejectedByServer,
+  };
+
+  /// Матни фаҳмо барои сабаби қатъи пайваст.
+  static String describeReason(ConnectionChangedReasonType reason) {
+    return switch (reason) {
+      ConnectionChangedReasonType.connectionChangedInvalidAppId => tr('k394'),
+      ConnectionChangedReasonType.connectionChangedInvalidToken ||
+      ConnectionChangedReasonType.connectionChangedTokenExpired =>
+        tr('k395'),
+      ConnectionChangedReasonType.connectionChangedInvalidChannelName =>
+        tr('k396'),
+      _ => tr('k397'),
+    };
+  }
+
   /// Матни фаҳмо барои корбар.
   ///
   /// Барои хатоҳои танзимот сабаби АСЛӢ гуфта мешавад: «кор намекунад»
