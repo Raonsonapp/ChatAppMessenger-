@@ -48,6 +48,15 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Канали пешфарзи огоҳиномаҳои FCM.
+             Бе ин дар Android 8+ огоҳиномае ки ҳангоми пӯшида будани
+             барнома меояд, ХОМӮШОНА партофта мешавад: система канали
+             дурустро намеёбад. Қимат бояд маҳз ҳамон канале бошад, ки
+             барнома месозад (NotificationService). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="messages_channel" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

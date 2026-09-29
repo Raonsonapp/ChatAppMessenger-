@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../firebase_options.dart';
 import '../models/app_call.dart';
@@ -323,6 +325,17 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class NotificationService {
   static Future<void> initialize() async {
     await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
+
+    // Дар Android 13+ огоҳинома иҷозати ҷудогонаи система талаб мекунад.
+    // Бе он огоҳиномаҳо ХОМӮШОНА намерасанд — на хато ҳаст, на чизе.
+    if (Platform.isAndroid) {
+      try {
+        final status = await Permission.notification.status;
+        if (!status.isGranted) await Permission.notification.request();
+      } catch (_) {
+        // Дар версияҳои кӯҳна ин иҷозат вуҷуд надорад — ин хато нест.
+      }
+    }
 
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings();

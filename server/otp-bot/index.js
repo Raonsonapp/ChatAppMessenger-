@@ -356,6 +356,16 @@ function buildPayload({ isCall, title, body, data, senderUid }) {
   }
 
   payload.notification = { title: title || 'ChatApp', body };
+  // Канал ҲАТМАН нишон дода мешавад: дар Android 8+ огоҳиномаи бе канали
+  // дуруст хомӯшона партофта мешавад ва корбар ҳангоми пӯшида будани
+  // барнома ҳељ чиз намебинад.
+  payload.android.notification = {
+    channelId: 'messages_channel',
+    priority: 'high',
+    // Огоҳиномаҳои як сӯҳбат дар як гурӯҳ ҷамъ мешаванд, на ки лавҳаро
+    // пур кунанд.
+    tag: (data || {}).threadId || undefined,
+  };
   return payload;
 }
 

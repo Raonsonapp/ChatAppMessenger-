@@ -82,15 +82,30 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
 
   /// Агар зангзананда қатъ кунад, экран худаш пӯшида мешавад — вагарна
   /// садо то 45 сония идома меёбад ва корбар «занги арвоҳ»-ро мебинад.
+  /// Ҳангоми қабул ё рад кардан аз тарафи ХУДАМ назораткунанда бояд
+  /// хомӯш бошад — вагарна он экранро мепӯшад ва занги навкушодашударо
+  /// мекушад.
+  bool _handledLocally = false;
+
   void _watchCall() {
     _callSub = FirebaseFirestore.instance
         .collection('calls')
         .doc(widget.callId)
         .snapshots()
         .listen((snap) {
+      if (_handledLocally || !mounted) return;
+
       final outcome = snap.data()?['outcome'] as String?;
-      if (outcome == null || outcome == 'ringing') return;
-      if (!mounted) return;
+
+      // ТАНҲО қатъи занг аз тарафи ДИГАР экранро мепӯшад.
+      //
+      // `completed` дар ин ҷо санҷида НАМЕШАВАД: маҳз ҳамин қимат ҳангоми
+      // қабул кардан гузошта мешавад. Азбаски Firestore навиштанро фавран
+      // аз кэши маҳаллӣ бармегардонад, назораткунанда пеш аз кушода шудани
+      // экрани занг кор мекард ва онро мепӯшид — яъне қабул кардан худаш
+      // зангро мекушт.
+      if (outcome != 'declined' && outcome != 'missed') return;
+
       RingtoneService.instance.stop();
       Navigator.of(context).maybePop();
     }, onError: (_) {});
@@ -99,6 +114,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   bool get isGroupCall => widget.groupId != null && widget.channelId != null;
 
   Future<void> _decline() async {
+    _handledLocally = true;
     await RingtoneService.instance.stop();
     try {
       await FirebaseFirestore.instance
@@ -110,6 +126,12 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   }
 
   void _accept() {
+    // Аввал назораткунанда хомӯш карда мешавад, баъд ҳама чизи дигар:
+    // навиштани `outcome` фавран ба назораткунанда мерасад.
+    _handledLocally = true;
+    _callSub?.cancel();
+    _callSub = null;
+
     // Садо ПЕШ АЗ ҳама чиз қатъ мешавад: вагарна он ҳангоми кушода шудани
     // экрани занг боз чанд сония садо медиҳад.
     RingtoneService.instance.stop();
