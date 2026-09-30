@@ -1,17 +1,25 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
+import '../services/conversation_actions.dart';
 import '../services/media_service.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/neon_fab.dart';
+import '../sheets/chat_menu_sheet.dart';
 import '../sheets/new_chat_sheet.dart';
 import '../sheets/profile_sheet.dart';
 import '../sheets/new_call_sheet.dart';
+import 'broadcast_screen.dart';
 import 'chat_search_screen.dart';
+import 'create_group_screen.dart';
+import 'starred_messages_screen.dart';
+import 'settings/linked_devices_screen.dart';
+import 'settings/settings_home_screen.dart';
 import 'create_status_screen.dart';
 import 'create_community_screen.dart';
 import 'tabs/chats_tab.dart';
@@ -47,6 +55,76 @@ class _ChatListScreenState extends State<ChatListScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => const ProfileSheet(),
     );
+  }
+
+  /// Менюи сенуқтагии саҳифаи асосӣ — мисли WhatsApp.
+  ///
+  /// Ҳар банд ба экрани воқеии мавҷуда мебарад; ҳеҷ банди холӣ нест.
+  void _openHomeMenu() {
+    ChatMenuSheet.show(
+      context,
+      title: 'ChatApp',
+      actions: [
+        ChatMenuAction(
+          icon: LucideIcons.users,
+          label: tr('k083'),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CreateGroupScreen()),
+          ),
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.megaphone,
+          label: tr('k493'),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BroadcastScreen()),
+          ),
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.monitor_smartphone,
+          label: tr('k494'),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LinkedDevicesScreen()),
+          ),
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.star,
+          label: tr('k260'),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StarredMessagesScreen()),
+          ),
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.check_check,
+          label: tr('k495'),
+          onTap: _markAllRead,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.settings,
+          label: tr('k181'),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsHomeScreen()),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _markAllRead() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      await ConversationActions.markAllRead(uid);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k496'))));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k543'))));
+    }
   }
 
   void _openSearch() {
@@ -135,18 +213,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              const AppLogo(size: 30),
-              const SizedBox(width: 10),
-              ShaderMask(
-                shaderCallback: (bounds) => AppColors.neonGradient.createShader(bounds),
-                child: const Text(
-                  'ChatApp',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 22, letterSpacing: 0.2),
+          // Пахши логотип варақаи профилро мекушояд — роҳи кӯтоҳ ба профил,
+          // ситорадорҳо ва танзимот.
+          GestureDetector(
+            onTap: _openProfileSheet,
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                const AppLogo(size: 30),
+                const SizedBox(width: 10),
+                ShaderMask(
+                  shaderCallback: (bounds) => AppColors.neonGradient.createShader(bounds),
+                  child: const Text(
+                    'ChatApp',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 22, letterSpacing: 0.2),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           Row(
             children: [
@@ -154,7 +238,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               const SizedBox(width: 8),
               _iconButton(LucideIcons.search, onTap: _openSearch),
               const SizedBox(width: 8),
-              _iconButton(LucideIcons.ellipsis_vertical, onTap: _openProfileSheet),
+              _iconButton(LucideIcons.ellipsis_vertical, onTap: _openHomeMenu),
             ],
           ),
         ],

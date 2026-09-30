@@ -20,6 +20,7 @@ import '../screens/group_chat_screen.dart';
 import '../screens/community_chat_screen.dart';
 import '../l10n/l10n.dart';
 import 'notification_prefs.dart';
+import 'device_service.dart';
 import '../models/app_conversation.dart';
 import '../l10n/media_preview.dart';
 
@@ -444,10 +445,19 @@ class NotificationService {
         // кор кунад.
         'fcmToken': token,
       }, SetOptions(merge: true));
+      await DeviceService.register(uid, token);
     } catch (_) {}
   }
 
   static String? _currentToken;
+
+  /// Токени дастгоҳи ҷорӣ — то экрани «Дастгоҳҳои пайваст» донад кадомаш худи мост.
+  static String? get currentToken => _currentToken;
+
+  /// Токенро мегирад ва агар ҳанӯз кэш нашуда бошад, аз FCM мепурсад.
+  static Future<String?> resolveCurrentToken() async {
+    return _currentToken ??= await _safeToken();
+  }
 
   /// Пеш аз баромадан даъват шавад.
   ///
@@ -465,6 +475,7 @@ class NotificationService {
         'fcmTokens': FieldValue.arrayRemove([token]),
         'fcmToken': FieldValue.delete(),
       }, SetOptions(merge: true));
+      await DeviceService.unregister(uid, token);
     } catch (_) {}
     _currentToken = null;
   }

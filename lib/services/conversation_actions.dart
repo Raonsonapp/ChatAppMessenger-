@@ -58,6 +58,39 @@ class ConversationActions {
     }, SetOptions(merge: true));
   }
 
+  /// Ҳама чатҳо ва гурӯҳҳои корбарро хонда қайд мекунад.
+  ///
+  /// Танҳо онҳое навишта мешаванд ки воқеан ҳисоби нохонда доранд — то як
+  /// пахши тугма садҳо навиштани бефоида ба Firestore накунад. Натиҷа шумораи
+  /// чатҳои тағйирёфта аст.
+  static Future<int> markAllRead(String uid) async {
+    final db = FirebaseFirestore.instance;
+    final conversations = await db
+        .collection('conversations')
+        .where('participants', arrayContains: uid)
+        .get();
+    final groups = await db.collection('groups').where('members', arrayContains: uid).get();
+
+    final targets = <DocumentReference<Map<String, dynamic>>>[];
+    for (final doc in [...conversations.docs, ...groups.docs]) {
+      final unread = doc.data()['unread'];
+      final mine = unread is Map ? unread[uid] : null;
+      if (mine is num && mine > 0) targets.add(doc.reference);
+    }
+    if (targets.isEmpty) return 0;
+
+    // Ҳудуди як batch дар Firestore 500 амал аст.
+    const chunk = 400;
+    for (var start = 0; start < targets.length; start += chunk) {
+      final batch = db.batch();
+      for (final ref in targets.skip(start).take(chunk)) {
+        batch.set(ref, {'unread': {uid: 0}}, SetOptions(merge: true));
+      }
+      await batch.commit();
+    }
+    return targets.length;
+  }
+
   /// Чатро ҳамчун нохонда қайд мекунад — то корбар баъдтар ба он баргардад.
   ///
   /// Як нишони нохонда гузошта мешавад, на ҳисоби воқеӣ: ҳадаф хотиррасон

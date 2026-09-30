@@ -29,6 +29,12 @@ service cloud.firestore {
       match /starred/{starId} {
         allow read, write: if signedIn() && uid() == userId;
       }
+
+      // Дастгоҳҳои пайваст — танҳо худи соҳиби ҳисоб мебинад ва идора мекунад.
+      // Ҳеҷ корбари дигар набояд донад ки шумо аз кадом дастгоҳҳо медароед.
+      match /devices/{deviceId} {
+        allow read, write: if signedIn() && uid() == userId;
+      }
     }
 
     // Сӯҳбати шахсӣ: танҳо ду иштирокчӣ.
