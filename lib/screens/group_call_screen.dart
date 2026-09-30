@@ -18,6 +18,7 @@ import '../services/call_error.dart';
 import '../services/agora_token_service.dart';
 import '../utils/agora_token_error.dart';
 import '../services/agora_engine_manager.dart';
+import '../services/call_video_profile.dart';
 
 /// Занги гурӯҳӣ — ҳамаи аъзоён ба як канали Agora ҳамроҳ мешаванд.
 ///
@@ -244,6 +245,7 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
       await engine.enableAudio();
       if (widget.type == CallType.video) {
         await engine.enableVideo();
+        await CallVideoProfile.apply(engine);
         await engine.startPreview();
       }
 

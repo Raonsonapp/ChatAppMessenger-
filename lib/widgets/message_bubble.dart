@@ -777,6 +777,9 @@ class MessageBubble extends StatelessWidget {
                               width: 220,
                               fit: BoxFit.cover,
                               memCacheWidth: 660,
+                              // Аксҳои чат ба танзимоти «Боркунии худкор» тобеъ
+                              // ҳастанд — маҳз онҳо трафикро мехӯранд.
+                              respectAutoDownload: true,
                               loading: Container(
                                 width: 220,
                                 height: 220,

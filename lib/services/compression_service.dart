@@ -5,6 +5,8 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_compress/video_compress.dart';
 
+import 'media_settings_controller.dart';
+
 /// Фишурдани акс ва видео пеш аз боркунӣ — мисли WhatsApp ва Instagram.
 ///
 /// Сабаб танҳо ҷои анбор нест: дар Тоҷикистон интернет на ҳама ҷо тез аст ва
@@ -19,12 +21,6 @@ class CompressionService {
   /// фикр мекунад, ки барнома овезон шудааст.
   static final ValueNotifier<double?> progress = ValueNotifier<double?>(null);
 
-  /// Тарафи дарози акс пас аз фишурдан.
-  static const int _maxImageSide = 1600;
-
-  /// Сифати JPEG. 80 — ҳадди оддие ки фарқи чашмрас намедиҳад.
-  static const int _imageQuality = 80;
-
   /// Аксҳои аз ин хурдтар фишурда намешаванд — фоида надорад.
   static const int _imageSkipBytes = 120 * 1024;
 
@@ -35,11 +31,19 @@ class CompressionService {
   /// фиристода нашудани акс аз калон будани он бадтар аст.
   static Future<File> compressImage(File file) async {
     try {
+      // Корбар «Сифати аслӣ»-ро интихоб карда метавонад — он вақт ба файл
+      // тамоман даст намезанем.
+      if (mediaSettings.skipImageCompression) return file;
+
       final original = await file.length();
       if (original <= _imageSkipBytes) return file;
 
       // GIF фишурда намешавад: анимация нобуд мешавад.
       if (file.path.toLowerCase().endsWith('.gif')) return file;
+
+      // Андоза ва сифат аз танзимоти «Сифати медиа» меоянд.
+      final maxSide = mediaSettings.imageMaxSide;
+      final quality = mediaSettings.imageQuality;
 
       final dir = await getTemporaryDirectory();
       final target =
@@ -48,9 +52,9 @@ class CompressionService {
       final result = await FlutterImageCompress.compressAndGetFile(
         file.absolute.path,
         target,
-        quality: _imageQuality,
-        minWidth: _maxImageSide,
-        minHeight: _maxImageSide,
+        quality: quality,
+        minWidth: maxSide,
+        minHeight: maxSide,
         // Аксҳои аз камера гирифташуда метавонанд чаппа бошанд: EXIF
         // ба худи пиксел табдил дода мешавад, вагарна пас аз фишурдан
         // акс чаппа мемонад.
@@ -78,6 +82,8 @@ class CompressionService {
   /// боркунӣ. Бе фишурдан чунин видео умуман фиристода намешуд.
   static Future<File> compressVideo(File file) async {
     try {
+      if (mediaSettings.quality == MediaQuality.original) return file;
+
       final original = await file.length();
       if (original <= _videoSkipBytes) return file;
 
@@ -92,7 +98,11 @@ class CompressionService {
       try {
         info = await VideoCompress.compressVideo(
           file.absolute.path,
-          quality: VideoQuality.MediumQuality,
+          // Ҳангоми сарфаи трафик сифати пасттар — файл хурдтар ва тезтар
+          // меравад.
+          quality: mediaSettings.quality == MediaQuality.saver
+              ? VideoQuality.LowQuality
+              : VideoQuality.MediumQuality,
           deleteOrigin: false,
           includeAudio: true,
         );

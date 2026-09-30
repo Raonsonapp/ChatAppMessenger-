@@ -544,4 +544,5 @@ const Map<String, String> stringsEn = {
   'k542': 'Dark',
   'k543': 'Could not complete that',
   'k544': 'Phone number',
+  'k545': 'Tap to download',
 };

@@ -14,6 +14,7 @@ import 'services/draft_store.dart';
 import 'l10n/locale_controller.dart';
 import 'screens/auth_gate.dart';
 import 'services/notification_service.dart';
+import 'services/media_settings_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,7 @@ void main() async {
   await _safely(textScaleController.load);
   await _safely(draftStore.load);
   await _safely(chatThemeController.load);
+  await _safely(mediaSettings.load);
 
   // Огоҳиномаҳо дар баъзе дастгоҳҳо (масалан бе Google Play) истисно
   // мепартоянд. Пештар ин истисно то `runApp` мерасид ва барнома умуман
@@ -76,6 +78,7 @@ class _ChatAppState extends State<ChatApp> {
     textScaleController,
     draftStore,
     chatThemeController,
+    mediaSettings,
   ]);
 
   @override
