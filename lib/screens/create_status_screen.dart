@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
 import '../models/app_status.dart';
+import '../models/status_style.dart';
 import '../services/media_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
@@ -30,6 +31,9 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
   final TextEditingController _textController = TextEditingController();
   XFile? _pickedImage;
   bool _isPosting = false;
+
+  /// Шакли статуси матнӣ. Ҳангоми интихоби акс истифода намешавад.
+  StatusStyle _style = const StatusStyle();
 
   @override
   void initState() {
@@ -64,7 +68,14 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final myName = (userDoc.data()?['name'] as String?) ?? tr('k015');
 
-      final status = AppStatus(id: '', ownerId: uid, ownerName: myName, text: text.isEmpty ? null : text, imageUrl: imageUrl);
+      final status = AppStatus(
+        id: '',
+        ownerId: uid,
+        ownerName: myName,
+        text: text.isEmpty ? null : text,
+        imageUrl: imageUrl,
+        style: _style,
+      );
       await FirebaseFirestore.instance.collection('statuses').doc(uid).collection('items').add(status.toMap());
       await FirebaseFirestore.instance.collection('statuses').doc(uid).set({
         'ownerId': uid,
@@ -81,6 +92,117 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
     } finally {
       if (mounted) setState(() => _isPosting = false);
     }
+  }
+
+  /// Палитраи замина, услуби ҳарф ва ҷойгиршавӣ.
+  Widget _styleEditor() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _editorLabel(tr('k546')),
+        SizedBox(
+          height: 42,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: StatusStyle.backgrounds.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final selected = _style.background == index;
+              return GestureDetector(
+                onTap: () => setState(() => _style = _style.copyWith(background: index)),
+                child: Container(
+                  width: 42,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: StatusStyle.backgrounds[index],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected ? AppColors.textPrimary : AppColors.glassBorder,
+                      width: selected ? 2.5 : 1,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 14),
+        _editorLabel(tr('k547')),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var index = 0; index < StatusStyle.fonts.length; index++)
+              _chip(
+                selected: _style.font == index,
+                onTap: () => setState(() => _style = _style.copyWith(font: index)),
+                child: Text(
+                  StatusStyle.fontNames[index],
+                  style: StatusStyle.fonts[index].copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        _editorLabel(tr('k548')),
+        Row(
+          children: [
+            for (final entry in <(int, IconData)>[
+              (0, LucideIcons.text_align_start),
+              (1, LucideIcons.text_align_center),
+              (2, LucideIcons.text_align_end),
+            ])
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _chip(
+                  selected: _style.align == entry.$1,
+                  onTap: () => setState(() => _style = _style.copyWith(align: entry.$1)),
+                  child: Icon(entry.$2, size: 17, color: AppColors.textPrimary),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _editorLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          color: AppColors.textSecondary.withValues(alpha: 0.75),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+        ),
+      ),
+    );
+  }
+
+  Widget _chip({required bool selected, required VoidCallback onTap, required Widget child}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.neonEmerald.withValues(alpha: 0.18) : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? AppColors.neonEmerald : AppColors.glassBorder,
+            width: selected ? 1.6 : 1,
+          ),
+        ),
+        child: child,
+      ),
+    );
   }
 
   @override
@@ -123,17 +245,22 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                           height: 300,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            gradient: AppColors.neonGradient,
+                            gradient: _style.gradient,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           padding: const EdgeInsets.all(20),
                           alignment: Alignment.center,
                           child: Text(
                             _textController.text.isEmpty ? tr('k107') : _textController.text,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 22),
+                            textAlign: _style.textAlign,
+                            style: _style.textStyleFor(_textController.text, base: 22),
                           ),
                         ),
+                      // Танзими шакл танҳо барои статуси матнӣ маъно дорад.
+                      if (_pickedImage == null) ...[
+                        const SizedBox(height: 16),
+                        _styleEditor(),
+                      ],
                       const SizedBox(height: 16),
                       GlassContainer(
                         borderRadius: 14,

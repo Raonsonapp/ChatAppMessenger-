@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../l10n/l10n.dart';
+import 'status_style.dart';
 
 /// Ҳуҷҷати `statuses/{uid}/items/{id}` — як навсозии статус (мисли Stories).
 /// Статусҳо пас аз 24 соат "гузашта" ҳисоб мешаванд (тибқи expiresAt).
@@ -13,6 +14,9 @@ class AppStatus {
   final DateTime? expiresAt;
   final List<String> viewedBy;
 
+  /// Шакли матн — барои статуси матнӣ. Барои акс истифода намешавад.
+  final StatusStyle style;
+
   AppStatus({
     required this.id,
     required this.ownerId,
@@ -22,6 +26,7 @@ class AppStatus {
     this.createdAt,
     this.expiresAt,
     this.viewedBy = const [],
+    this.style = const StatusStyle(),
   });
 
   bool get isExpired {
@@ -41,6 +46,7 @@ class AppStatus {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
       viewedBy: List<String>.from(data['viewedBy'] as List? ?? []),
+      style: StatusStyle.fromMap(data),
     );
   }
 
@@ -54,6 +60,7 @@ class AppStatus {
       'createdAt': FieldValue.serverTimestamp(),
       'expiresAt': Timestamp.fromDate(now.add(const Duration(hours: 24))),
       'viewedBy': <String>[],
+      ...style.toMap(),
     };
   }
 }
