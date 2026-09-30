@@ -548,4 +548,6 @@ const Map<String, String> stringsEn = {
   'k546': 'Background',
   'k547': 'Font',
   'k548': 'Alignment',
+  'k549': 'No answer',
+  'k550': 'Declined',
 };

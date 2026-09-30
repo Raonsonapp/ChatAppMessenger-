@@ -39,6 +39,21 @@ class AppCall {
     this.groupName,
   });
 
+  /// Давомнокӣ ҳамчун `2:05` ё `1:02:30`.
+  ///
+  /// Барои занги ноанҷом холӣ бармегардад — навиштани «0:00» дар таърих
+  /// хонандаро гумроҳ мекунад.
+  String? get formattedDuration {
+    if (outcome != CallOutcome.completed || durationSeconds <= 0) return null;
+    final hours = durationSeconds ~/ 3600;
+    final minutes = (durationSeconds % 3600) ~/ 60;
+    final seconds = durationSeconds % 60;
+    String two(int value) => value.toString().padLeft(2, '0');
+    return hours > 0
+        ? '$hours:${two(minutes)}:${two(seconds)}'
+        : '$minutes:${two(seconds)}';
+  }
+
   factory AppCall.fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     return AppCall(

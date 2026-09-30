@@ -101,11 +101,13 @@ class CallsTab extends StatelessWidget {
                     color: isMissed ? Colors.redAccent : AppColors.textSecondary,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    call.createdAt == null
-                        ? '...'
-                        : '${call.createdAt!.day}/${call.createdAt!.month} · ${call.createdAt!.hour.toString().padLeft(2, '0')}:${call.createdAt!.minute.toString().padLeft(2, '0')}',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                  Expanded(
+                    child: Text(
+                      _subtitleFor(call),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                    ),
                   ),
                 ],
               ),
@@ -133,6 +135,24 @@ class CallsTab extends StatelessWidget {
         );
       },
     );
+  }
+  /// Сатри дуюм: вақт ва — агар занг воқеан сурат гирифта бошад — давомнокӣ.
+  ///
+  /// Давомнокӣ пештар тамоман нишон дода намешуд, ҳарчанд дар Firestore сабт
+  /// мешуд: корбар намедонист занг 5 сония буд ё 20 дақиқа.
+  static String _subtitleFor(AppCall call) {
+    final at = call.createdAt;
+    String two(int value) => value.toString().padLeft(2, '0');
+    final when = at == null ? '...' : '${at.day}/${at.month} · ${two(at.hour)}:${two(at.minute)}';
+
+    final duration = call.formattedDuration;
+    if (duration != null) return '$when · $duration';
+
+    return switch (call.outcome) {
+      CallOutcome.missed => '$when · ${tr('k549')}',
+      CallOutcome.declined => '$when · ${tr('k550')}',
+      _ => when,
+    };
   }
 }
 
@@ -248,4 +268,5 @@ class _CallActionState extends State<_CallAction> {
       ),
     );
   }
+
 }
