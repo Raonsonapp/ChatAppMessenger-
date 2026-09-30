@@ -8,6 +8,7 @@ import '../../theme/app_scope.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
+import '../../widgets/stream_error_notice.dart';
 
 /// Дастгоҳҳое ки ба ҳамин ҳисоб пайвастанд.
 ///
@@ -106,6 +107,9 @@ class _LinkedDevicesScreenState extends State<LinkedDevicesScreen> {
                     : StreamBuilder<List<LinkedDevice>>(
                         stream: DeviceService.watch(uid, currentToken: _currentToken),
                         builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return StreamErrorNotice(error: snapshot.error);
+                          }
                           if (snapshot.connectionState == ConnectionState.waiting) {
                             return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
                           }

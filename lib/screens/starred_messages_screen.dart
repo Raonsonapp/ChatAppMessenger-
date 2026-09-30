@@ -12,6 +12,7 @@ import '../l10n/l10n.dart';
 import '../l10n/media_preview.dart';
 import '../theme/app_scope.dart';
 import '../widgets/net_image.dart';
+import '../widgets/stream_error_notice.dart';
 
 /// Рӯйхати паёмҳои ситорадори корбар — мисли «Избранные» дар WhatsApp.
 class StarredMessagesScreen extends StatelessWidget {
@@ -54,6 +55,9 @@ class StarredMessagesScreen extends StatelessWidget {
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: StarService.watch(),
                   builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return StreamErrorNotice(error: snapshot.error);
+                    }
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Center(child: CircularProgressIndicator(color: AppColors.neonCyan));
                     }

@@ -13,6 +13,7 @@ import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/user_avatar.dart';
 import 'call_screen.dart';
+import '../widgets/stream_error_notice.dart';
 
 /// Контактҳои дӯстдошта — занги зуд.
 ///
@@ -59,6 +60,9 @@ class FavoritesScreen extends StatelessWidget {
                     : StreamBuilder<List<String>>(
                         stream: FavoritesService.watch(uid),
                         builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return StreamErrorNotice(error: snapshot.error);
+                          }
                           final ids = snapshot.data ?? const [];
                           if (ids.isEmpty) {
                             return EmptyState(

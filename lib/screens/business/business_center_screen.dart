@@ -14,6 +14,7 @@ import '../../widgets/glass_container.dart';
 import '../../widgets/listing_card.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../marketplace/listing_detail_screen.dart';
+import '../../widgets/stream_error_notice.dart';
 
 /// Маркази бизнес: эълонҳои фаъол ва дафтари қарз/даромад/хароҷот.
 ///
@@ -74,6 +75,9 @@ class _BusinessCenterScreenState extends State<BusinessCenterScreen> {
                     : StreamBuilder<List<LedgerEntry>>(
                         stream: LedgerService.watch(uid),
                         builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return StreamErrorNotice(error: snapshot.error);
+                          }
                           final entries = snapshot.data ?? const <LedgerEntry>[];
                           final summary = LedgerSummary.from(entries);
                           return ListView(
