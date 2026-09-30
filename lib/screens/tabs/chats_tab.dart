@@ -178,7 +178,6 @@ class _ChatsTabState extends State<ChatsTab> {
                       child: EmptyState(
                         icon: LucideIcons.list_filter,
                         title: tr('k554'),
-                        description: '',
                       ),
                     ),
                   ...filtered.map((convo) {
