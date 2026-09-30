@@ -15,9 +15,31 @@ import '../../l10n/l10n.dart';
 import '../archived_chats_screen.dart';
 import '../../widgets/empty_state.dart';
 import '../../theme/app_scope.dart';
+import '../../services/favorites_service.dart';
 
-class ChatsTab extends StatelessWidget {
+/// Рӯйхатҳои чат — ҳамон «Lists»-и WhatsApp.
+enum ChatFilter { all, unread, groups, favorites }
+
+class ChatsTab extends StatefulWidget {
   const ChatsTab({super.key});
+
+  @override
+  State<ChatsTab> createState() => _ChatsTabState();
+}
+
+class _ChatsTabState extends State<ChatsTab> {
+  ChatFilter _filter = ChatFilter.all;
+
+  /// Рӯйхати дӯстдоштаҳо — барои филтри «Дӯстдошта».
+  List<String> _favorites = const [];
+
+  /// Чанд гурӯҳ дар кашидани ҷорӣ нишон дода шуд.
+  ///
+  /// Ду бахш (гурӯҳҳо ва чатҳои шахсӣ) ҷараёнҳои алоҳида доранд, вале паёми
+  /// «чат нест» бояд як маротиба ва танҳо вақте пайдо шавад, ки ҳеҷ кадоми
+  /// онҳо чизе надода бошанд. Бахши гурӯҳҳо дар рӯйхат пеш аз чатҳо меистад,
+  /// бинобар ин то навбати чатҳо ин рақам аллакай нав шудааст.
+  int _groupsShown = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +49,13 @@ class ChatsTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 100),
       children: [
-        const ChatTile(conversation: AppChats.aiAssistant, pinned: true),
-        const SizedBox(height: 4),
+        if (currentUid != null) _filterBar(currentUid),
+        // Ёрдамчии AI танҳо дар рӯйхати «Ҳама» — он на нохонда аст, на гурӯҳ,
+        // на дӯстдошта.
+        if (_filter == ChatFilter.all) ...[
+          const ChatTile(conversation: AppChats.aiAssistant, pinned: true),
+          const SizedBox(height: 4),
+        ],
         if (currentUid != null) ...[
           // Гурӯҳҳо
           StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -47,13 +74,24 @@ class ChatsTab extends StatelessWidget {
                 );
               }
               if (!snapshot.hasData) return const SizedBox.shrink();
-              final docs = sortByTimeDesc(snapshot.data!.docs, 'lastMessageTime');
-              if (docs.isEmpty) return const SizedBox.shrink();
+              // Дар рӯйхати «Дӯстдошта» гурӯҳҳо нестанд — дӯстдошта ба одам
+              // тааллуқ дорад, на ба гурӯҳ.
+              if (_filter == ChatFilter.favorites) {
+                _groupsShown = 0;
+                return const SizedBox.shrink();
+              }
+              final groups = sortByTimeDesc(snapshot.data!.docs, 'lastMessageTime')
+                  .map(AppGroup.fromDoc)
+                  .where((group) =>
+                      _filter != ChatFilter.unread || group.unreadFor(currentUid) > 0)
+                  .toList();
+              _groupsShown = groups.length;
+              if (groups.isEmpty) return const SizedBox.shrink();
               return Column(
-                children: docs.map((doc) {
+                children: groups.map((group) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 2),
-                    child: GroupTile(group: AppGroup.fromDoc(doc), currentUid: currentUid),
+                    child: GroupTile(group: group, currentUid: currentUid),
                   );
                 }).toList(),
               );
@@ -95,6 +133,8 @@ class ChatsTab extends StatelessWidget {
                   return pa.compareTo(pb);
                 });
 
+              final filtered = _applyFilter(visible, currentUid);
+
               if (visibleAll.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 30),
@@ -107,7 +147,9 @@ class ChatsTab extends StatelessWidget {
               }
               return Column(
                 children: [
-                  if (archived.isNotEmpty)
+                  // Сатри бойгонӣ танҳо дар рӯйхати «Ҳама» — дар филтр он
+                  // танҳо халал мерасонад.
+                  if (archived.isNotEmpty && _filter == ChatFilter.all)
                     _ArchivedRow(
                       count: archived.length,
                       onTap: () => Navigator.push(
@@ -115,7 +157,16 @@ class ChatsTab extends StatelessWidget {
                         MaterialPageRoute(builder: (_) => const ArchivedChatsScreen()),
                       ),
                     ),
-                  ...visible.map((convo) {
+                  if (filtered.isEmpty && _groupsShown == 0 && _filter != ChatFilter.all)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 30),
+                      child: EmptyState(
+                        icon: LucideIcons.list_filter,
+                        title: tr('k554'),
+                        description: '',
+                      ),
+                    ),
+                  ...filtered.map((convo) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 2),
                       child: UserConversationTile(conversation: convo, currentUid: currentUid),
@@ -127,6 +178,77 @@ class ChatsTab extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+
+  List<AppConversation> _applyFilter(List<AppConversation> source, String currentUid) {
+    return switch (_filter) {
+      ChatFilter.all => source,
+      ChatFilter.unread => source.where((c) => c.unreadFor(currentUid) > 0).toList(),
+      // Дар рӯйхати «Гурӯҳҳо» чати шахсӣ нест.
+      ChatFilter.groups => const [],
+      ChatFilter.favorites =>
+        source.where((c) => _favorites.contains(c.otherUid(currentUid))).toList(),
+    };
+  }
+
+  /// Сатри рӯйхатҳо. Рақами назди «Нохонда» аз худи чатҳо ҳисоб намешавад:
+  /// он ҷараёни алоҳида мехост ва рӯйхатро дучанд мехонд.
+  Widget _filterBar(String currentUid) {
+    return StreamBuilder<List<String>>(
+      stream: FavoritesService.watch(currentUid),
+      builder: (context, snapshot) {
+        _favorites = snapshot.data ?? _favorites;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10, left: 2),
+          child: SizedBox(
+            height: 34,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                for (final entry in <(ChatFilter, String)>[
+                  (ChatFilter.all, tr('k551')),
+                  (ChatFilter.unread, tr('k552')),
+                  (ChatFilter.groups, tr('k190')),
+                  (ChatFilter.favorites, tr('k553')),
+                ])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _filterChip(entry.$1, entry.$2),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _filterChip(ChatFilter filter, String label) {
+    final selected = _filter == filter;
+    return GestureDetector(
+      onTap: () => setState(() => _filter = filter),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.neonEmerald.withValues(alpha: 0.18) : AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected ? AppColors.neonEmerald : AppColors.glassBorder,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? AppColors.neonEmerald : AppColors.textSecondary,
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
+        ),
+      ),
     );
   }
 }

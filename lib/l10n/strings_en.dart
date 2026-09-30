@@ -550,4 +550,8 @@ const Map<String, String> stringsEn = {
   'k548': 'Alignment',
   'k549': 'No answer',
   'k550': 'Declined',
+  'k551': 'All',
+  'k552': 'Unread',
+  'k553': 'Favourites',
+  'k554': 'No chats in this list',
 };
