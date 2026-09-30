@@ -460,6 +460,29 @@ await check('A аватари худашро иваз карда метавон�
 await check('A рӯйхати токенҳояшро нав карда метавонад', () =>
   assertSucceeds(setDoc(doc(a, 'users', A), { fcmToken: 'tok1' }, { merge: true })));
 
+// ── Дафтари бизнес ───────────────────────────────────────────────────────────
+//
+// Дафтар мегӯяд кӣ ба соҳиби дукон чанд қарздор аст. Ин маълумоти тиҷоратӣ ва
+// шахсист — рақиб ё харидор набояд онро бинад.
+await check('A ба дафтари худаш навишта метавонад', () =>
+  assertSucceeds(setDoc(doc(a, 'users', A, 'ledger', 'e1'), {
+    kind: 'debt', title: 'Карим', amount: 500, settled: false,
+  })));
+await check('A дафтари худашро хонда метавонад', () =>
+  assertSucceeds(getDocs(collection(a, 'users', A, 'ledger'))));
+await check('A сабти худашро пӯшида қайд карда метавонад', () =>
+  assertSucceeds(updateDoc(doc(a, 'users', A, 'ledger', 'e1'), { settled: true })));
+await check('B дафтари A-ро хонда НАМЕТАВОНАД', () =>
+  assertFails(getDocs(collection(b, 'users', A, 'ledger'))));
+await check('B як сабти дафтари A-ро хонда НАМЕТАВОНАД', () =>
+  assertFails(getDoc(doc(b, 'users', A, 'ledger', 'e1'))));
+await check('B ба дафтари A навишта НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(b, 'users', A, 'ledger', 'e2'), { kind: 'debt', amount: 1 })));
+await check('B сабти дафтари A-ро нест карда НАМЕТАВОНАД', () =>
+  assertFails(deleteDoc(doc(b, 'users', A, 'ledger', 'e1'))));
+await check('A сабти худашро нест карда метавонад', () =>
+  assertSucceeds(deleteDoc(doc(a, 'users', A, 'ledger', 'e1'))));
+
 await env.cleanup();
 
 let failed = 0;

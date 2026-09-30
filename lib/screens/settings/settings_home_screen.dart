@@ -17,6 +17,7 @@ import 'about_screen.dart';
 import 'delete_account_screen.dart';
 import 'account_settings_screen.dart';
 import 'plus_screen.dart';
+import '../business/business_center_screen.dart';
 import 'linked_devices_screen.dart';
 import '../edit_profile_screen.dart';
 import '../../widgets/user_avatar.dart';
@@ -76,6 +77,15 @@ class SettingsHomeScreen extends StatelessWidget {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const AccountSettingsScreen()),
+                        ),
+                      ),
+                      _row(
+                        context,
+                        icon: LucideIcons.store,
+                        label: tr('k619'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const BusinessCenterScreen()),
                         ),
                       ),
                       _row(
