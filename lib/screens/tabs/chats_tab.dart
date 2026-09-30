@@ -45,11 +45,26 @@ class _ChatsTabState extends State<ChatsTab> {
   Widget build(BuildContext context) {
     AppScope.watch(context);
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUid == null) return _list(null);
 
+    // Ҷараёни дӯстдоштаҳо тамоми рӯйхатро мепечонад, на танҳо сатри филтрро.
+    // Вагарна илова кардани дӯстдошта дар филтри «Дӯстдошта» дида намешуд:
+    // сатри филтр аз нав кашида мешуд, вале рӯйхати чатҳо ҳамсоя аст ва
+    // нав намешуд.
+    return StreamBuilder<List<String>>(
+      stream: FavoritesService.watch(currentUid),
+      builder: (context, snapshot) {
+        _favorites = snapshot.data ?? _favorites;
+        return _list(currentUid);
+      },
+    );
+  }
+
+  Widget _list(String? currentUid) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 100),
       children: [
-        if (currentUid != null) _filterBar(currentUid),
+        if (currentUid != null) _filterBar(),
         // Ёрдамчии AI танҳо дар рӯйхати «Ҳама» — он на нохонда аст, на гурӯҳ,
         // на дӯстдошта.
         if (_filter == ChatFilter.all) ...[
@@ -192,35 +207,28 @@ class _ChatsTabState extends State<ChatsTab> {
     };
   }
 
-  /// Сатри рӯйхатҳо. Рақами назди «Нохонда» аз худи чатҳо ҳисоб намешавад:
-  /// он ҷараёни алоҳида мехост ва рӯйхатро дучанд мехонд.
-  Widget _filterBar(String currentUid) {
-    return StreamBuilder<List<String>>(
-      stream: FavoritesService.watch(currentUid),
-      builder: (context, snapshot) {
-        _favorites = snapshot.data ?? _favorites;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 10, left: 2),
-          child: SizedBox(
-            height: 34,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                for (final entry in <(ChatFilter, String)>[
-                  (ChatFilter.all, tr('k551')),
-                  (ChatFilter.unread, tr('k552')),
-                  (ChatFilter.groups, tr('k190')),
-                  (ChatFilter.favorites, tr('k553')),
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _filterChip(entry.$1, entry.$2),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
+  /// Сатри рӯйхатҳо.
+  Widget _filterBar() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10, left: 2),
+      child: SizedBox(
+        height: 34,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: [
+            for (final entry in <(ChatFilter, String)>[
+              (ChatFilter.all, tr('k551')),
+              (ChatFilter.unread, tr('k552')),
+              (ChatFilter.groups, tr('k190')),
+              (ChatFilter.favorites, tr('k553')),
+            ])
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _filterChip(entry.$1, entry.$2),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
