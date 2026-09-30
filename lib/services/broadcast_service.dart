@@ -75,18 +75,24 @@ class BroadcastService {
           'deletedBy': FieldValue.arrayRemove([fromUid, toUid]),
         }, SetOptions(merge: true));
 
-        await PushService.notify(
-          toUid: toUid,
-          title: fromName,
-          body: message,
-          data: {
-            'type': 'message',
-            'conversationId': conversationId,
-            'senderUid': fromUid,
-            'text': message,
-          },
-        );
+        // Паём аллакай навишта шуд — аз ин ҷо ба баъд он расидааст.
         sent++;
+
+        // Огоҳӣ алоҳида: агар сервери огоҳӣ дастнорас бошад, паём ба ҳар ҳол
+        // дар чат ҳаст ва набояд «ноком» ҳисоб шавад.
+        try {
+          await PushService.notify(
+            toUid: toUid,
+            title: fromName,
+            body: message,
+            data: {
+              'type': 'message',
+              'conversationId': conversationId,
+              'senderUid': fromUid,
+              'text': message,
+            },
+          );
+        } catch (_) {}
       } catch (_) {
         // Як қабулкунандаи баста набояд боқимондаро нигоҳ дорад.
         failed++;
