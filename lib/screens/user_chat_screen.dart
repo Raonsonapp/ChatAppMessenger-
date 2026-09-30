@@ -542,7 +542,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         mediaType: 'document',
       );
 
-  Future<void> _sendVoiceMessage(File file, Duration duration) {
+  Future<void> _sendVoiceMessage(File file, Duration duration, List<int> waveform) {
     setState(() => _recording = false);
     return _sendMedia(
       () => ChatMediaService.sendVoice(
@@ -551,6 +551,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         storageFolder: _storageFolder,
         file: file,
         duration: duration,
+        waveform: waveform,
         unreadFor: [widget.otherUserId],
         disappearInSeconds: _disappearIn,
       ),

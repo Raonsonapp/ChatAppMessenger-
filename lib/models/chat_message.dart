@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../utils/waveform.dart';
 
 /// Ҳар ҳуҷҷат дар `.../messages` ба ин сохтор мувофиқат мекунад:
 /// { text, senderId, isAI, createdAt, replyToText?, replyToSenderId?,
@@ -39,6 +40,12 @@ class ChatMessage {
   /// Давомнокӣ бо сония — барои `audio` ва `video`.
   final int? mediaDuration;
 
+  /// Мавҷи садо (0…1) — қиматҳои воқеии микрофон ҳангоми сабт.
+  ///
+  /// Холӣ бошад, плеер хати оддиро нишон медиҳад. Бандҳои тасодуфӣ кашида
+  /// намешаванд: он қуллаҳоеро нишон медод, ки ба садо рабте надоранд.
+  final List<double> waveform;
+
   /// Номи аслии файл — барои `document`.
   final String? mediaName;
 
@@ -78,6 +85,7 @@ class ChatMessage {
     this.mediaUrl,
     this.mediaType,
     this.mediaDuration,
+    this.waveform = const [],
     this.mediaName,
     this.mediaSize,
     this.forwarded = false,
@@ -110,6 +118,7 @@ class ChatMessage {
       mediaUrl: data['mediaUrl'] as String?,
       mediaType: data['mediaType'] as String?,
       mediaDuration: (data['mediaDuration'] as num?)?.toInt(),
+      waveform: Waveform.parse(data['waveform']),
       mediaName: data['mediaName'] as String?,
       mediaSize: (data['mediaSize'] as num?)?.toInt(),
       forwarded: (data['forwarded'] ?? false) as bool,

@@ -828,6 +828,7 @@ class MessageBubble extends StatelessWidget {
                               url: message.mediaUrl!,
                               isMe: isMe,
                               durationSeconds: message.mediaDuration,
+                              waveform: message.waveform,
                             ),
                           ),
                         if (hasVideo)

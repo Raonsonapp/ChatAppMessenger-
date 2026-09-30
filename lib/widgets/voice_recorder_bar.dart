@@ -10,12 +10,15 @@ import '../theme/app_theme.dart';
 import '../services/media_service.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_scope.dart';
+import '../utils/waveform.dart';
 
 /// Сабти паёми овозӣ. Ҳангоми сабт ба ҷои майдони матн нишон дода мешавад:
 /// вақти гузашта, тугмаи бекор кардан ва тугмаи фиристодан.
 class VoiceRecorderBar extends StatefulWidget {
   /// Файли сабтшуда ва давомнокии он.
-  final void Function(File file, Duration duration) onRecorded;
+  /// `waveform` — қиматҳои воқеии баландии овоз (0…100), ки ҳангоми сабт аз
+  /// микрофон гирифта шудаанд. Гиранда ҳамонҳоро мекашад.
+  final void Function(File file, Duration duration, List<int> waveform) onRecorded;
   final VoidCallback onCancel;
 
   const VoiceRecorderBar({super.key, required this.onRecorded, required this.onCancel});
@@ -27,6 +30,11 @@ class VoiceRecorderBar extends StatefulWidget {
 class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
   final AudioRecorder _recorder = AudioRecorder();
   Timer? _timer;
+
+  /// Таймери ҷудо барои амплитуда: он бояд аз ҳисоби сония зуд-зудтар
+  /// хонда шавад, вагарна мавҷ ҳамвор ва бемаънӣ мешавад.
+  Timer? _amplitudeTimer;
+  final List<double> _samples = [];
   Duration _elapsed = Duration.zero;
   String? _path;
   bool _starting = true;
@@ -60,10 +68,23 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _elapsed += const Duration(seconds: 1));
     });
+
+    // Ҳар 100 мс як намуна. Барои сабти як дақиқа ин 600 намуна аст, ки баъд
+    // ба 40 банд фишурда мешавад.
+    _amplitudeTimer = Timer.periodic(const Duration(milliseconds: 100), (_) async {
+      try {
+        final amplitude = await _recorder.getAmplitude();
+        _samples.add(Waveform.normalize(amplitude.current));
+      } catch (_) {
+        // Дар баъзе дастгоҳҳо амплитуда дастрас нест — он вақт мавҷ холӣ
+        // мемонад ва хати оддӣ нишон дода мешавад. Ин сабтро вайрон намекунад.
+      }
+    });
   }
 
   Future<void> _cancel() async {
     _timer?.cancel();
+    _amplitudeTimer?.cancel();
     await _recorder.cancel();
     final path = _path;
     if (path != null) {
@@ -75,6 +96,7 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
 
   Future<void> _send() async {
     _timer?.cancel();
+    _amplitudeTimer?.cancel();
     final path = await _recorder.stop();
     if (path == null) {
       widget.onCancel();
@@ -87,12 +109,13 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
       widget.onCancel();
       return;
     }
-    widget.onRecorded(file, _elapsed);
+    widget.onRecorded(file, _elapsed, Waveform.compress(_samples));
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _amplitudeTimer?.cancel();
     _recorder.dispose();
     super.dispose();
   }

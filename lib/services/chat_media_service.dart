@@ -30,6 +30,7 @@ class ChatMediaService {
     int? sizeBytes,
     List<String>? unreadFor,
     int? disappearInSeconds,
+    List<int>? waveform,
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return false;
@@ -44,6 +45,9 @@ class ChatMediaService {
       'mediaUrl': url,
       'mediaType': mediaType,
       if (durationSeconds != null) 'mediaDuration': durationSeconds,
+      // Мавҷи воқеӣ — қиматҳои микрофон ҳангоми сабт. Холӣ бошад, гиранда
+      // хати оддиро мебинад.
+      if (waveform != null && waveform.isNotEmpty) 'waveform': waveform,
       if (sizeBytes != null) 'mediaSize': sizeBytes,
       if (mediaType == 'document') 'mediaName': name,
       if (disappearInSeconds != null && disappearInSeconds > 0)
@@ -167,6 +171,7 @@ class ChatMediaService {
     required Duration duration,
     List<String>? unreadFor,
     int? disappearInSeconds,
+    List<int>? waveform,
   }) async {
     final sent = await sendFile(
       messagesRef: messagesRef,
@@ -179,6 +184,7 @@ class ChatMediaService {
       durationSeconds: duration.inSeconds,
       unreadFor: unreadFor,
       disappearInSeconds: disappearInSeconds,
+      waveform: waveform,
     );
     // Файли муваққатӣ дигар лозим нест.
     await file.delete().catchError((_) => file);

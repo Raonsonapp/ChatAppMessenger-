@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../services/media_service.dart';
 import '../theme/app_scope.dart';
 import '../l10n/l10n.dart';
+import '../utils/waveform.dart';
 
 /// Паёми овозӣ дар чат: тугмаи пахш, хати пешравии кашидашаванда, вақт ва
 /// суръати пахш (1x / 1.5x / 2x).
@@ -19,11 +20,15 @@ class AudioMessagePlayer extends StatefulWidget {
   final int? durationSeconds;
   final bool isMe;
 
+  /// Мавҷи воқеӣ (0…1). Холӣ бошад, хати оддии пешравӣ кашида мешавад.
+  final List<double> waveform;
+
   const AudioMessagePlayer({
     super.key,
     required this.url,
     required this.isMe,
     this.durationSeconds,
+    this.waveform = const [],
   });
 
   @override
@@ -167,15 +172,29 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
                           _seekTo(d.localPosition.dx / constraints.maxWidth),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(3),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 4,
-                            backgroundColor: tint.withValues(alpha: 0.22),
-                            valueColor: AlwaysStoppedAnimation<Color>(tint),
-                          ),
-                        ),
+                        child: widget.waveform.isEmpty
+                            // Паёмҳои кӯҳна ва дастгоҳҳое ки амплитуда
+                            // намедиҳанд — хати оддӣ.
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(3),
+                                child: LinearProgressIndicator(
+                                  value: progress,
+                                  minHeight: 4,
+                                  backgroundColor: tint.withValues(alpha: 0.22),
+                                  valueColor: AlwaysStoppedAnimation<Color>(tint),
+                                ),
+                              )
+                            : SizedBox(
+                                height: 26,
+                                child: CustomPaint(
+                                  painter: _WaveformPainter(
+                                    values: widget.waveform,
+                                    progress: progress,
+                                    color: tint,
+                                  ),
+                                  size: Size.infinite,
+                                ),
+                              ),
                       ),
                     );
                   },
@@ -214,5 +233,53 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
         ],
       ),
     );
+  }
+}
+
+
+/// Мавҷи садо: бандҳои қиматҳои ВОҚЕИИ микрофон.
+///
+/// Бандҳои гузашта пурранг, боқимонда шаффоф — ҳамон тарзе ки пешравӣ фаҳмо
+/// мешавад бе хати ҷудогона.
+class _WaveformPainter extends CustomPainter {
+  const _WaveformPainter({
+    required this.values,
+    required this.progress,
+    required this.color,
+  });
+
+  final List<double> values;
+  final double progress;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.isEmpty || size.width <= 0) return;
+
+    // Фосилаи байни бандҳо аз худи паҳнӣ ҳисоб мешавад, то мавҷ дар ҳар
+    // андозаи ҳубоб ҷой гирад.
+    final slot = size.width / values.length;
+    final barWidth = (slot * 0.55).clamp(1.0, 3.0);
+    final playedUntil = size.width * progress.clamp(0.0, 1.0);
+
+    final paint = Paint()
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = barWidth;
+
+    for (var i = 0; i < values.length; i++) {
+      final x = slot * i + slot / 2;
+      final height = size.height * Waveform.displayHeight(values[i]);
+      final top = (size.height - height) / 2;
+
+      paint.color = x <= playedUntil ? color : color.withValues(alpha: 0.32);
+      canvas.drawLine(Offset(x, top), Offset(x, top + height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_WaveformPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.color != color ||
+        oldDelegate.values != values;
   }
 }
