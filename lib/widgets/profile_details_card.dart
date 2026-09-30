@@ -7,6 +7,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_container.dart';
+import '../services/plus_service.dart';
+import 'plus_badge.dart';
 
 /// Маълумоти профили корбар: «Дар бораи», `@username`, рақам, Instagram, сайт.
 ///
@@ -31,7 +33,18 @@ class ProfileDetailsCard extends StatelessWidget {
         final instagram = (data['instagram'] as String?)?.trim() ?? '';
         final website = (data['website'] as String?)?.trim() ?? '';
 
+        final plusStatus = PlusStatus.fromUserDoc(data);
+
         final rows = <Widget>[
+          if (plusStatus.active)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                children: [
+                  PlusBadge(status: plusStatus),
+                ],
+              ),
+            ),
           if (about.isNotEmpty)
             _row(icon: LucideIcons.info, label: tr('k116'), value: about),
           if (username.isNotEmpty)

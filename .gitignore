@@ -46,3 +46,4 @@ firebase-debug.log
 .flutter-plugins-dependencies
 .packages
 test/firestore_rules/node_modules/
+server/otp-bot/firestore-debug.log

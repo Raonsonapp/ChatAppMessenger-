@@ -14,6 +14,7 @@ const { overQuota } = require('./quota');
 const agora = require('./agora');
 const linkPreview = require('./link_preview');
 const { deviceFingerprint } = require('./device_fingerprint');
+const plus = require('./plus');
 
 /** Вақти оғози ин нусхаи сервер. */
 const startedAt = new Date();
@@ -223,6 +224,139 @@ const notifyQuota = new Map();
 function quotaExceeded(uid) {
   return overQuota(uploadQuota, uid, UPLOAD_QUOTA_PER_HOUR);
 }
+
+/**
+ * UID-и соҳиби ChatApp.
+ *
+ * Танҳо аз тағйирёбандаи муҳити сервер меояд. Ин муҳимтарин ҷузъи бехатарии
+ * Plus аст: барнома ҳељ гоҳ намегӯяд, ки кӣ соҳиб аст — сервер ҳамеша uid-и
+ * токени воридшударо бо ҳамин қимат муқоиса мекунад. Дар код ягон роҳи
+ * гузаштан аз он нест.
+ */
+const OWNER_UID = (process.env.OWNER_UID || '').trim();
+
+function isOwnerUid(uid) {
+  return OWNER_UID.length > 0 && uid === OWNER_UID;
+}
+
+/** Токени Bearer-ро месанҷад ва корбарро бармегардонад, вагарна `null`. */
+async function authenticate(req, res) {
+  const authHeader = req.headers.authorization || '';
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!idToken) {
+    res.status(401).json({ error: 'Authorization lozim ast' });
+    return null;
+  }
+  try {
+    return await getAuth().verifyIdToken(idToken);
+  } catch {
+    res.status(401).json({ error: 'Token nodurust ast' });
+    return null;
+  }
+}
+
+/** Ҳуқуқи Plus-и корбар дар шакли қобили фиристодан ба барнома. */
+function plusPayload(uid, data) {
+  const entitlement = data?.plus ?? null;
+  const owner = isOwnerUid(uid);
+  return {
+    isOwner: owner,
+    active: plus.isActive(entitlement, { isOwner: owner }),
+    source: owner ? plus.SOURCES.owner : (entitlement?.source ?? null),
+    expiresAt: owner ? null : plus.toMillis(entitlement?.expiresAt),
+    trialUsed: entitlement?.trialUsed === true,
+  };
+}
+
+/** Ҳолати Plus-и худи корбар. */
+app.get('/api/plus/me', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+
+  try {
+    const snap = await getFirestore().collection('users').doc(user.uid).get();
+    return res.json(plusPayload(user.uid, snap.data()));
+  } catch {
+    return res.status(500).json({ error: 'plus-read-failed' });
+  }
+});
+
+/**
+ * Синни озмоишии як моҳа.
+ *
+ * Сервер қарор мегирад, на барнома: `trialUsed` дар ҳуҷҷат мемонад ва қоидаҳо
+ * ба барнома иҷозат намедиҳанд онро тағйир диҳад.
+ */
+app.post('/api/plus/trial', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+
+  try {
+    const ref = getFirestore().collection('users').doc(user.uid);
+    const snap = await ref.get();
+    const entitlement = plus.trialEntitlement({ previous: snap.data()?.plus ?? null });
+    if (entitlement === null) {
+      return res.status(409).json({ error: 'trial-not-available' });
+    }
+    await ref.set({ plus: entitlement }, { merge: true });
+    return res.json(plusPayload(user.uid, { plus: entitlement }));
+  } catch {
+    return res.status(500).json({ error: 'trial-failed' });
+  }
+});
+
+/**
+ * Гранти соҳиб. Танҳо соҳиб — ва ин ин ҷо, дар сервер санҷида мешавад.
+ */
+app.post('/api/plus/grant', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  if (!isOwnerUid(user.uid)) return res.status(403).json({ error: 'not-owner' });
+
+  const targetUid = String((req.body ?? {}).uid ?? '').trim();
+  const duration = String((req.body ?? {}).duration ?? '').trim();
+  if (!targetUid) return res.status(400).json({ error: 'uid lozim ast' });
+  if (!plus.isKnownDuration(duration)) return res.status(400).json({ error: 'bad-duration' });
+
+  try {
+    const ref = getFirestore().collection('users').doc(targetUid);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(404).json({ error: 'user-not-found' });
+
+    const entitlement = plus.grantEntitlement({
+      duration,
+      ownerUid: user.uid,
+      previous: snap.data()?.plus ?? null,
+    });
+    await ref.set({ plus: entitlement }, { merge: true });
+    return res.json(plusPayload(targetUid, { plus: entitlement }));
+  } catch {
+    return res.status(500).json({ error: 'grant-failed' });
+  }
+});
+
+/** Бекор кардани Plus — низ танҳо соҳиб. */
+app.post('/api/plus/revoke', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  if (!isOwnerUid(user.uid)) return res.status(403).json({ error: 'not-owner' });
+
+  const targetUid = String((req.body ?? {}).uid ?? '').trim();
+  if (!targetUid) return res.status(400).json({ error: 'uid lozim ast' });
+  if (isOwnerUid(targetUid)) return res.status(400).json({ error: 'cannot-revoke-owner' });
+
+  try {
+    const ref = getFirestore().collection('users').doc(targetUid);
+    const snap = await ref.get();
+    if (!snap.exists) return res.status(404).json({ error: 'user-not-found' });
+
+    const entitlement = plus.revokedEntitlement({ previous: snap.data()?.plus ?? null });
+    await ref.set({ plus: entitlement }, { merge: true });
+    return res.json(plusPayload(targetUid, { plus: entitlement }));
+  } catch {
+    return res.status(500).json({ error: 'revoke-failed' });
+  }
+});
 
 app.post('/api/upload-url', async (req, res) => {
   const authHeader = req.headers.authorization || '';

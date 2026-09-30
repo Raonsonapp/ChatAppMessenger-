@@ -16,11 +16,14 @@ import 'help_screen.dart';
 import 'about_screen.dart';
 import 'delete_account_screen.dart';
 import 'account_settings_screen.dart';
+import 'plus_screen.dart';
 import 'linked_devices_screen.dart';
 import '../edit_profile_screen.dart';
 import '../../widgets/user_avatar.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/app_scope.dart';
+import '../../widgets/plus_badge.dart';
+import '../../services/plus_service.dart';
 
 class SettingsHomeScreen extends StatelessWidget {
   const SettingsHomeScreen({super.key});
@@ -57,6 +60,15 @@ class SettingsHomeScreen extends StatelessWidget {
                     _profileHub(context),
                     const SizedBox(height: 14),
                     _sectionCard(context, [
+                      _row(
+                        context,
+                        icon: LucideIcons.sparkles,
+                        label: tr('k587'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const PlusScreen()),
+                        ),
+                      ),
                       _row(
                         context,
                         icon: LucideIcons.circle_user,
@@ -226,15 +238,27 @@ class SettingsHomeScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16.5,
-                            ),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16.5,
+                                  ),
+                                ),
+                              ),
+                              // Нишон аз ҳамон ҳуҷҷат меояд, ки сервер
+                              // менависад — барнома онро худаш намесозад.
+                              PlusBadge(
+                                status: PlusStatus.fromUserDoc(data),
+                                compact: true,
+                              ),
+                            ],
                           ),
                           if (second.isNotEmpty) ...[
                             const SizedBox(height: 3),

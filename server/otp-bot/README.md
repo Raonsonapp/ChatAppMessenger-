@@ -23,6 +23,14 @@
    - `FIREBASE_SERVICE_ACCOUNT_JSON` — тамоми матни файли JSON-и қадами 2-ро
      АЙНАН нусхабардорӣ карда дар ин ҷо часпонед (якҷоя бо `{` ва `}`).
      Base64 лозим нест — Railway қиматҳои бисёрхаттаро қабул мекунад.
+
+   Тағйирёбандаҳои иловагӣ (ихтиёрӣ, вале барои баъзе имкониятҳо ҳатмӣ):
+   - `AGORA_APP_ID` ва `AGORA_APP_CERTIFICATE` — бе онҳо занг кор намекунад
+   - `R2_*` — бе онҳо боркунии медиа кор намекунад
+   - `OWNER_UID` — uid-и соҳиби ChatApp. Бе он панели соҳиб дар ҳељ ҳисоб
+     намоён намешавад ва гранти Plus 403 мегирад. Ниг. `PLUS_SETUP.md`
+   - `TRANSLATE_ENDPOINT` ва `TRANSLATE_API_KEY` — бе онҳо тарҷума рӯирост
+     мегӯяд, ки танзим нашудааст
 5. Railway худкор deploy мекунад — тавассути `Dockerfile`-и ҳамин папка
    (Settings → Build → Builder: Dockerfile). Пас аз deploy, дар Settings →
    Networking → "Generate Domain" домен созед, target port-ро `3000` гузоред.

@@ -11,7 +11,7 @@ import {
 import { readFileSync } from 'node:fs';
 import {
   doc, getDoc, setDoc, updateDoc, collection, addDoc,
-  query, where, getDocs, deleteDoc,
+  query, where, getDocs, deleteDoc, deleteField,
 } from 'firebase/firestore';
 
 const env = await initializeTestEnvironment({
@@ -406,6 +406,59 @@ await check('A эълони худашро нест карда метавона�
   assertSucceeds(deleteDoc(doc(a, 'listings', 'l1'))));
 await check('Меҳмони новоридшуда эълонро хонда НАМЕТАВОНАД', () =>
   assertFails(getDocs(collection(anon, 'listings'))));
+
+// ── ChatApp Plus: ҳуқуқ аз барнома навишта намешавад ─────────────────────────
+//
+// Агар барнома `plus.active`-ро худаш нависад, обунаи пулакӣ бо як сатри код
+// гирифта мешавад. Ин қатори санҷишҳо маҳз ҳаминро манъ мекунад.
+
+// Ҳолати ибтидоӣ: ҳанӯз Plus нест.
+await check('A ба худаш Plus дода НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(a, 'users', A), { plus: { active: true } }, { merge: true })));
+await check('A ба B Plus дода НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(a, 'users', B), { plus: { active: true } }, { merge: true })));
+
+// Сервер (бе қоидаҳо) Plus медиҳад — маҳз ҳамин роҳи ягонаи дуруст аст.
+// `trialUsed: true` махсус гузошта шудааст: поёнтар санҷида мешавад, ки корбар
+// онро ба false барнагардонад ва моҳи муфтро дубора нагирад.
+await env.withSecurityRulesDisabled(async (ctx) => {
+  await setDoc(doc(ctx.firestore(), 'users', A), {
+    plus: { active: true, source: 'owner_grant', expiresAt: null, trialUsed: true },
+  }, { merge: true });
+});
+
+await check('A Plus-и худашро хонда метавонад', () =>
+  assertSucceeds(getDoc(doc(a, 'users', A))));
+await check('A майдони plus-ро нест карда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(a, 'users', A), { plus: deleteField() })));
+await check('A ба plus майдони нав илова карда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(a, 'users', A), {
+    plus: { active: true, source: 'owner_grant', expiresAt: null, trialUsed: true, extra: 1 },
+  })));
+await check('A trialUsed-ро ба false барнагардонда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(a, 'users', A), {
+    plus: { active: true, source: 'owner_grant', expiresAt: null, trialUsed: false },
+  })));
+await check('A сарчашмаро ба purchase иваз карда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(a, 'users', A), {
+    plus: { active: true, source: 'purchase', expiresAt: null, trialUsed: true },
+  })));
+await check('A Plus-и худашро бекор карда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(a, 'users', A), {
+    plus: { active: false, source: null, expiresAt: null, trialUsed: true },
+  })));
+await check('B ба plus-и A даст расонда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(b, 'users', A), {
+    plus: { active: true, source: 'owner_grant', expiresAt: null, trialUsed: false },
+  })));
+
+// Навиштанҳои муқаррарии барнома бояд ҳамчун пештар кор кунанд.
+await check('A профили худашро тағйир дода метавонад', () =>
+  assertSucceeds(setDoc(doc(a, 'users', A), { name: 'Ali', about: 'салом' }, { merge: true })));
+await check('A аватари худашро иваз карда метавонад', () =>
+  assertSucceeds(updateDoc(doc(a, 'users', A), { photoUrl: 'https://x/y.jpg' })));
+await check('A рӯйхати токенҳояшро нав карда метавонад', () =>
+  assertSucceeds(setDoc(doc(a, 'users', A), { fcmToken: 'tok1' }, { merge: true })));
 
 await env.cleanup();
 

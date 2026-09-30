@@ -22,7 +22,22 @@ service cloud.firestore {
     // профили худро тағйир дода метавонад.
     match /users/{userId} {
       allow read: if signedIn();
-      allow write: if signedIn() && uid() == userId;
+
+      // Майдони `plus` (ҳуқуқи ChatApp Plus) барои барнома ХОНДАНӢ аст.
+      //
+      // Ин муҳимтарин қоидаи Plus аст: агар барнома тавонад `plus.active`-ро
+      // худаш нависад, обунаи пулакӣ бо як сатри код гирифта мешавад. Онро
+      // танҳо сервер бо Admin SDK менависад — он аз қоидаҳо намегузарад.
+      //
+      // Барнома `set(merge: true)` зиёд истифода мебарад; дар ин ҳолат
+      // `request.resource.data` натиҷаи омехта аст, бинобар ин `plus` он ҷо
+      // ҳаст ва ба қимати ҳозира баробар мемонад — навиштанҳои муқаррарӣ
+      // бетаъсир мемонанд.
+      allow create: if signedIn() && uid() == userId
+        && !('plus' in request.resource.data);
+      allow update: if signedIn() && uid() == userId
+        && request.resource.data.get('plus', null) == resource.data.get('plus', null);
+      allow delete: if signedIn() && uid() == userId;
 
       // Паёмҳои ситорадор — танҳо барои худи соҳиб. Қоидаҳои ҳуҷҷати падар ба
       // зерколлексия татбиқ намешаванд, бинобар ин ин ҷо алоҳида навишта шуд.
