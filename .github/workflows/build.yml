@@ -96,11 +96,17 @@ jobs:
       # Пештар ин санҷиш танҳо дастӣ иҷро мешуд — яъне қоидаи вайрон то
       # фиристодан ба лоиҳаи воқеӣ пинҳон мемонд. Маҳз ҳамин санҷиш хатои
       # «соҳиб номи худашро аз нав навишта наметавонад»-ро гирифт.
-      - name: Test Firestore rules (emulator)
+      # Ду қадами ҷудо — то дар лог дида шавад, ки вақт ба кучо рафт:
+      # ба насби бастаҳо ё ба худи эмулятор.
+      - name: Install Firestore rules test deps
+        timeout-minutes: 6
         run: |
           cd test/firestore_rules
-          npm install --no-audit --no-fund --silent
-          cd ../..
+          npm ci --no-audit --no-fund
+
+      - name: Test Firestore rules (emulator)
+        timeout-minutes: 6
+        run: |
           firebase emulators:exec \
             --only firestore \
             --project demo-chatapp \
