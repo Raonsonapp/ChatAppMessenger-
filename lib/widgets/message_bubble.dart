@@ -26,6 +26,7 @@ import 'linkified_text.dart';
 import '../services/report_service.dart';
 import '../sheets/report_sheet.dart';
 import '../services/translate_service.dart';
+import 'reaction_chip.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -894,17 +895,11 @@ class MessageBubble extends StatelessWidget {
                       bottom: -10,
                       right: isMe ? 6 : null,
                       left: isMe ? null : 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.glassBorder),
-                        ),
-                        child: Text(
-                          distinctReactions.take(3).join(' '),
-                          style: const TextStyle(fontSize: 12),
-                        ),
+                      // `key` аз id-и паём аст, то ҳубоби вокуниш ҳангоми
+                      // тағйири рӯйхат ба паёми дигар нагузарад.
+                      child: ReactionChip(
+                        key: ValueKey('react_${message.id}'),
+                        reactions: distinctReactions,
                       ),
                     ),
                 ],
