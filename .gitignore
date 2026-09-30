@@ -45,3 +45,4 @@ firebase-debug.log
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
+test/firestore_rules/node_modules/

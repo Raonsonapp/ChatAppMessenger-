@@ -332,6 +332,48 @@ await check('C ҳамаи чатҳоро рӯйхат карда НАМЕТАВ�
 await check('Меҳмони новоридшуда чизе хонда НАМЕТАВОНАД', () =>
   assertFails(getDocs(collection(anon, 'users'))));
 
+// ── Номҳои ягонаи корбар (@username) ─────────────────────────────────────────
+//
+// Ин қоида ягонагиро таъмин мекунад. Агар он вайрон шавад, як корбар номи
+// каси дигарро гирифта метавонад — яъне ҷустуҷӯ одами хато мебарорад.
+await check('A номи озодро гирифта метавонад', () =>
+  assertSucceeds(setDoc(doc(a, 'usernames', 'shahron'), { uid: A })));
+await check('B номи гирифтаи A-ро рабуда НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(b, 'usernames', 'shahron'), { uid: B })));
+await check('A номи худашро аз нав навишта метавонад', () =>
+  assertSucceeds(setDoc(doc(a, 'usernames', 'shahron'), { uid: A })));
+await check('B ном бо uid-и A сабт карда НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(b, 'usernames', 'farhod'), { uid: A })));
+await check('B номи A-ро ба худаш гузаронда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(b, 'usernames', 'shahron'), { uid: B })));
+await check('A номи худашро ба каси дигар гузаронда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(a, 'usernames', 'shahron'), { uid: B })));
+await check('Ном бо майдони иловагӣ сабт намешавад', () =>
+  assertFails(setDoc(doc(b, 'usernames', 'farhod'), { uid: B, admin: true })));
+await check('B номи A-ро нест карда НАМЕТАВОНАД', () =>
+  assertFails(deleteDoc(doc(b, 'usernames', 'shahron'))));
+await check('A номи худашро озод карда метавонад', () =>
+  assertSucceeds(deleteDoc(doc(a, 'usernames', 'shahron'))));
+await check('Ҳар воридшуда номро хонда метавонад (барои ҷустуҷӯ)', () =>
+  assertSucceeds(getDoc(doc(b, 'usernames', 'shahron'))));
+await check('Меҳмони новоридшуда ном гирифта НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(anon, 'usernames', 'guest_name'), { uid: 'x' })));
+
+// ── Дастгоҳҳои пайваст ───────────────────────────────────────────────────────
+//
+// Рӯйхати дастгоҳҳо маълумоти шахсист: касе набояд донад ки шумо аз кадом
+// дастгоҳҳо медароед ва касе набояд дастгоҳи шуморо ҷудо кунад.
+await check('A дастгоҳи худашро сабт карда метавонад', () =>
+  assertSucceeds(setDoc(doc(a, 'users', A, 'devices', 'dev1'), { platform: 'Android' })));
+await check('A дастгоҳҳои худашро хонда метавонад', () =>
+  assertSucceeds(getDocs(collection(a, 'users', A, 'devices'))));
+await check('A дастгоҳи худашро нест карда метавонад', () =>
+  assertSucceeds(deleteDoc(doc(a, 'users', A, 'devices', 'dev1'))));
+await check('B дастгоҳҳои A-ро хонда НАМЕТАВОНАД', () =>
+  assertFails(getDocs(collection(b, 'users', A, 'devices'))));
+await check('B ба рӯйхати дастгоҳҳои A навишта НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(b, 'users', A, 'devices', 'dev2'), { platform: 'iOS' })));
+
 await env.cleanup();
 
 let failed = 0;

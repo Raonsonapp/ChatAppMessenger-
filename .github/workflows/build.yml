@@ -83,6 +83,21 @@ jobs:
             --config ../../firebase.emulator.json \
             "node --test agora_access.test.mjs"
 
+      # Қоидаҳои Firestore дар ҳамон эмулятори воқеӣ санҷида мешаванд.
+      # Пештар ин санҷиш танҳо дастӣ иҷро мешуд — яъне қоидаи вайрон то
+      # фиристодан ба лоиҳаи воқеӣ пинҳон мемонд. Маҳз ҳамин санҷиш хатои
+      # «соҳиб номи худашро аз нав навишта наметавонад»-ро гирифт.
+      - name: Test Firestore rules (emulator)
+        run: |
+          cd test/firestore_rules
+          npm install --no-audit --no-fund --silent
+          cd ../..
+          firebase emulators:exec \
+            --only firestore \
+            --project demo-chatapp \
+            --config firebase.emulator.json \
+            "node test/firestore_rules/rules.test.mjs"
+
       - name: Build release APK
         run: flutter build apk --release
 

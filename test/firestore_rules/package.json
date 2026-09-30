@@ -1,0 +1,11 @@
+{
+  "name": "chatapp-firestore-rules-tests",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Санҷиши firestore.rules дар эмулятори воқеии Firestore",
+  "type": "module",
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.0.0"
+  }
+}
