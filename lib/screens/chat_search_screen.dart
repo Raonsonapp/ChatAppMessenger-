@@ -14,6 +14,10 @@ import '../widgets/neon_backdrop.dart';
 import '../widgets/glass_container.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_scope.dart';
+import '../models/listing.dart';
+import '../services/listing_service.dart';
+import '../widgets/listing_card.dart';
+import 'marketplace/listing_detail_screen.dart';
 
 /// Ҷустуҷӯи умумӣ: ChatAI, сӯҳбатҳои шахсӣ ва гурӯҳҳо — ҳам аз рӯи ном ва
 /// ҳам аз рӯи матни охирин паём.
@@ -132,6 +136,11 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
                           );
                         },
                       ),
+                    // Эълонҳои Бозор — вагарна «Ҳамаро ҷустуҷӯ кунед» дурӯғ
+                    // мешавад. Ҷустуҷӯ фақат ҳангоми вуҷуди дархост иҷро
+                    // мешавад: хондани тамоми эълонҳо барои сатри холӣ фоида
+                    // надорад ва трафик мехӯрад.
+                    if (ql.isNotEmpty) _listingResults(),
                   ],
                 ),
               ),
@@ -139,6 +148,43 @@ class _ChatSearchScreenState extends State<ChatSearchScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _listingResults() {
+    return FutureBuilder<List<Listing>>(
+      // `key` муҳим аст: бе он дархости кӯҳна ҳангоми тағйири матн дубора
+      // истифода мешуд ва натиҷа аз дархост қафо мемонд.
+      key: ValueKey(_query.trim().toLowerCase()),
+      future: ListingService.search(_query),
+      builder: (context, snapshot) {
+        final items = snapshot.data ?? const <Listing>[];
+        if (items.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+              child: Text(
+                tr('k556').toUpperCase(),
+                style: TextStyle(
+                  color: AppColors.textSecondary.withValues(alpha: 0.75),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ),
+            ...items.map((listing) => ListingCard(
+                  listing: listing,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => ListingDetailScreen(listing: listing)),
+                  ),
+                )),
+          ],
+        );
+      },
     );
   }
 }

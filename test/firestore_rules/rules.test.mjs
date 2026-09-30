@@ -374,6 +374,39 @@ await check('B дастгоҳҳои A-ро хонда НАМЕТАВОНАД', (
 await check('B ба рӯйхати дастгоҳҳои A навишта НАМЕТАВОНАД', () =>
   assertFails(setDoc(doc(b, 'users', A, 'devices', 'dev2'), { platform: 'iOS' })));
 
+// ── Эълонҳои Бозор ───────────────────────────────────────────────────────────
+//
+// Бозор ба сӯҳбат мебарад, бинобар ин эълон бояд ҷамъиятӣ бошад. Вале рабудани
+// эълони каси дигар набояд имконпазир бошад — маҳз ҳамин ҷо хатари асосист.
+await check('A эълони худашро сохта метавонад', () =>
+  assertSucceeds(setDoc(doc(a, 'listings', 'l1'), {
+    kind: 'product', ownerId: A, ownerName: 'A', title: 'Samsung A51', price: 2500,
+  })));
+await check('B эълонро хонда метавонад (Бозор ҷамъиятист)', () =>
+  assertSucceeds(getDoc(doc(b, 'listings', 'l1'))));
+await check('B эълонро рӯйхат карда метавонад', () =>
+  assertSucceeds(getDocs(query(collection(b, 'listings'), where('kind', '==', 'product')))));
+await check('B эълони A-ро тағйир дода НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(b, 'listings', 'l1'), { price: 1 })));
+await check('B эълони A-ро ба худаш гузаронда НАМЕТАВОНАД', () =>
+  assertFails(updateDoc(doc(b, 'listings', 'l1'), { ownerId: B })));
+await check('B эълони A-ро нест карда НАМЕТАВОНАД', () =>
+  assertFails(deleteDoc(doc(b, 'listings', 'l1'))));
+await check('B эълон ба номи A сохта НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(b, 'listings', 'l2'), {
+    kind: 'product', ownerId: A, ownerName: 'A', title: 'ба номи дигар',
+  })));
+await check('Эълони бе сарлавҳа сохта намешавад', () =>
+  assertFails(setDoc(doc(b, 'listings', 'l3'), {
+    kind: 'product', ownerId: B, ownerName: 'B', title: '',
+  })));
+await check('A эълони худашро пинҳон карда метавонад', () =>
+  assertSucceeds(updateDoc(doc(a, 'listings', 'l1'), { active: false })));
+await check('A эълони худашро нест карда метавонад', () =>
+  assertSucceeds(deleteDoc(doc(a, 'listings', 'l1'))));
+await check('Меҳмони новоридшуда эълонро хонда НАМЕТАВОНАД', () =>
+  assertFails(getDocs(collection(anon, 'listings'))));
+
 await env.cleanup();
 
 let failed = 0;

@@ -3,10 +3,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../models/chat_conversation.dart';
 import '../../models/app_conversation.dart';
 import '../../models/app_group.dart';
-import '../../widgets/chat_tile.dart';
 import '../../widgets/user_conversation_tile.dart';
 import '../../widgets/group_tile.dart';
 import '../../theme/app_theme.dart';
@@ -65,12 +63,6 @@ class _ChatsTabState extends State<ChatsTab> {
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 100),
       children: [
         if (currentUid != null) _filterBar(),
-        // Ёрдамчии AI танҳо дар рӯйхати «Ҳама» — он на нохонда аст, на гурӯҳ,
-        // на дӯстдошта.
-        if (_filter == ChatFilter.all) ...[
-          const ChatTile(conversation: AppChats.aiAssistant, pinned: true),
-          const SizedBox(height: 4),
-        ],
         if (currentUid != null) ...[
           // Гурӯҳҳо
           StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(

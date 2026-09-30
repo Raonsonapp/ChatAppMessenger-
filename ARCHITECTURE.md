@@ -4,9 +4,12 @@
 
 ## Экранҳо
 
-Саҳифаи асосӣ `ChatListScreen` чор ҷадвал дорад дар `IndexedStack`:
-`ChatsTab` · `StatusTab` · `CommunitiesTab` · `CallsTab`
+Саҳифаи асосӣ `ChatListScreen` панҷ ҷадвал дорад дар `IndexedStack`:
+`ChatsTab` · `StatusTab` · `MarketplaceTab` · `CommunitiesTab` · `CallsTab`
 (`lib/screens/tabs/`).
+
+Ҷадвали шашуми «Ман/Профил» дидаву дониста нест: профили ChatApp ягона аст ва
+аз логотип, корти профил дар танзимот ва экрани «Ҳисоб» дастрас аст.
 
 Чатҳо: `user_chat_screen` (шахсӣ), `group_chat_screen`, `community_chat_screen`,
 `channel_screen`, `chat_detail_screen` (ёрдамчии AI).
@@ -14,6 +17,9 @@
 Зангҳо: `call_screen` (шахсӣ, бо PiP), `group_call_screen`,
 `incoming_call_screen`, `dial_pad_screen`, `schedule_call_screen`,
 `favorites_screen`.
+
+Бозор: `lib/screens/marketplace/` — `listing_detail_screen`,
+`create_listing_screen`.
 
 Танзимот: `lib/screens/settings/` — `settings_home_screen` (корти профил +
 ҳамаи бандҳо), `account_settings_screen`, `linked_devices_screen`,
@@ -61,6 +67,7 @@ groups/{id}                     гурӯҳ + /messages
 communities/{id}, channels/{id} ҷамъият ва канал + /messages
 statuses/{uid}/items/{id}       навсозиҳо, 24 соат (expiresAt)
 calls/{id}, scheduledCalls/{id} таърих ва зангҳои нақшашуда
+listings/{id}                   эълонҳои Бозор (product/service/job/ad)
 reports/{id}                    шикоятҳо (танҳо навиштан)
 linkPreviews/{hash}             кэши пешнамоиши ҳавола
 ```
@@ -72,6 +79,18 @@ linkPreviews/{hash}             кэши пешнамоиши ҳавола
 `message_status_service` тасдиқи расидан ва хонданро бо batch менависад.
 Ҳубобҳо — `widgets/message_bubble.dart`: вокуниш, ҷавоб бо кашидан, таҳрир,
 интихоби гурӯҳӣ, овоз, видео, пурсиш, пешнамоиши ҳавола.
+
+## Бозор
+
+Чор навъ (маҳсулот, хизмат, ҷойи кор, эълон) як коллексияи `listings` ва як
+экранро истифода мебаранд — сохтори онҳо якхела аст ва ҷудо кардан ба чор
+система танҳо такрори код медод. Навъ дар майдони `kind`.
+
+Тугмаи асосии ҳар эълон — сӯҳбат бо соҳиб. Он системаи нави паём насохта,
+ҳамон `conversations`-ро истифода мебарад, бинобар ин сӯҳбат дар рӯйхати чатҳо
+пайдо мешавад. Ин ҳамон принсипи ChatApp аст: «ҳама чиз аз сӯҳбат сар мешавад».
+
+Харита ва расонидан (Delivery) ҳанӯз нестанд — ниг. бахши охирин.
 
 ## Системаи статус
 
@@ -110,9 +129,9 @@ uid дошта бошанд.
 ## Санҷиш
 
 - `flutter analyze` — 0 огоҳӣ
-- `flutter test` — 52 санҷиш
-- `node --test` дар `server/otp-bot` — 29 санҷиш
-- Қоидаҳои Firestore дар эмулятори воқеӣ — 85 санҷиш
+- `flutter test` — 63 санҷиш
+- `node --test` дар `server/otp-bot` — 34 санҷиш
+- Қоидаҳои Firestore дар эмулятори воқеӣ — 96 санҷиш
 - `flutter build apk --release`
 
 Ҳама дар `.github/workflows/build.yml` дар ҳар push иҷро мешаванд.
@@ -129,3 +148,8 @@ uid дошта бошанд.
   Kotlin талаб мекунад ва бе санҷиш дар дастгоҳи воқеӣ хатари онро дорад, ки
   иконка тамоман нопадид шавад.
 - **Назорати волидайн** — нест.
+- **Харитаи Бозор** — MapLibre дар лоиҳа насб нашудааст.
+- **Расонидан (Delivery)** — системаи фармоиш ҳанӯз нест.
+- **ChatApp Plus, панели админ, гранти Plus** — сервери ҳуқуқ ва системаи
+  пардохт лозим аст; нишони Plus бе онҳо танҳо ороиш мебуд.
+- **Матн аз паёми овозӣ** — хизмати шинохти нутқ пайваст нашудааст.

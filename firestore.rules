@@ -60,6 +60,27 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.uid == uid();
     }
 
+    // Эълонҳои Бозор: маҳсулот, хизмат, ҷойи кор ва эълон.
+    //
+    // Эълон ҷамъиятӣ аст — ҳар воридшуда онро мехонад, вагарна Бозор маъно
+    // надорад. Вале навиштан, тағйир ва нест кардан танҳо аз соҳиб:
+    // - `ownerId` бояд худи нависанда бошад, то касе эълонро ба номи каси
+    //   дигар нагузорад;
+    // - ҳангоми тағйир `ownerId` бетағйир мемонад, то эълони каси дигар рабуда
+    //   нашавад.
+    match /listings/{listingId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.ownerId == uid()
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 200;
+      allow update: if signedIn()
+        && resource.data.ownerId == uid()
+        && request.resource.data.ownerId == uid();
+      allow delete: if signedIn() && resource.data.ownerId == uid();
+    }
+
     // Сӯҳбати шахсӣ: танҳо ду иштирокчӣ.
     match /conversations/{conversationId} {
       allow read, update, delete: if signedIn()

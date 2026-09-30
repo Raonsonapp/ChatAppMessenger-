@@ -26,6 +26,11 @@ import 'tabs/chats_tab.dart';
 import 'tabs/status_tab.dart';
 import 'tabs/communities_tab.dart';
 import 'tabs/calls_tab.dart';
+import 'tabs/marketplace_tab.dart';
+import 'marketplace/create_listing_screen.dart';
+import '../models/listing.dart';
+import '../models/chat_conversation.dart';
+import 'chat_detail_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_scope.dart';
 import '../widgets/connection_banner.dart';
@@ -39,6 +44,13 @@ class ChatListScreen extends StatefulWidget {
 
 class _ChatListScreenState extends State<ChatListScreen> {
   int _currentIndex = 0;
+
+  /// Барои донистани он ки дар Бозор кадом навъ интихоб шудааст — тугмаи «+»
+  /// бояд ҳамон навъро созад.
+  final GlobalKey<MarketplaceTabState> _marketplaceKey = GlobalKey<MarketplaceTabState>();
+
+  /// Лангари менюи сенуқтагӣ — меню бояд зери ҳамин тугма кушода шавад.
+  final GlobalKey _menuAnchorKey = GlobalKey();
 
   void _openNewChatSheet() {
     showModalBottomSheet(
@@ -57,14 +69,57 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  /// Менюи сенуқтагии саҳифаи асосӣ — мисли WhatsApp.
+  /// Менюи сенуқтагии саҳифаи асосӣ.
   ///
   /// Ҳар банд ба экрани воқеии мавҷуда мебарад; ҳеҷ банди холӣ нест.
-  void _openHomeMenu() {
-    ChatMenuSheet.show(
-      context,
-      title: 'ChatApp',
-      actions: [
+  ///
+  /// Меню зери ҳамон тугма кушода мешавад, на аз поёни экран: варақаи поёнӣ
+  /// барои менюи дохили чат мемонад, вале дар сарлавҳа менюи лангарӣ ба
+  /// тугмаи пахшшуда наздиктар аст ва камтар ҷои экранро мепӯшонад.
+  Future<void> _openHomeMenu() async {
+    final anchor = _menuAnchorKey.currentContext?.findRenderObject() as RenderBox?;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    if (anchor == null || overlay == null) return;
+
+    final topRight = anchor.localToGlobal(anchor.size.topRight(Offset.zero), ancestor: overlay);
+    final bottomRight = anchor.localToGlobal(anchor.size.bottomRight(Offset.zero), ancestor: overlay);
+
+    final selected = await showMenu<VoidCallback>(
+      context: context,
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: AppColors.glassBorder),
+      ),
+      position: RelativeRect.fromLTRB(
+        topRight.dx,
+        bottomRight.dy + 6,
+        overlay.size.width - topRight.dx,
+        0,
+      ),
+      items: [
+        for (final action in _homeMenuActions())
+          PopupMenuItem<VoidCallback>(
+            value: action.onTap,
+            height: 46,
+            child: Row(
+              children: [
+                Icon(action.icon, size: 18, color: AppColors.neonCyan),
+                const SizedBox(width: 14),
+                Text(
+                  action.label,
+                  style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+    selected?.call();
+  }
+
+  List<ChatMenuAction> _homeMenuActions() {
+    return [
         ChatMenuAction(
           icon: LucideIcons.users,
           label: tr('k083'),
@@ -110,8 +165,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             MaterialPageRoute(builder: (_) => const SettingsHomeScreen()),
           ),
         ),
-      ],
-    );
+      ];
   }
 
   Future<void> _markAllRead() async {
@@ -159,19 +213,73 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
+  /// Тугмаи асосӣ ва — дар ҷадвали чатҳо — гузаргоҳи ChatApp AI дар болои он.
+  ///
+  /// AI пештар ҳамчун чати мустаҳкамшуда дар болои рӯйхат мешишт ва ҳар рӯз
+  /// ҷои як сӯҳбати воқеиро мегирифт. Ҳоло он гузаргоҳи ҷамъушуда аст.
   Widget? _buildFab() {
-    switch (_currentIndex) {
-      case 0:
-        return NeonFab(onPressed: _openNewChatSheet);
-      case 1:
-        return NeonFab(icon: LucideIcons.camera, onPressed: _openCreateStatus);
-      case 2:
-        return NeonFab(onPressed: _openCreateCommunity);
-      case 3:
-        return NeonFab(icon: LucideIcons.phone_call, onPressed: _openNewCallSheet);
-      default:
-        return null;
-    }
+    final fab = switch (_currentIndex) {
+      0 => NeonFab(onPressed: _openNewChatSheet),
+      1 => NeonFab(icon: LucideIcons.camera, onPressed: _openCreateStatus),
+      2 => NeonFab(onPressed: _openCreateListing),
+      3 => NeonFab(onPressed: _openCreateCommunity),
+      4 => NeonFab(icon: LucideIcons.phone_call, onPressed: _openNewCallSheet),
+      _ => null,
+    };
+    if (fab == null) return null;
+    if (_currentIndex != 0) return fab;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _aiShortcut(),
+        const SizedBox(height: 12),
+        fab,
+      ],
+    );
+  }
+
+  /// Гузаргоҳи ҷамъушудаи ChatApp AI.
+  Widget _aiShortcut() {
+    return GestureDetector(
+      onTap: _openAi,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.55), width: 1.2),
+          boxShadow: [
+            BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.22), blurRadius: 14, spreadRadius: 0.5),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.sparkles, color: AppColors.neonCyan, size: 16),
+            const SizedBox(width: 7),
+            Text(
+              'AI',
+              style: TextStyle(color: AppColors.neonCyan, fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openAi() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ChatDetailScreen(conversation: AppChats.aiAssistant)),
+    );
+  }
+
+  /// Эълони нав аз ҳамон навъе ки дар Бозор интихоб шудааст.
+  void _openCreateListing() {
+    final kind = _marketplaceKey.currentState?.kind ?? ListingKind.product;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => CreateListingScreen(kind: kind)));
   }
 
   @override
@@ -188,15 +296,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
           child: Column(
             children: [
               _buildAppBar(),
+              // Сатри ҷустуҷӯ танҳо дар он ҷадвалҳое ки чизе барои ҷустуҷӯ
+              // доранд. Дар «Статус» ва «Зангҳо» он танҳо ҷой мегирифт.
+              if (_currentIndex == 0 || _currentIndex == 2) _buildSearchField(),
               const ConnectionBanner(),
               Expanded(
                 child: IndexedStack(
                   index: _currentIndex,
-                  children: const [
-                    ChatsTab(),
-                    StatusTab(),
-                    CommunitiesTab(),
-                    CallsTab(),
+                  children: [
+                    const ChatsTab(),
+                    const StatusTab(),
+                    MarketplaceTab(key: _marketplaceKey),
+                    const CommunitiesTab(),
+                    const CallsTab(),
                   ],
                 ),
               ),
@@ -236,9 +348,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
             children: [
               _iconButton(LucideIcons.camera, onTap: _openCameraStatus),
               const SizedBox(width: 8),
-              _iconButton(LucideIcons.search, onTap: _openSearch),
-              const SizedBox(width: 8),
-              _iconButton(LucideIcons.ellipsis_vertical, onTap: _openHomeMenu),
+              // Дар ҷадвалҳое ки сатри ҷустуҷӯ доранд, нишонаи ҷустуҷӯ дар
+              // сарлавҳа такрор мешавад — он ҷо пинҳон мешавад.
+              if (_currentIndex != 0 && _currentIndex != 2) ...[
+                _iconButton(LucideIcons.search, onTap: _openSearch),
+                const SizedBox(width: 8),
+              ],
+              _iconButton(LucideIcons.ellipsis_vertical, onTap: _openHomeMenu, key: _menuAnchorKey),
             ],
           ),
         ],
@@ -246,8 +362,34 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  Widget _iconButton(IconData icon, {required VoidCallback onTap}) {
+  /// Сатри «Ҳамаро ҷустуҷӯ кунед» — чатҳо, паёмҳо, корбарон ва эълонҳои Бозор.
+  Widget _buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: GestureDetector(
+        onTap: _openSearch,
+        behavior: HitTestBehavior.opaque,
+        child: GlassContainer(
+          borderRadius: 16,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Icon(LucideIcons.search, color: AppColors.textSecondary, size: 18),
+              const SizedBox(width: 10),
+              Text(
+                tr('k557'),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _iconButton(IconData icon, {required VoidCallback onTap, Key? key}) {
     return GestureDetector(
+      key: key,
       onTap: onTap,
       child: GlassContainer(
         borderRadius: 14,
@@ -359,8 +501,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 children: [
                   _navItem(0, LucideIcons.message_circle, tr('k044')),
                   _navItem(1, LucideIcons.circle_dashed, tr('k045')),
-                  _navItem(2, LucideIcons.users, tr('k046')),
-                  _navItem(3, LucideIcons.phone, tr('k047')),
+                  _navItem(2, LucideIcons.store, tr('k556')),
+                  _navItem(3, LucideIcons.users, tr('k046')),
+                  _navItem(4, LucideIcons.phone, tr('k047')),
                 ],
               ),
             ),
