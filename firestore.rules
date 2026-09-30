@@ -37,6 +37,21 @@ service cloud.firestore {
       }
     }
 
+    // Номҳои ягонаи корбар (`@username`).
+    //
+    // ID-и ҳуҷҷат худи номи хурдҳарф аст — ҳамин ягонагиро таъмин мекунад.
+    // Гирифтан фақат вақте иҷозат дода мешавад, ки ном озод бошад ё аллакай
+    // аз худи ҳамон корбар бошад; бинобар ин касе номи дигареро рабуда
+    // наметавонад. `update` тамоман иҷозат дода намешавад — ном озод ва аз нав
+    // гирифта мешавад.
+    match /usernames/{name} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == uid();
+      allow delete: if signedIn() && resource.data.uid == uid();
+    }
+
     // Сӯҳбати шахсӣ: танҳо ду иштирокчӣ.
     match /conversations/{conversationId} {
       allow read, update, delete: if signedIn()

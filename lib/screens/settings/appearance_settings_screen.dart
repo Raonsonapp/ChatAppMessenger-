@@ -19,8 +19,8 @@ class AppearanceSettingsScreen extends StatefulWidget {
 }
 
 class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
-  Future<void> _select(bool dark) async {
-    await themeController.setDark(dark);
+  Future<void> _selectMode(AppThemeMode mode) async {
+    await themeController.setMode(mode);
     if (mounted) setState(() {});
   }
 
@@ -45,7 +45,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     AppScope.watch(context);
-    final isDark = themeController.isDark;
+    final mode = themeController.mode;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -90,20 +90,31 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                       child: Column(
                         children: [
+                          // «Мисли система» — мавзӯъ аз танзими телефон
+                          // гирифта мешавад ва ҳангоми иваз шудани он дарҳол
+                          // тағйир меёбад.
+                          _option(
+                            icon: LucideIcons.smartphone,
+                            label: tr('k540'),
+                            description: themeController.isDark ? tr('k542') : tr('k541'),
+                            selected: mode == AppThemeMode.system,
+                            onTap: () => _selectMode(AppThemeMode.system),
+                          ),
+                          Divider(color: AppColors.glassBorder, height: 1),
                           _option(
                             icon: LucideIcons.moon,
                             label: tr('k149'),
                             description: tr('k150'),
-                            selected: isDark,
-                            onTap: () => _select(true),
+                            selected: mode == AppThemeMode.dark,
+                            onTap: () => _selectMode(AppThemeMode.dark),
                           ),
                           Divider(color: AppColors.glassBorder, height: 1),
                           _option(
                             icon: LucideIcons.sun,
                             label: tr('k151'),
                             description: tr('k152'),
-                            selected: !isDark,
-                            onTap: () => _select(false),
+                            selected: mode == AppThemeMode.light,
+                            onTap: () => _selectMode(AppThemeMode.light),
                           ),
                         ],
                       ),

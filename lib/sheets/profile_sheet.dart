@@ -11,19 +11,13 @@ import '../screens/starred_messages_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import '../theme/app_scope.dart';
-import '../services/notification_service.dart';
-import '../services/presence_service.dart';
+import '../services/account_service.dart';
 
 class ProfileSheet extends StatelessWidget {
   const ProfileSheet({super.key});
 
   Future<void> _signOut(BuildContext context) async {
-    // Токени ҳамин дастгоҳ бардошта мешавад. Бе ин дастгоҳи бароммада
-    // огоҳиномаҳои паёмҳои шахсиро гирифтанро давом медиҳад — яъне касе ки
-    // телефонро мегирад, паёмҳои моро мебинад.
-    await NotificationService.unregisterTokenForCurrentUser();
-    await PresenceService.instance.stopAndClear();
-    await FirebaseAuth.instance.signOut();
+    await AccountService.signOut();
     if (!context.mounted) return;
     Navigator.of(context).pop();
     Navigator.of(context).popUntil((route) => route.isFirst);

@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/otp_server_config.dart';
+import 'notification_service.dart';
+import 'presence_service.dart';
 
 /// Нест кардани ҳисоб.
 ///
@@ -13,6 +15,18 @@ class AccountService {
   /// Ҳисоб ва маълумоти шахсиро нест мекунад, сипас аз барнома мебарояд.
   ///
   /// Бозгашт надорад.
+  /// Аз ҳисоб баромадан.
+  ///
+  /// Токени огоҳии ҳамин дастгоҳ бардошта мешавад — вагарна дастгоҳи
+  /// бароммада паёмҳои шахсиро гирифтанро давом медиҳад, яъне касе ки
+  /// телефонро мегирад, паёмҳои мо мебинад. Ҳамин тартиб аз варақаи профил
+  /// ва аз экрани «Ҳисоб» истифода мешавад, то ду роҳи гуногун нашавад.
+  static Future<void> signOut() async {
+    await NotificationService.unregisterTokenForCurrentUser();
+    await PresenceService.instance.stopAndClear();
+    await FirebaseAuth.instance.signOut();
+  }
+
   static Future<void> deleteAccount() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw const AccountFailure(AccountFailureKind.notSignedIn);

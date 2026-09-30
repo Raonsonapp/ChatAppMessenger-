@@ -14,6 +14,7 @@ import 'shared_media_screen.dart';
 import '../theme/app_scope.dart';
 import '../services/report_service.dart';
 import '../sheets/report_sheet.dart';
+import '../widgets/profile_details_card.dart';
 
 /// Маълумоти воқеии контакт — mute/манъ/тоза кардани чат ҳама воқеан
 /// дар Firestore сабт мешаванд.
@@ -219,6 +220,7 @@ class ContactInfoScreen extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 24),
+                            ProfileDetailsCard(uid: otherUserId),
                             GlassContainer(
                               borderRadius: 16,
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
