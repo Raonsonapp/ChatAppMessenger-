@@ -128,6 +128,13 @@ class _UserChatScreenState extends State<UserChatScreen> {
   /// корбар паёми ҳафтаи гузаштаро меҷӯяд.
   static const int _searchMessageLimit = 1500;
 
+  /// Оё равзана аллакай барои паёмҳои нохонда васеъ карда шудааст.
+  ///
+  /// Бе ин корбаре ки 500 паёми нохонда дорад, танҳо 300-тои охиринро мехонд —
+  /// яъне фиристанда барои 200-тои боқимонда ҳељ гоҳ ✓✓ намегирифт, ҳарчанд
+  /// гиранда чатро кушода бошад. Равзана як маротиба васеъ мешавад.
+  bool _grewForUnread = false;
+
   /// Пас аз «Паёмҳои пештараро бор кардан» ба поён напаридан.
   ///
   /// Бе ин корбар тугмаро пахш мекард ва рӯйхат фавран ба поён мепарид — яъне
@@ -281,6 +288,17 @@ class _UserChatScreenState extends State<UserChatScreen> {
       final unread = (data?['unread'] as Map<String, dynamic>?)?[uid];
       _myUnread = (unread as num?)?.toInt() ?? 0;
       if (!mounted) return;
+
+      // Равзана то ҳама паёмҳои нохонда васеъ мешавад — вагарна қайди
+      // «хонда шуд» ба паёмҳои кӯҳнатар намерасад. Ҳадди боло гузошта шудааст,
+      // то ҳисоби бемаънии калон барномаро вазнин накунад.
+      if (!_grewForUnread && _myUnread + 50 > _messageLimit) {
+        _grewForUnread = true;
+        setState(() {
+          _messageLimit = (_myUnread + 50).clamp(_initialMessageLimit, _searchMessageLimit);
+        });
+      }
+
       if (value != _disappearIn || pinned != _pinnedText) {
         setState(() {
           _disappearIn = value;
