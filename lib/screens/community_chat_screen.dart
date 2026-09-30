@@ -60,6 +60,38 @@ class CommunityChatScreen extends StatefulWidget {
 }
 
 class _CommunityChatScreenState extends State<CommunityChatScreen> {
+  /// Ҳадди паёмҳои боршаванда.
+  ///
+  /// Пештар ҷараён БЕ ҲАДД буд ва чати калон ҳамаи таърихро мехонд — ин ҳам
+  /// пули Firestore, ҳам хотира ва ҳам сустӣ.
+  int _messageLimit = 300;
+
+  /// Пас аз боркунии паёмҳои пештара ба поён напаридан.
+  bool _keepScrollAfterLoadMore = false;
+
+  /// Тугмаи «Паёмҳои пештараро бор кардан» дар болои рӯйхат.
+  Widget _loadMoreButton() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Center(
+        child: TextButton(
+          onPressed: () => setState(() {
+            _messageLimit += 300;
+            _keepScrollAfterLoadMore = true;
+          }),
+          child: Text(
+            tr('k642'),
+            style: TextStyle(
+              color: AppColors.neonCyan,
+              fontWeight: FontWeight.w700,
+              fontSize: 12.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   ChatMessage? _replyingTo;
@@ -697,7 +729,10 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                   children: [
                     ChatWallpaper(
                     child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
+                  stream: _messagesRef
+                          .orderBy('createdAt', descending: false)
+                          .limitToLast(_messageLimit)
+                          .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return Center(
@@ -728,16 +763,26 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                       );
                     }
                     WidgetsBinding.instance.addPostFrameCallback((_) async {
-                      _scrollToBottom();
+                      // Пас аз боркунии паёмҳои пештара ба поён намепарем —
+                      // вагарна он чизе ки корбар хост бинад, аз чашм меравад.
+                      // Қайди «расид/хонда шуд» ба ҳар ҳол иҷро мешавад.
+                      if (!_keepScrollAfterLoadMore) _scrollToBottom();
+                      _keepScrollAfterLoadMore = false;
                       // «Расид», баъд «хонда шуд» — ҳамон мантиқи чати шахсӣ.
                       await MessageStatusService.markDelivered(docs);
                       await MessageStatusService.markRead(docs);
                     });
+                    // Агар шумораи паёмҳои расида ба ҳадд баробар бошад, эҳтимол
+                    // паёмҳои пештара ҳастанд.
+                    final maybeMore = snapshot.data!.docs.length >= _messageLimit;
+
                     return ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      itemCount: docs.length,
-                      itemBuilder: (context, index) {
+                      itemCount: docs.length + (maybeMore ? 1 : 0),
+                      itemBuilder: (context, rawIndex) {
+                        if (maybeMore && rawIndex == 0) return _loadMoreButton();
+                        final index = maybeMore ? rawIndex - 1 : rawIndex;
                         final message = ChatMessage.fromDoc(docs[index]);
                         final isMe = message.senderId == currentUid;
                         final previousMessage =

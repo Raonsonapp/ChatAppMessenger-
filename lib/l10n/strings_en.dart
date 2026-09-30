@@ -641,4 +641,5 @@ const Map<String, String> stringsEn = {
   'k639': 'Orders and delivery are not available yet',
   'k640': 'The ledger is your own private record — the customer never sees it.',
   'k641': 'Could not load data. Check your connection.',
+  'k642': 'Load earlier messages',
 };

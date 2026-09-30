@@ -115,6 +115,25 @@ class _UserChatScreenState extends State<UserChatScreen> {
   bool _searching = false;
   String _searchQuery = '';
 
+  /// Чанд паёми охирин бор мешавад.
+  ///
+  /// Пештар ҷараён БЕ ҲАДД буд: чати 10 000-паёма ҳамаашро мехонд — ин ҳам
+  /// пули Firestore, ҳам хотира ва ҳам сустӣ. Ҳоло танҳо охиринҳо бор мешаванд
+  /// ва корбар боқимондаро худаш хоҳиш мекунад.
+  int _messageLimit = _initialMessageLimit;
+  static const int _initialMessageLimit = 300;
+  static const int _messagePage = 300;
+
+  /// Ҳадди паёмҳо ҳангоми ҷустуҷӯ. Ҷустуҷӯ дар равзанаи хурд бемаънӣ мешавад —
+  /// корбар паёми ҳафтаи гузаштаро меҷӯяд.
+  static const int _searchMessageLimit = 1500;
+
+  /// Пас аз «Паёмҳои пештараро бор кардан» ба поён напаридан.
+  ///
+  /// Бе ин корбар тугмаро пахш мекард ва рӯйхат фавран ба поён мепарид — яъне
+  /// паёмҳои пештара, ки ӯ мехост бинад, аз чашм мерафтанд.
+  bool _keepScrollAfterLoadMore = false;
+
   DocumentReference<Map<String, dynamic>> get _conversationRef =>
       FirebaseFirestore.instance.collection('conversations').doc(widget.conversationId);
 
@@ -732,7 +751,12 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         ChatWallpaper(
                         chatId: widget.conversationId,
                         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
+                      // `limitToLast` бо `orderBy` охирин N паёмро бо тартиби
+                      // афзоянда медиҳад — маҳз он чизе ки чат мехоҳад.
+                      stream: _messagesRef
+                          .orderBy('createdAt', descending: false)
+                          .limitToLast(_messageLimit)
+                          .snapshots(),
                       builder: (context, snapshot) {
                         if (snapshot.hasError) {
                           return Center(
@@ -787,14 +811,44 @@ class _UserChatScreenState extends State<UserChatScreen> {
                           );
                         }
                         // Ҳангоми ҷустуҷӯ ба поён намепарем — натиҷа гум мешавад.
-                        if (_searchQuery.isEmpty) {
+                        // Ҳамчунин пас аз боркунии паёмҳои пештара.
+                        if (_searchQuery.isEmpty && !_keepScrollAfterLoadMore) {
                           WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
                         }
+                        _keepScrollAfterLoadMore = false;
+                        // Агар шумораи паёмҳои расида ба ҳадд баробар бошад,
+                        // эҳтимол паёмҳои пештара ҳастанд. Тугмаи возеҳ ба ҷои
+                        // боркунии худкор ҳангоми варақ задан: он ҷаҳиши
+                        // ғайричашмдошти рӯйхат намедиҳад.
+                        final maybeMore = snapshot.data!.docs.length >= _messageLimit;
+
                         return ListView.builder(
                           controller: _scrollController,
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          itemCount: docs.length,
-                          itemBuilder: (context, index) {
+                          itemCount: docs.length + (maybeMore ? 1 : 0),
+                          itemBuilder: (context, rawIndex) {
+                            if (maybeMore && rawIndex == 0) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Center(
+                                  child: TextButton(
+                                    onPressed: () => setState(() {
+                                      _messageLimit += _messagePage;
+                                      _keepScrollAfterLoadMore = true;
+                                    }),
+                                    child: Text(
+                                      tr('k642'),
+                                      style: TextStyle(
+                                        color: AppColors.neonCyan,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            final index = maybeMore ? rawIndex - 1 : rawIndex;
                             final message = ChatMessage.fromDoc(docs[index]);
                             final previousMessage =
                                 index == 0 ? null : ChatMessage.fromDoc(docs[index - 1]);
@@ -1016,7 +1070,12 @@ class _UserChatScreenState extends State<UserChatScreen> {
     );
   }
 
-  void _openSearch() => setState(() => _searching = true);
+  void _openSearch() => setState(() {
+        _searching = true;
+        // Ҳангоми ҷустуҷӯ равзана васеътар мешавад, вагарна ҷустуҷӯ танҳо
+        // паёмҳои дар экран бударо мебинад.
+        if (_messageLimit < _searchMessageLimit) _messageLimit = _searchMessageLimit;
+      });
 
   /// Менюи сенуқтагии чат.
   void _openChatMenu() {
