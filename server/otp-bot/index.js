@@ -13,6 +13,7 @@ const r2 = require('./r2');
 const { overQuota } = require('./quota');
 const agora = require('./agora');
 const linkPreview = require('./link_preview');
+const { deviceFingerprint } = require('./device_fingerprint');
 
 /** Вақти оғози ин нусхаи сервер. */
 const startedAt = new Date();
@@ -461,7 +462,7 @@ async function notifyMany({ sender, toUids, title, body, data }) {
 
   // Токенҳои бекоршуда тоза мешаванд, то дафъаи дигар бекор кӯшиш нашавад.
   await Promise.all(
-    stale.map(({ ref, token }) =>
+    stale.flatMap(({ ref, token }) => [
       ref
         .update({
           // Танҳо ҳамин як дастгоҳ бардошта мешавад — дастгоҳҳои дигари
@@ -469,7 +470,15 @@ async function notifyMany({ sender, toUids, title, body, data }) {
           fcmTokens: FieldValue.arrayRemove(token),
         })
         .catch(() => {}),
-    ),
+      // Сабти дастгоҳ низ бардошта мешавад. Бе ин корбар дар «Дастгоҳҳои
+      // пайваст» дастгоҳе мебинад, ки токенаш кайҳо бекор шудааст ва дигар
+      // ҳељ огоҳӣ намегирад — рӯйхат дурӯғ мешавад.
+      ref
+        .collection('devices')
+        .doc(deviceFingerprint(token))
+        .delete()
+        .catch(() => {}),
+    ]),
   );
 
   return { sent, skipped: skipped + (targets.length - sent) };

@@ -63,6 +63,15 @@ jobs:
           npm install --no-audit --no-fund --silent
           node --test agora.test.mjs
 
+      # Хэши дастгоҳ дар ду ҷо ҳисоб мешавад — дар барнома (Dart) ва дар
+      # сервер (JS). Агар онҳо аз ҳам дур шаванд, сервер сабти дастгоҳи
+      # хатоеро нест мекунад. Ҳар ду санҷиш ҳамон қиматҳои маълумро талаб
+      # мекунанд, бинобар ин дурӣ дарҳол дида мешавад.
+      - name: Test device fingerprint
+        run: |
+          cd server/otp-bot
+          node --test device_fingerprint.test.mjs
+
       # Эмулятори Firestore JDK 21 талаб мекунад; Java-и пешфарзи коргар
       # кӯҳнатар аст ва эмулятор бе ин қадам оғоз намешавад.
       - name: Setup Java for the emulator
