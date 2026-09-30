@@ -112,10 +112,21 @@ class ChatThemePreset {
 class ChatThemeController extends ChangeNotifier {
   static const String _prefsKey = 'chat_styles_v1';
 
+  /// Калиди намуди умумӣ — он ба ҳамаи чатҳое татбиқ мешавад, ки намуди
+  /// шахсии худро надоранд.
+  ///
+  /// Ин сатр ҳељ гоҳ ID-и чати воқеӣ шуда наметавонад: ID-и сӯҳбат
+  /// `uidA_uidB` аст ва ID-и гурӯҳ аз Firestore меояд.
+  static const String defaultChatId = '__default__';
+
   final Map<String, ChatStyle> _styles = {};
 
-  /// Намуди чат, ё холӣ агар гузошта нашуда бошад.
-  ChatStyle styleFor(String chatId) => _styles[chatId] ?? const ChatStyle();
+  /// Намуди умумӣ — он ки дар «Намуди зоҳирӣ» интихоб мешавад.
+  ChatStyle get defaultStyle => _styles[defaultChatId] ?? const ChatStyle();
+
+  /// Намуди чат: аввал намуди шахсии ҳамин чат, баъд намуди умумӣ.
+  ChatStyle styleFor(String chatId) =>
+      _styles[chatId] ?? _styles[defaultChatId] ?? const ChatStyle();
 
   Future<void> load() async {
     try {

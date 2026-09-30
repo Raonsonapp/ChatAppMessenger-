@@ -554,4 +554,5 @@ const Map<String, String> stringsEn = {
   'k552': 'Unread',
   'k553': 'Favourites',
   'k554': 'No chats in this list',
+  'k555': 'Chat theme',
 };
