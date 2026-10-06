@@ -20,6 +20,8 @@ import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
 import 'community_info_screen.dart';
+import 'shared_media_screen.dart';
+import 'chat_theme_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/chat_wallpaper.dart';
 import '../services/location_service.dart';
@@ -38,9 +40,6 @@ import 'create_poll_screen.dart';
 import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
 import '../widgets/upload_indicator.dart';
-import '../services/message_status_service.dart';
-import '../theme/chat_theme_controller.dart';
-import 'schedule_call_screen.dart';
 
 /// Чати умумии ҷамъият (Эълонҳо) — сохти айнан монанд ба GroupChatScreen,
 /// вале дар коллексияи алоҳидаи `communities`.
@@ -60,38 +59,6 @@ class CommunityChatScreen extends StatefulWidget {
 }
 
 class _CommunityChatScreenState extends State<CommunityChatScreen> {
-  /// Ҳадди паёмҳои боршаванда.
-  ///
-  /// Пештар ҷараён БЕ ҲАДД буд ва чати калон ҳамаи таърихро мехонд — ин ҳам
-  /// пули Firestore, ҳам хотира ва ҳам сустӣ.
-  int _messageLimit = 300;
-
-  /// Пас аз боркунии паёмҳои пештара ба поён напаридан.
-  bool _keepScrollAfterLoadMore = false;
-
-  /// Тугмаи «Паёмҳои пештараро бор кардан» дар болои рӯйхат.
-  Widget _loadMoreButton() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Center(
-        child: TextButton(
-          onPressed: () => setState(() {
-            _messageLimit += 300;
-            _keepScrollAfterLoadMore = true;
-          }),
-          child: Text(
-            tr('k642'),
-            style: TextStyle(
-              color: AppColors.neonCyan,
-              fontWeight: FontWeight.w700,
-              fontSize: 12.5,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   ChatMessage? _replyingTo;
@@ -125,7 +92,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
   /// Сарлавҳаи ҷамъиятро нав мекунад ва ҳисоби нохондашударо зиёд мекунад.
   /// Ба ҳамаи аъзоён огоҳинома мефиристад. Хатогӣ фиристодани паёмро вайрон
   /// намекунад — паём аллакай дар Firestore аст.
-  Future<void> _notifyMembers(String preview, {String? mediaType}) async {
+  Future<void> _notifyMembers(String preview) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final myName = _memberNames[uid] ?? tr('k002');
@@ -140,10 +107,6 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         'threadName': widget.communityName,
         'senderId': uid,
         'senderName': myName,
-        // Бе матн ва навъ огоҳиномае ки барнома месозад, ҳамеша
-        // «Паёми нав» менависад.
-        'text': preview,
-        if (mediaType != null) 'mediaType': mediaType,
       },
     );
   }
@@ -157,14 +120,12 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     await _communityRef.set({
       'lastMessage': preview,
       // Навъи паём — то гиранда матни кӯтоҳро бо забони худаш бубинад.
-      // Барои паёми матнӣ майдон бардошта мешавад — вагарна пас аз як
-      // паёми овозӣ ҳамаи паёмҳои матнӣ низ «Паёми овозӣ» менамуданд.
-      'lastMessageType': type ?? FieldValue.delete(),
+      if (type != null) 'lastMessageType': type,
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
       if (counters.isNotEmpty) 'unread': counters,
     }, SetOptions(merge: true));
-    _notifyMembers(preview, mediaType: type);
+    _notifyMembers(preview);
   }
 
   /// Ҳангоми кушодани ҷамъият ҳисоби нохондашудаи ман сифр мешавад.
@@ -255,7 +216,6 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         onDocumentPicked: _sendDocumentMessage,
         onLocationTap: _sendLocationMessage,
         onPollTap: _sendPoll,
-        onEventTap: _openScheduleCall,
       ),
     );
   }
@@ -411,7 +371,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         ),
       );
 
-  Future<void> _sendVoiceMessage(File file, Duration duration, List<int> waveform) {
+  Future<void> _sendVoiceMessage(File file, Duration duration) {
     setState(() => _recording = false);
     return _sendMedia(
       () => ChatMediaService.sendVoice(
@@ -420,7 +380,6 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
         storageFolder: _storageFolder,
         file: file,
         duration: duration,
-        waveform: waveform,
         unreadFor: _others,
       ),
     );
@@ -695,21 +654,6 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => CommunityInfoScreen(communityId: widget.communityId)));
   }
 
-
-  /// Ранги ҳубобчаи паёмҳои ман — аз мавзӯи ҳамин чат.
-  Color? get _chatBubbleColor {
-    final style = chatThemeController.styleFor(widget.communityId);
-    final value = style.bubbleColor;
-    return value == null ? null : Color(value);
-  }
-
-
-  /// Банақшагирии занг аз феҳристи замима.
-  void _openScheduleCall() => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ScheduleCallScreen()),
-      );
-
   @override
   Widget build(BuildContext context) {
     AppScope.watch(context);
@@ -729,11 +673,9 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                 child: Stack(
                   children: [
                     ChatWallpaper(
+                    chatId: widget.communityId,
                     child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: _messagesRef
-                          .orderBy('createdAt', descending: false)
-                          .limitToLast(_messageLimit)
-                          .snapshots(),
+                  stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return Center(
@@ -763,27 +705,12 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                         ),
                       );
                     }
-                    WidgetsBinding.instance.addPostFrameCallback((_) async {
-                      // Пас аз боркунии паёмҳои пештара ба поён намепарем —
-                      // вагарна он чизе ки корбар хост бинад, аз чашм меравад.
-                      // Қайди «расид/хонда шуд» ба ҳар ҳол иҷро мешавад.
-                      if (!_keepScrollAfterLoadMore) _scrollToBottom();
-                      _keepScrollAfterLoadMore = false;
-                      // «Расид», баъд «хонда шуд» — ҳамон мантиқи чати шахсӣ.
-                      await MessageStatusService.markDelivered(docs);
-                      await MessageStatusService.markRead(docs);
-                    });
-                    // Агар шумораи паёмҳои расида ба ҳадд баробар бошад, эҳтимол
-                    // паёмҳои пештара ҳастанд.
-                    final maybeMore = snapshot.data!.docs.length >= _messageLimit;
-
+                    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
                     return ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      itemCount: docs.length + (maybeMore ? 1 : 0),
-                      itemBuilder: (context, rawIndex) {
-                        if (maybeMore && rawIndex == 0) return _loadMoreButton();
-                        final index = maybeMore ? rawIndex - 1 : rawIndex;
+                      itemCount: docs.length,
+                      itemBuilder: (context, index) {
                         final message = ChatMessage.fromDoc(docs[index]);
                         final isMe = message.senderId == currentUid;
                         final previousMessage =
@@ -793,7 +720,6 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                           message: message,
                           isMe: isMe,
                           currentUid: currentUid,
-                          bubbleColor: _chatBubbleColor,
                           senderLabel: isMe ? null : _memberNames[message.senderId],
                           animateIn: index == docs.length - 1,
                           grouped: isGroupedWithPrevious(previousMessage, message),
@@ -920,8 +846,45 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
                 ),
               ),
             ),
+            PopupMenuButton<void>(
+              icon: Icon(LucideIcons.ellipsis_vertical, color: AppColors.textSecondary, size: 19),
+              color: AppColors.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: AppColors.glassBorder)),
+              itemBuilder: (menuContext) => [
+                _menuItem(LucideIcons.info, tr('k055'), _openCommunityInfo),
+                _menuItem(LucideIcons.images, tr('k294'), () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SharedMediaScreen(
+                          parentPath: 'communities/${widget.communityId}',
+                          title: tr('k294'),
+                        ),
+                      ),
+                    )),
+                _menuItem(LucideIcons.palette, tr('k420'), () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatThemeScreen(chatId: widget.communityId, chatTitle: widget.communityName),
+                      ),
+                    )),
+                _menuItem(LucideIcons.more_horizontal, tr('k181'), _openCommunityInfo),
+              ],
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  PopupMenuItem<void> _menuItem(IconData icon, String label, VoidCallback onTap) {
+    return PopupMenuItem<void>(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.textPrimary),
+          const SizedBox(width: 14),
+          Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
+        ],
       ),
     );
   }

@@ -26,38 +26,6 @@ class ChannelScreen extends StatefulWidget {
 }
 
 class _ChannelScreenState extends State<ChannelScreen> {
-  /// Ҳадди паёмҳои боршаванда.
-  ///
-  /// Пештар ҷараён БЕ ҲАДД буд ва чати калон ҳамаи таърихро мехонд — ин ҳам
-  /// пули Firestore, ҳам хотира ва ҳам сустӣ.
-  int _messageLimit = 300;
-
-  /// Пас аз боркунии паёмҳои пештара ба поён напаридан.
-  bool _keepScrollAfterLoadMore = false;
-
-  /// Тугмаи «Паёмҳои пештараро бор кардан» дар болои рӯйхат.
-  Widget _loadMoreButton() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Center(
-        child: TextButton(
-          onPressed: () => setState(() {
-            _messageLimit += 300;
-            _keepScrollAfterLoadMore = true;
-          }),
-          child: Text(
-            tr('k642'),
-            style: TextStyle(
-              color: AppColors.neonCyan,
-              fontWeight: FontWeight.w700,
-              fontSize: 12.5,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isUploading = false;
@@ -167,10 +135,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
                   _buildHeader(name, followers.length, isOwner),
                   Expanded(
                     child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: _messagesRef
-                          .orderBy('createdAt', descending: false)
-                          .limitToLast(_messageLimit)
-                          .snapshots(),
+                      stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
                           return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
@@ -185,23 +150,12 @@ class _ChannelScreenState extends State<ChannelScreen> {
                             ),
                           );
                         }
-                        // Пас аз боркунии паёмҳои пештара ба поён намепарем —
-                        // вагарна он чизе ки корбар хост бинад, аз чашм меравад.
-                        if (!_keepScrollAfterLoadMore) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-                        }
-                        _keepScrollAfterLoadMore = false;
-                        // Агар шумораи паёмҳои расида ба ҳадд баробар бошад, эҳтимол
-                        // паёмҳои пештара ҳастанд.
-                        final maybeMore = snapshot.data!.docs.length >= _messageLimit;
-
+                        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
                         return ListView.builder(
                           controller: _scrollController,
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          itemCount: docs.length + (maybeMore ? 1 : 0),
-                          itemBuilder: (context, rawIndex) {
-                            if (maybeMore && rawIndex == 0) return _loadMoreButton();
-                            final index = maybeMore ? rawIndex - 1 : rawIndex;
+                          itemCount: docs.length,
+                          itemBuilder: (context, index) {
                             final message = ChatMessage.fromDoc(docs[index]);
                             return MessageBubble(message: message, isMe: false, currentUid: _currentUid, showReadReceipts: false);
                           },

@@ -247,13 +247,13 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
                 )
               else
                 Container(
-                  decoration: BoxDecoration(gradient: status.style.gradient),
+                  decoration: BoxDecoration(gradient: AppColors.neonGradient),
                   alignment: Alignment.center,
                   padding: const EdgeInsets.all(28),
                   child: Text(
                     status.text ?? '',
-                    textAlign: status.style.textAlign,
-                    style: status.style.textStyleFor(status.text ?? ''),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 26),
                   ),
                 ),
               if (status.imageUrl != null && status.text != null && status.text!.isNotEmpty)
