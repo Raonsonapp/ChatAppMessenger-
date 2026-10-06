@@ -388,7 +388,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         ),
       );
 
-  Future<void> _sendVoiceMessage(File file, Duration duration) {
+  Future<void> _sendVoiceMessage(File file, Duration duration, List<int> waveform) {
     setState(() => _recording = false);
     return _sendMedia(
       () => ChatMediaService.sendVoice(
@@ -397,6 +397,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         storageFolder: _storageFolder,
         file: file,
         duration: duration,
+        // Мавҷи воқеии садо, ки ҳангоми сабт аз микрофон гирифта шуд.
+        waveform: waveform,
         unreadFor: _others,
       ),
     );
@@ -910,7 +912,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         builder: (_) => ChatThemeScreen(chatId: widget.groupId, chatTitle: widget.groupName),
                       ),
                     )),
-                _menuItem(LucideIcons.more_horizontal, tr('k181'), _openGroupInfo),
+                _menuItem(LucideIcons.ellipsis, tr('k181'), _openGroupInfo),
               ],
             ),
           ],

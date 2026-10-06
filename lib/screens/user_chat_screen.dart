@@ -50,11 +50,19 @@ class UserChatScreen extends StatefulWidget {
   final String conversationId;
   final String otherUserName;
   final String otherUserId;
+
+  /// Матни омода дар майдони вуруд — масалан ҳангоми гузаштан аз эълони Бозор.
+  ///
+  /// Паём ХУДКОР фиристода намешавад: корбар онро мебинад, тағйир медиҳад ва
+  /// худаш мефиристад.
+  final String? initialText;
+
   const UserChatScreen({
     super.key,
     required this.conversationId,
     required this.otherUserName,
     required this.otherUserId,
+    this.initialText,
   });
 
   @override
@@ -222,9 +230,16 @@ class _UserChatScreenState extends State<UserChatScreen> {
   void initState() {
     super.initState();
     // Матни нофиристода барқарор мешавад — мисли WhatsApp.
+    // Матни омода аз берун (масалан аз эълони Бозор) танҳо вақте гузошта
+    // мешавад, ки нависандаи корбар холӣ бошад — набояд навиштаи нотамоми ӯ
+    // нест шавад.
     final draft = draftStore.read(widget.conversationId);
-    if (draft != null) {
+    final initial = widget.initialText?.trim();
+    if (draft != null && draft.isNotEmpty) {
       _controller.text = draft;
+      _hasText = true;
+    } else if (initial != null && initial.isNotEmpty) {
+      _controller.text = initial;
       _hasText = true;
     }
     _convoSub = _conversationRef.snapshots().listen((snap) {
@@ -488,7 +503,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         trf('k316', [picked.name]),
       );
 
-  Future<void> _sendVoiceMessage(File file, Duration duration) {
+  Future<void> _sendVoiceMessage(File file, Duration duration, List<int> waveform) {
     setState(() => _recording = false);
     return _sendMedia(
       () => ChatMediaService.sendVoice(
@@ -497,6 +512,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
         storageFolder: _storageFolder,
         file: file,
         duration: duration,
+        // Мавҷи воқеии садо, ки ҳангоми сабт аз микрофон гирифта шуд.
+        waveform: waveform,
         unreadFor: [widget.otherUserId],
         disappearInSeconds: _disappearIn,
       ),
@@ -1149,7 +1166,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         builder: (_) => ChatThemeScreen(chatId: widget.conversationId, chatTitle: widget.otherUserName),
                       ),
                     )),
-                _menuItem(LucideIcons.more_horizontal, tr('k181'), _openContactInfo),
+                _menuItem(LucideIcons.ellipsis, tr('k181'), _openContactInfo),
               ],
             ),
           ],

@@ -8,7 +8,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../models/app_call.dart';
-import '../services/agora_config.dart';
 import '../theme/app_theme.dart';
 import '../widgets/group_avatar.dart';
 import '../widgets/neon_backdrop.dart';
@@ -16,6 +15,10 @@ import '../l10n/l10n.dart';
 import '../theme/app_scope.dart';
 import '../services/push_service.dart';
 import '../services/call_error.dart';
+import '../services/agora_token_service.dart';
+import '../utils/agora_token_error.dart';
+import '../services/agora_engine_manager.dart';
+import '../services/call_video_profile.dart';
 
 /// Занги гурӯҳӣ — ҳамаи аъзоён ба як канали Agora ҳамроҳ мешаванд.
 ///
@@ -164,14 +167,44 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
     }
   }
 
+  /// Token-и навро мегирад ва ба Agora медиҳад.
+  Future<void> _renewToken() async {
+    final channelId = _channelId;
+    if (channelId == null) return;
+    try {
+      final fresh = await AgoraTokenService.fetch(channelId);
+      final token = fresh.token;
+      if (token != null) await _engine?.renewToken(token);
+    } catch (_) {
+      // Навкунӣ нашуд — занг то мӯҳлати token давом мекунад.
+    }
+  }
+
   Future<void> _joinChannel() async {
     try {
-      final engine = createAgoraRtcEngine();
-      _engine = engine;
-      await engine.initialize(RtcEngineContext(
-        appId: kAgoraAppId,
+      // Token аз сервер: App Certificate дар барнома намемонад ва сервер
+      // месанҷад, ки оё корбар узви ҳамин гурӯҳ аст.
+      final AgoraCredentials credentials;
+      try {
+        credentials = await AgoraTokenService.fetch(_channelId!);
+      } on AgoraTokenFailure catch (failure) {
+        if (mounted) setState(() => _error = describeAgoraTokenError(failure));
+        return;
+      }
+      if (!mounted) return;
+
+      // Муҳаррик тавассути идоракунанда сохта мешавад: он кӯҳнаро ҲАМЕША
+      // озод мекунад. Бе ин занги дуюм хатои -17 мегирифт — Agora мегӯяд
+      // «аллакай дар канал».
+      final engine = await AgoraEngineManager.create(RtcEngineContext(
+        appId: credentials.appId,
         channelProfile: ChannelProfileType.channelProfileCommunication,
       ));
+      if (!mounted) {
+        await AgoraEngineManager.disposeActive();
+        return;
+      }
+      _engine = engine;
 
       engine.registerEventHandler(RtcEngineEventHandler(
         onJoinChannelSuccess: (connection, elapsed) {
@@ -184,6 +217,10 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
             if (mounted) setState(() => _seconds++);
           });
         },
+        // Token мӯҳлат дорад: занги дароз бе навкунӣ дар миёна қатъ мешуд.
+        onTokenPrivilegeWillExpire: (connection, token) {
+          _renewToken();
+        },
         onUserJoined: (connection, remoteUid, elapsed) {
           if (!mounted) return;
           setState(() => _remoteUids.add(remoteUid));
@@ -191,6 +228,12 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
         onUserOffline: (connection, remoteUid, reason) {
           if (!mounted) return;
           setState(() => _remoteUids.remove(remoteUid));
+        },
+        // Agora хатои token-ро аксар вақт маҳз аз ин ҷо хабар медиҳад,
+        // на аз `onError`. Бе ин экран то абад «Пайваст мешавад…» мемонад.
+        onConnectionStateChanged: (connection, state, reason) {
+          if (!mounted || !CallError.isFatalReason(reason)) return;
+          setState(() => _error = CallError.describeReason(reason));
         },
         onError: (err, msg) {
           // Танҳо хатои ҷиддӣ зангро қатъ мекунад.
@@ -202,13 +245,14 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
       await engine.enableAudio();
       if (widget.type == CallType.video) {
         await engine.enableVideo();
+        await CallVideoProfile.apply(engine);
         await engine.startPreview();
       }
 
       await engine.joinChannel(
-        token: '',
+        token: credentials.tokenOrEmpty,
         channelId: _channelId!,
-        uid: 0,
+        uid: credentials.uid,
         options: ChannelMediaOptions(
           channelProfile: ChannelProfileType.channelProfileCommunication,
           clientRoleType: ClientRoleType.clientRoleBroadcaster,
@@ -238,8 +282,8 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
     }
 
     try {
-      await _engine?.leaveChannel();
-      await _engine?.release();
+      _engine = null;
+      await AgoraEngineManager.disposeActive();
     } catch (_) {}
 
     if (mounted) Navigator.of(context).pop();
@@ -256,9 +300,11 @@ class _GroupCallScreenState extends State<GroupCallScreen> {
           'durationSeconds': _seconds,
         }).catchError((_) {});
       }
-      _engine?.leaveChannel();
-      _engine?.release();
     }
+    // Муҳаррик ҲАМЕША озод карда мешавад — вагарна занги оянда хатои -17
+    // мегирад («аллакай дар канал»).
+    _engine = null;
+    AgoraEngineManager.disposeActiveUnawaited();
     super.dispose();
   }
 
