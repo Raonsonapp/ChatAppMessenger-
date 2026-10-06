@@ -11,6 +11,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/user_conversation_tile.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_scope.dart';
+import '../widgets/stream_error_notice.dart';
 
 /// Чатҳои бойгонишуда. Дарозфишорӣ ҳамон менюро мекушояд, бинобар ин
 /// баргардондан аз ҳамин ҷо низ имконпазир аст.
@@ -56,6 +57,9 @@ class ArchivedChatsScreen extends StatelessWidget {
                             .where('participants', arrayContains: uid)
                             .snapshots(),
                         builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return StreamErrorNotice(error: snapshot.error);
+                          }
                           if (snapshot.connectionState == ConnectionState.waiting) {
                             return Center(child: CircularProgressIndicator(color: AppColors.neonCyan));
                           }

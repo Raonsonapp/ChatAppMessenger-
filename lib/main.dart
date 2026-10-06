@@ -14,6 +14,8 @@ import 'services/draft_store.dart';
 import 'l10n/locale_controller.dart';
 import 'screens/auth_gate.dart';
 import 'services/notification_service.dart';
+import 'theme/chat_theme_controller.dart';
+import 'services/media_settings_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +39,8 @@ void main() async {
   await _safely(textScaleController.load);
   await _safely(accessibilityController.load);
   await _safely(draftStore.load);
+  await _safely(chatThemeController.load);
+  await _safely(mediaSettings.load);
   // Якҷошавии мавзӯи торик/равшан бо контрасти баланд — пеш аз аввалин
   // кашидан, вагарна якеи ин ду танзимот то боздиди экран дида намешавад.
   AppColors.applyFlags(isDark: themeController.isDark, highContrast: accessibilityController.highContrast);
@@ -79,6 +83,8 @@ class _ChatAppState extends State<ChatApp> {
     textScaleController,
     accessibilityController,
     draftStore,
+    chatThemeController,
+    mediaSettings,
   ]);
 
   @override

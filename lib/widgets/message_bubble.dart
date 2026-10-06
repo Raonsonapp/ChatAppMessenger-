@@ -15,12 +15,19 @@ import '../l10n/l10n.dart';
 import '../services/media_download_service.dart';
 import '../utils/download_error.dart';
 import '../sheets/forward_sheet.dart';
-import 'emoji_picker_sheet.dart';
 import '../screens/image_viewer_screen.dart';
 import '../theme/text_scale_controller.dart';
 import 'poll_card.dart';
 import '../theme/app_scope.dart';
 import 'net_image.dart';
+import '../services/link_preview_service.dart';
+import 'link_preview_card.dart';
+import 'linkified_text.dart';
+import '../services/report_service.dart';
+import '../sheets/report_sheet.dart';
+import '../services/translate_service.dart';
+import 'reaction_chip.dart';
+import 'emoji_picker_sheet.dart';
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
@@ -28,6 +35,17 @@ class MessageBubble extends StatelessWidget {
   final String currentUid;
   final String? senderLabel;
   final bool showReadReceipts;
+
+  /// Ранги ҳубобчаи паёмҳои ман — аз мавзӯи ҳамин чат.
+  ///
+  /// `null` — ранги пешфарзи барнома.
+  final Color? bubbleColor;
+
+  /// Иштирокчиёни дигар — барои ҳисоби «расид»/«хонда шуд».
+  ///
+  /// Дар чати шахсӣ якто, дар гурӯҳ ҳамаи аъзоён ба ғайр аз ман. Дар гурӯҳ
+  /// ✓✓ танҳо вақте нишон дода мешавад, ки ҲАМА гирифта бошанд.
+  final List<String> otherParticipants;
   final ValueChanged<ChatMessage>? onReply;
   final ValueChanged<ChatMessage>? onDelete;
 
@@ -71,6 +89,8 @@ class MessageBubble extends StatelessWidget {
     required this.currentUid,
     this.senderLabel,
     this.showReadReceipts = true,
+    this.otherParticipants = const [],
+    this.bubbleColor,
     this.onReply,
     this.onDelete,
     this.onDeleteForMe,
@@ -89,6 +109,92 @@ class MessageBubble extends StatelessWidget {
   });
 
   static const List<String> _quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+  /// Матнро тарҷума карда, дар варақаи поён нишон медиҳад.
+  ///
+  /// Матни аслӣ дар назди тарҷума мемонад: корбар бояд бубинад, ки чӣ
+  /// тарҷума шуд.
+  Future<void> _translate(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(SnackBar(content: Text(tr('k489'))));
+
+    String result;
+    try {
+      result = await TranslateService.translate(message.text);
+    } on TranslateFailure catch (failure) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(failure.message)));
+      return;
+    } catch (_) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(tr('k487'))));
+      return;
+    }
+
+    messenger.hideCurrentSnackBar();
+    if (!context.mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.glassBorder),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(LucideIcons.languages,
+                    size: 18, color: AppColors.neonCyan),
+                const SizedBox(width: 9),
+                Text(
+                  tr('k490'),
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SelectableText(
+              result,
+              style: TextStyle(
+                  color: AppColors.textPrimary, fontSize: 15, height: 1.35),
+            ),
+            const SizedBox(height: 14),
+            Divider(color: AppColors.glassBorder, height: 1),
+            const SizedBox(height: 12),
+            Text(
+              message.text,
+              style: TextStyle(
+                color: AppColors.textSecondary.withValues(alpha: 0.75),
+                fontSize: 12.5,
+                height: 1.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Аввалин ҳаволаи матн — барои корти пешнамоиш.
+  String? get _previewUrl {
+    if (message.text.isEmpty) return null;
+    return LinkPreviewService.firstUrl(message.text);
+  }
 
   /// Оё ин паёмро ба дастгоҳ нигоҳ доштан мумкин аст?
   bool get _isSavable {
@@ -165,6 +271,8 @@ class MessageBubble extends StatelessWidget {
                       ),
                     );
                   }),
+                  // Тугмаи «+» — маҷмӯаи пурраи эмоҷӣ. Шаш вокуниши тез барои
+                  // ҳама ҳолатҳо кофӣ нест.
                   if (onReact != null)
                     InkWell(
                       borderRadius: BorderRadius.circular(20),
@@ -208,6 +316,40 @@ class MessageBubble extends StatelessWidget {
                   onReply?.call(message);
                 },
               ),
+              if (message.text.trim().isNotEmpty && !message.deleted)
+                _actionTile(
+                  context,
+                  icon: LucideIcons.languages,
+                  label: tr('k488'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _translate(context);
+                  },
+                ),
+              if (!isMe)
+                _actionTile(
+                  context,
+                  icon: LucideIcons.flag,
+                  label: tr('k415'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      isScrollControlled: true,
+                      builder: (_) => ReportSheet(
+                        target: ReportTarget.message,
+                        targetId: message.id,
+                        contextPath: messageRef?.path,
+                        // Нусхаи матн нигоҳ дошта мешавад: агар муаллиф
+                        // паёмро нест кунад, шикоят бе далел мемонад.
+                        contentSnapshot: message.text.isEmpty
+                            ? message.mediaType
+                            : message.text,
+                      ),
+                    );
+                  },
+                ),
               if (_isSavable)
                 _actionTile(
                   context,
@@ -609,8 +751,14 @@ class MessageBubble extends StatelessWidget {
                     decoration: isSticker
                         ? null
                         : BoxDecoration(
-                            gradient: (isMe && !message.deleted && !hasImage) ? AppColors.neonGradient : null,
-                            color: (isMe && !message.deleted && !hasImage) ? null : AppColors.glassFill,
+                            // Агар барои ин чат ранг интихоб шуда бошад, он
+                            // ба ҷои градиенти пешфарз истифода мешавад.
+                            gradient: (isMe && !message.deleted && !hasImage && bubbleColor == null)
+                                ? AppColors.neonGradient
+                                : null,
+                            color: (isMe && !message.deleted && !hasImage)
+                                ? bubbleColor
+                                : AppColors.glassFill,
                             border: isMe
                                 ? null
                                 : Border.all(color: isAI ? AppColors.neonCyan.withValues(alpha: 0.4) : AppColors.glassBorder),
@@ -666,6 +814,9 @@ class MessageBubble extends StatelessWidget {
                               width: 220,
                               fit: BoxFit.cover,
                               memCacheWidth: 660,
+                              // Аксҳои чат ба танзимоти «Боркунии худкор» тобеъ
+                              // ҳастанд — маҳз онҳо трафикро мехӯранд.
+                              respectAutoDownload: true,
                               loading: Container(
                                 width: 220,
                                 height: 220,
@@ -713,6 +864,7 @@ class MessageBubble extends StatelessWidget {
                               url: message.mediaUrl!,
                               isMe: isMe,
                               durationSeconds: message.mediaDuration,
+                              waveform: message.waveform,
                             ),
                           ),
                         if (hasVideo)
@@ -734,16 +886,43 @@ class MessageBubble extends StatelessWidget {
                         if (message.text.isNotEmpty || message.deleted)
                           Padding(
                             padding: hasImage ? const EdgeInsets.fromLTRB(8, 6, 8, 4) : EdgeInsets.zero,
-                            child: Text(
-                              message.deleted ? tr('k242') : message.text,
-                              style: TextStyle(
+                            child: Builder(builder: (context) {
+                              final textStyle = TextStyle(
                                 color: (isMe && !hasImage) ? AppColors.background : AppColors.textPrimary,
                                 fontSize: 14.5 * textScaleController.scale,
                                 height: 1.3,
                                 fontStyle: message.deleted ? FontStyle.italic : FontStyle.normal,
                                 fontWeight: (isMe && !hasImage) ? FontWeight.w600 : FontWeight.w400,
-                              ),
-                            ),
+                              );
+                              if (message.deleted) {
+                                return Text(tr('k242'), style: textStyle);
+                              }
+                              // Ҳаволаҳо пахшшаванда мешаванд — пештар онҳо
+                              // матни оддӣ буданд ва кушода намешуданд.
+                              return LinkifiedText(
+                                text: message.text,
+                                style: textStyle,
+                                linkStyle: textStyle.copyWith(
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: (isMe && !hasImage)
+                                      ? AppColors.background
+                                      : AppColors.neonCyan,
+                                  color: (isMe && !hasImage)
+                                      ? AppColors.background
+                                      : AppColors.neonCyan,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              );
+                            }),
+                          ),
+                        // Пешнамоиш танҳо барои паёми матнӣ: дар назди акс ё
+                        // ҳуҷҷат он ҷои зиёдро мегирад ва фоида намедиҳад.
+                        if (!message.deleted &&
+                            message.mediaUrl == null &&
+                            _previewUrl != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: LinkPreviewCard(url: _previewUrl!, isMe: isMe),
                           ),
                       ],
                     ),
@@ -753,17 +932,11 @@ class MessageBubble extends StatelessWidget {
                       bottom: -10,
                       right: isMe ? 6 : null,
                       left: isMe ? null : 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.glassBorder),
-                        ),
-                        child: Text(
-                          distinctReactions.take(3).join(' '),
-                          style: const TextStyle(fontSize: 12),
-                        ),
+                      // `key` аз id-и паём аст, то ҳубоби вокуниш ҳангоми
+                      // тағйири рӯйхат ба паёми дигар нагузарад.
+                      child: ReactionChip(
+                        key: ValueKey('react_${message.id}'),
+                        reactions: distinctReactions,
                       ),
                     ),
                 ],
@@ -799,13 +972,39 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
-  /// Feather надорад иконаи "ду галочка"-и WhatsApp — бо ду
-  /// LucideIcons.check-и рӯйиҳамафтода шабеҳсозӣ мешавад.
+  /// Нишонаи ҳолати паём — мисли WhatsApp:
+  ///
+  ///   🕘  фиристода мешавад
+  ///   ✓   фиристода шуд
+  ///   ✓✓  расид
+  ///   ✓✓  (сабз) хонда шуд
+  ///   ⚠   нарафт
+  ///
+  /// Lucide иконаи «ду галочка» надорад, бинобар ин ду `check`-и
+  /// рӯйиҳамафтода истифода мешавад.
   Widget _buildReadReceipt() {
-    final color = message.read ? AppColors.neonEmerald : AppColors.textSecondary.withValues(alpha: 0.6);
-    if (!message.read) {
-      return Icon(LucideIcons.check, size: 13, color: color);
+    final faded = AppColors.textSecondary.withValues(alpha: 0.6);
+
+    switch (message.deliveryStatus(otherParticipants)) {
+      case MessageStatus.sending:
+        return Icon(LucideIcons.clock, size: 12, color: faded);
+
+      case MessageStatus.failed:
+        // Хатогӣ бояд НАМОЁН бошад: паём набояд хомӯшона гум шавад.
+        return Icon(LucideIcons.circle_alert, size: 13, color: Colors.redAccent);
+
+      case MessageStatus.sent:
+        return Icon(LucideIcons.check, size: 13, color: faded);
+
+      case MessageStatus.delivered:
+        return _doubleCheck(faded);
+
+      case MessageStatus.read:
+        return _doubleCheck(AppColors.neonEmerald);
     }
+  }
+
+  Widget _doubleCheck(Color color) {
     return SizedBox(
       width: 16,
       height: 13,

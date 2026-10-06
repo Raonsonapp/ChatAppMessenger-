@@ -20,8 +20,6 @@ import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
 import 'group_info_screen.dart';
-import 'shared_media_screen.dart';
-import 'chat_theme_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/chat_wallpaper.dart';
 import '../services/location_service.dart';
@@ -43,6 +41,9 @@ import 'create_poll_screen.dart';
 import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
 import '../widgets/upload_indicator.dart';
+import '../services/message_status_service.dart';
+import '../theme/chat_theme_controller.dart';
+import 'schedule_call_screen.dart';
 
 /// Чати воқеии гурӯҳӣ — паёмҳои дохилшаванда номи фиристандаро нишон
 /// медиҳанд. Сарлавҳа ба GroupInfoScreen (аъзоён, admin, баромадан) мегузарад.
@@ -62,6 +63,38 @@ class GroupChatScreen extends StatefulWidget {
 }
 
 class _GroupChatScreenState extends State<GroupChatScreen> {
+  /// Ҳадди паёмҳои боршаванда.
+  ///
+  /// Пештар ҷараён БЕ ҲАДД буд ва чати калон ҳамаи таърихро мехонд — ин ҳам
+  /// пули Firestore, ҳам хотира ва ҳам сустӣ.
+  int _messageLimit = 300;
+
+  /// Пас аз боркунии паёмҳои пештара ба поён напаридан.
+  bool _keepScrollAfterLoadMore = false;
+
+  /// Тугмаи «Паёмҳои пештараро бор кардан» дар болои рӯйхат.
+  Widget _loadMoreButton() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Center(
+        child: TextButton(
+          onPressed: () => setState(() {
+            _messageLimit += 300;
+            _keepScrollAfterLoadMore = true;
+          }),
+          child: Text(
+            tr('k642'),
+            style: TextStyle(
+              color: AppColors.neonCyan,
+              fontWeight: FontWeight.w700,
+              fontSize: 12.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   ChatMessage? _replyingTo;
@@ -94,7 +127,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// нохондашударо як воҳид зиёд мекунад.
   /// Ба ҳамаи аъзоён огоҳинома мефиристад. Хатогӣ фиристодани паёмро вайрон
   /// намекунад — паём аллакай дар Firestore аст.
-  Future<void> _notifyMembers(String preview) async {
+  Future<void> _notifyMembers(String preview, {String? mediaType}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final myName = _memberNames[uid] ?? tr('k002');
@@ -109,6 +142,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         'threadName': widget.groupName,
         'senderId': uid,
         'senderName': myName,
+        // Бе матн ва навъ огоҳиномае ки барнома месозад, ҳамеша
+        // «Паёми нав» менависад.
+        'text': preview,
+        if (mediaType != null) 'mediaType': mediaType,
       },
     );
   }
@@ -123,12 +160,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await _groupRef.set({
       'lastMessage': preview,
       // Навъи паём — то гиранда матни кӯтоҳро бо забони худаш бубинад.
-      if (type != null) 'lastMessageType': type,
+      // Барои паёми матнӣ майдон бардошта мешавад — вагарна пас аз як
+      // паёми овозӣ ҳамаи паёмҳои матнӣ низ «Паёми овозӣ» менамуданд.
+      'lastMessageType': type ?? FieldValue.delete(),
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
       if (counters.isNotEmpty) 'unread': counters,
     }, SetOptions(merge: true));
-    _notifyMembers(preview);
+    _notifyMembers(preview, mediaType: type);
   }
 
   /// Ҳамаи аъзоён ба ғайр аз худам — барои ҳисоби нохондашуда.
@@ -233,6 +272,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         onDocumentPicked: _sendDocumentMessage,
         onLocationTap: _sendLocationMessage,
         onPollTap: _sendPoll,
+        onEventTap: _openScheduleCall,
       ),
     );
   }
@@ -397,7 +437,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         storageFolder: _storageFolder,
         file: file,
         duration: duration,
-        // Мавҷи воқеии садо, ки ҳангоми сабт аз микрофон гирифта шуд.
         waveform: waveform,
         unreadFor: _others,
       ),
@@ -673,6 +712,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => GroupInfoScreen(groupId: widget.groupId)));
   }
 
+
+  /// Ранги ҳубобчаи паёмҳои ман — аз мавзӯи ҳамин чат.
+  Color? get _chatBubbleColor {
+    final style = chatThemeController.styleFor(widget.groupId);
+    final value = style.bubbleColor;
+    return value == null ? null : Color(value);
+  }
+
+
+  /// Банақшагирии занг аз феҳристи замима.
+  void _openScheduleCall() => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ScheduleCallScreen()),
+      );
+
   @override
   Widget build(BuildContext context) {
     AppScope.watch(context);
@@ -692,9 +746,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 child: Stack(
                   children: [
                     ChatWallpaper(
-                    chatId: widget.groupId,
                     child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
+                  stream: _messagesRef
+                          .orderBy('createdAt', descending: false)
+                          .limitToLast(_messageLimit)
+                          .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return Center(
@@ -724,12 +780,27 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         ),
                       );
                     }
-                    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                    WidgetsBinding.instance.addPostFrameCallback((_) async {
+                      // Пас аз боркунии паёмҳои пештара ба поён намепарем —
+                      // вагарна он чизе ки корбар хост бинад, аз чашм меравад.
+                      // Қайди «расид/хонда шуд» ба ҳар ҳол иҷро мешавад.
+                      if (!_keepScrollAfterLoadMore) _scrollToBottom();
+                      _keepScrollAfterLoadMore = false;
+                      // «Расид», баъд «хонда шуд» — ҳамон мантиқи чати шахсӣ.
+                      await MessageStatusService.markDelivered(docs);
+                      await MessageStatusService.markRead(docs);
+                    });
+                    // Агар шумораи паёмҳои расида ба ҳадд баробар бошад, эҳтимол
+                    // паёмҳои пештара ҳастанд.
+                    final maybeMore = snapshot.data!.docs.length >= _messageLimit;
+
                     return ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      itemCount: docs.length,
-                      itemBuilder: (context, index) {
+                      itemCount: docs.length + (maybeMore ? 1 : 0),
+                      itemBuilder: (context, rawIndex) {
+                        if (maybeMore && rawIndex == 0) return _loadMoreButton();
+                        final index = maybeMore ? rawIndex - 1 : rawIndex;
                         final message = ChatMessage.fromDoc(docs[index]);
                         final isMe = message.senderId == currentUid;
                         final previousMessage =
@@ -739,13 +810,17 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           message: message,
                           isMe: isMe,
                           currentUid: currentUid,
+                          bubbleColor: _chatBubbleColor,
                           senderLabel: isMe ? null : _memberNames[message.senderId],
                           animateIn: index == docs.length - 1,
                           grouped: isGroupedWithPrevious(previousMessage, message),
                           selectionActive: _selected.isNotEmpty,
                           selected: _selected.containsKey(message.id),
                           onSelectToggle: _toggleSelect,
-                          showReadReceipts: false,
+                          // Дар гурӯҳ ✓✓ вақте пайдо мешавад, ки ҲАМАИ
+                          // аъзоён гирифта/хонда бошанд — мисли WhatsApp.
+                          showReadReceipts: isMe,
+                          otherParticipants: _others,
                           onReply: (m) => setState(() => _replyingTo = m),
                           onDelete: _deleteMessage,
                           onReact: _reactToMessage,
@@ -891,45 +966,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               onPressed: () => _startGroupCall(CallType.video),
               icon: Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
             ),
-            PopupMenuButton<void>(
-              icon: Icon(LucideIcons.ellipsis_vertical, color: AppColors.textSecondary, size: 19),
-              color: AppColors.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: AppColors.glassBorder)),
-              itemBuilder: (menuContext) => [
-                _menuItem(LucideIcons.info, tr('k440'), _openGroupInfo),
-                _menuItem(LucideIcons.images, tr('k294'), () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SharedMediaScreen(
-                          parentPath: 'groups/${widget.groupId}',
-                          title: tr('k294'),
-                        ),
-                      ),
-                    )),
-                _menuItem(LucideIcons.palette, tr('k420'), () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChatThemeScreen(chatId: widget.groupId, chatTitle: widget.groupName),
-                      ),
-                    )),
-                _menuItem(LucideIcons.ellipsis, tr('k181'), _openGroupInfo),
-              ],
-            ),
           ],
         ),
-      ),
-    );
-  }
-
-  PopupMenuItem<void> _menuItem(IconData icon, String label, VoidCallback onTap) {
-    return PopupMenuItem<void>(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: AppColors.textPrimary),
-          const SizedBox(width: 14),
-          Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
-        ],
       ),
     );
   }

@@ -10,6 +10,7 @@ import '../widgets/user_avatar.dart';
 import '../widgets/neon_backdrop.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_scope.dart';
+import '../services/username_service.dart';
 import '../utils/upload_error.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -23,6 +24,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _nicknameController = TextEditingController();
   final TextEditingController _aboutController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _instagramController = TextEditingController();
+  final TextEditingController _websiteController = TextEditingController();
+
+  /// Номи корбари захирашуда — то ҳангоми иваз кардан номи кӯҳна озод шавад.
+  String _savedUsername = '';
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isUploadingPhoto = false;
@@ -46,6 +53,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _nicknameController.text = (data['nickname'] ?? '') as String;
       _aboutController.text = (data['about'] ?? '') as String;
       _photoUrl = data['photoUrl'] as String?;
+      _savedUsername = (data['username'] ?? '') as String;
+      _usernameController.text = _savedUsername;
+      _instagramController.text = (data['instagram'] ?? '') as String;
+      _websiteController.text = (data['website'] ?? '') as String;
     }
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -56,6 +67,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _nicknameController.dispose();
     _aboutController.dispose();
+    _usernameController.dispose();
+    _instagramController.dispose();
+    _websiteController.dispose();
     super.dispose();
   }
 
@@ -96,11 +110,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _savedMessage = null;
     });
     try {
+      // Номи корбар алоҳида нигоҳ дошта мешавад — он бояд ягона бошад ва
+      // метавонад рад шавад, бинобар ин пеш аз навиштани боқимонда иҷро мешавад.
+      final desired = UsernameService.normalize(_usernameController.text);
+      if (desired.isEmpty && _savedUsername.isNotEmpty) {
+        await UsernameService.release(uid: uid, previous: _savedUsername);
+        _savedUsername = '';
+      } else if (desired.isNotEmpty &&
+          UsernameService.key(desired) != UsernameService.key(_savedUsername)) {
+        if (!UsernameService.isValid(desired)) {
+          setState(() {
+            _isSaving = false;
+            _errorText = tr('k515');
+          });
+          return;
+        }
+        final result = await UsernameService.claim(
+          uid: uid,
+          raw: desired,
+          previous: _savedUsername.isEmpty ? null : _savedUsername,
+        );
+        if (!result.isOk) {
+          setState(() {
+            _isSaving = false;
+            _errorText = result.status == UsernameStatus.taken ? tr('k514') : tr('k515');
+          });
+          return;
+        }
+        _savedUsername = desired;
+      }
+
       // САБТ: навсозии воқеии профил дар Cloud Firestore
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'name': name,
         'nickname': _nicknameController.text.trim(),
         'about': _aboutController.text.trim(),
+        'instagram': _cleanHandle(_instagramController.text),
+        'website': _cleanUrl(_websiteController.text),
       }, SetOptions(merge: true));
       if (!mounted) return;
       setState(() {
@@ -187,6 +233,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       _buildField(tr('k319'), _nicknameController, hint: '@shahron'),
                       const SizedBox(height: 14),
                       _buildField(tr('k116'), _aboutController, hint: tr('k067')),
+                      const SizedBox(height: 14),
+                      _buildField(tr('k511'), _usernameController, hint: '@shahron'),
+                      const SizedBox(height: 4),
+                      Text(
+                        tr('k515'),
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
+                      ),
+                      const SizedBox(height: 14),
+                      _buildField('Instagram', _instagramController, hint: '@chatapp'),
+                      const SizedBox(height: 14),
+                      _buildField(tr('k512'), _websiteController, hint: 'chatapp.tj'),
                       if (_errorText != null) ...[
                         const SizedBox(height: 10),
                         Text(_errorText!, style: const TextStyle(color: Colors.redAccent, fontSize: 12.5)),
@@ -221,6 +278,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
     );
+  }
+
+  /// `@` ва суроғаи пурраи Instagram ба номи кӯтоҳ табдил мешавад.
+  static String _cleanHandle(String raw) {
+    var value = raw.trim();
+    for (final prefix in ['https://', 'http://', 'www.', 'instagram.com/', 'm.instagram.com/']) {
+      if (value.toLowerCase().startsWith(prefix)) value = value.substring(prefix.length);
+    }
+    while (value.startsWith('@')) {
+      value = value.substring(1);
+    }
+    // Хати охири суроға («/») лозим нест.
+    while (value.endsWith('/')) {
+      value = value.substring(0, value.length - 1);
+    }
+    return value.trim();
+  }
+
+  /// Сайт бе схема низ навишта мешавад — `https://` илова мекунем, то ҳавола
+  /// воқеан кушода шавад.
+  static String _cleanUrl(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) return '';
+    final lower = value.toLowerCase();
+    if (lower.startsWith('http://') || lower.startsWith('https://')) return value;
+    return 'https://$value';
   }
 
   Widget _buildField(String label, TextEditingController controller, {required String hint}) {

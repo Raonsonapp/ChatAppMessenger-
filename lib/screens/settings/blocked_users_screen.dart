@@ -10,6 +10,7 @@ import '../../widgets/empty_state.dart';
 import '../../widgets/user_avatar.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/app_scope.dart';
+import '../../widgets/stream_error_notice.dart';
 
 /// Рӯйхати корбарони манъшуда.
 ///
@@ -56,6 +57,9 @@ class BlockedUsersScreen extends StatelessWidget {
                     : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                         stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
                         builder: (context, snapshot) {
+                          if (snapshot.hasError) {
+                            return StreamErrorNotice(error: snapshot.error);
+                          }
                           if (!snapshot.hasData) {
                             return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
                           }

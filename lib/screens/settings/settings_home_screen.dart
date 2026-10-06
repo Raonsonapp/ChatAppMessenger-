@@ -21,10 +21,12 @@ import 'account_screen.dart';
 import 'lists_screen.dart';
 import 'chats_settings_screen.dart';
 import 'accessibility_settings_screen.dart';
-import '../linked_devices_screen.dart';
+import 'linked_devices_screen.dart';
 import '../coming_soon_screen.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/app_scope.dart';
+import 'plus_screen.dart';
+import '../business/business_center_screen.dart';
 
 /// Танзимот — экрани воҳиди пурра, мисли WhatsApp: сарлавҳаи профил дар боло
 /// (расм/ном/телефони воқеӣ), сонаш ҳамаи бахшҳои воқеии барнома. Ҳар банд
@@ -116,6 +118,28 @@ class SettingsHomeScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                    const SizedBox(height: 14),
+                    _sectionCard(context, [
+                      _row(
+                        context,
+                        icon: LucideIcons.sparkles,
+                        label: tr('k587'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const PlusScreen()),
+                        ),
+                      ),
+                      _row(
+                        context,
+                        icon: LucideIcons.store,
+                        label: tr('k619'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const BusinessCenterScreen()),
+                        ),
+                        showDivider: false,
+                      ),
+                    ]),
                     const SizedBox(height: 14),
                     _sectionCard(context, [
                       _row(

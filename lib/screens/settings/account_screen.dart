@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
@@ -8,9 +9,11 @@ import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/app_scope.dart';
 import '../coming_soon_screen.dart';
-import '../linked_devices_screen.dart';
+import 'linked_devices_screen.dart';
 import 'privacy_settings_screen.dart';
 import 'delete_account_screen.dart';
+import '../../services/account_service.dart';
+import '../edit_profile_screen.dart';
 
 /// "Аккаунт" — рақами воқеии телефон (аз FirebaseAuth), пайвандҳо ба
 /// Махфият, Дастгоҳҳои пайвастшуда ва нест кардани ҳисоб.
@@ -34,6 +37,7 @@ class AccountScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     AppScope.watch(context);
     final phone = FirebaseAuth.instance.currentUser?.phoneNumber ?? '—';
+    final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -66,6 +70,33 @@ class AccountScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       child: Column(
                         children: [
+                          // `@username` — ягона дар тамоми барнома. Ҷустуҷӯ
+                          // одамро аз рӯи он низ меёбад, бинобар ин он ин ҷо
+                          // ҷои аввалро мегирад.
+                          if (uid != null)
+                            StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(uid)
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                final username =
+                                    (snapshot.data?.data()?['username'] as String?)?.trim() ?? '';
+                                return ListTile(
+                                  leading: Icon(LucideIcons.at_sign, color: AppColors.neonCyan, size: 19),
+                                  title: Text(tr('k511'),
+                                      style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+                                  subtitle: Text(username.isEmpty ? '—' : '@$username',
+                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                                  trailing: Icon(LucideIcons.chevron_right, color: AppColors.textSecondary, size: 17),
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                                  ),
+                                );
+                              },
+                            ),
+                          if (uid != null) Divider(color: AppColors.glassBorder, height: 1),
                           ListTile(
                             leading: Icon(LucideIcons.phone, color: AppColors.neonCyan, size: 19),
                             title: Text(tr('k458'), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
@@ -107,10 +138,21 @@ class AccountScreen extends StatelessWidget {
                     GlassContainer(
                       borderRadius: 18,
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      child: ListTile(
-                        leading: Icon(LucideIcons.trash, color: Colors.redAccent, size: 19),
-                        title: Text(tr('k385'), style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600, fontSize: 14)),
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DeleteAccountScreen())),
+                      child: Column(
+                        children: [
+                          ListTile(
+                            leading: Icon(LucideIcons.log_out, color: AppColors.neonCyan, size: 19),
+                            title: Text(tr('k521'),
+                                style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+                            onTap: () => _confirmSignOut(context),
+                          ),
+                          Divider(color: AppColors.glassBorder, height: 1),
+                          ListTile(
+                            leading: Icon(LucideIcons.trash, color: Colors.redAccent, size: 19),
+                            title: Text(tr('k385'), style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600, fontSize: 14)),
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DeleteAccountScreen())),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -121,5 +163,33 @@ class AccountScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Баромадан аз ҳисоб бо тасдиқ.
+  ///
+  /// AccountService.signOut токени огоҳии ҳамин дастгоҳро низ мебардорад —
+  /// бе он дастгоҳи бароммада паёмҳои шахсиро гирифтанро давом медиҳад.
+  Future<void> _confirmSignOut(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(tr('k521'), style: TextStyle(color: AppColors.textPrimary, fontSize: 17)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(tr('k277'), style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(tr('k521'), style: const TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    await AccountService.signOut();
+    if (!context.mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 }

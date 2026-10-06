@@ -16,8 +16,13 @@ import 'create_status_screen.dart';
 import 'create_community_screen.dart';
 import 'create_group_screen.dart';
 import 'favorites_screen.dart';
-import 'linked_devices_screen.dart';
-import 'coming_soon_screen.dart';
+import 'settings/linked_devices_screen.dart';
+import 'broadcast_screen.dart';
+import 'tabs/marketplace_tab.dart';
+import 'marketplace/create_listing_screen.dart';
+import 'chat_detail_screen.dart';
+import '../models/listing.dart';
+import '../models/chat_conversation.dart';
 import 'settings/settings_home_screen.dart';
 import 'create_channel_screen.dart';
 import 'settings/privacy_settings_screen.dart';
@@ -39,6 +44,10 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
+  /// Барои донистани он ки дар Бозор кадом навъ интихоб шудааст — тугмаи «+»
+  /// бояд ҳамон навъро созад.
+  final GlobalKey<MarketplaceTabState> _marketplaceKey = GlobalKey<MarketplaceTabState>();
+
   int _currentIndex = 0;
 
   void _openNewChatSheet() {
@@ -102,10 +111,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const LinkedDevicesScreen()));
   }
 
+  /// Паёми умумӣ воқеан кор мекунад: матн ба ҳар чати шахсӣ ҷудогона меравад
+  /// (мисли WhatsApp). Бинобар ин ин ҷо экрани «ба зудӣ» лозим нест.
   void _openNewBroadcast() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ComingSoonScreen(title: tr('k410'))),
+      MaterialPageRoute(builder: (_) => const BroadcastScreen()),
     );
   }
 
@@ -164,6 +175,28 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
+  /// Сатри «Ҳамаро ҷустуҷӯ кунед» — чатҳо, гурӯҳҳо ва эълонҳои Бозор.
+  Widget _buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: GestureDetector(
+        onTap: _openSearch,
+        behavior: HitTestBehavior.opaque,
+        child: GlassContainer(
+          borderRadius: 16,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Icon(LucideIcons.search, color: AppColors.textSecondary, size: 18),
+              const SizedBox(width: 10),
+              Text(tr('k557'), style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   PopupMenuItem<void> _menuItem(IconData icon, String label, VoidCallback onTap) {
     return PopupMenuItem<void>(
       onTap: onTap,
@@ -177,19 +210,73 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
+  /// Тугмаи асосӣ ва — дар ҷадвали чатҳо — гузаргоҳи ChatApp AI дар болои он.
+  ///
+  /// AI пештар ҳамчун чати мустаҳкамшуда дар болои рӯйхат мешишт ва ҳар рӯз
+  /// ҷои як сӯҳбати воқеиро мегирифт. Ҳоло он гузаргоҳи ҷамъушуда аст.
   Widget? _buildFab() {
-    switch (_currentIndex) {
-      case 0:
-        return NeonFab(onPressed: _openNewChatSheet);
-      case 1:
-        return NeonFab(icon: LucideIcons.camera, onPressed: _openCreateStatus);
-      case 2:
-        return NeonFab(onPressed: _openCreateCommunity);
-      case 3:
-        return NeonFab(icon: LucideIcons.phone_call, onPressed: _openNewCallSheet);
-      default:
-        return null;
-    }
+    final fab = switch (_currentIndex) {
+      0 => NeonFab(onPressed: _openNewChatSheet),
+      1 => NeonFab(icon: LucideIcons.camera, onPressed: _openCreateStatus),
+      2 => NeonFab(onPressed: _openCreateListing),
+      3 => NeonFab(onPressed: _openCreateCommunity),
+      4 => NeonFab(icon: LucideIcons.phone_call, onPressed: _openNewCallSheet),
+      _ => null,
+    };
+    if (fab == null) return null;
+    if (_currentIndex != 0) return fab;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _aiShortcut(),
+        const SizedBox(height: 12),
+        fab,
+      ],
+    );
+  }
+
+  /// Гузаргоҳи ҷамъушудаи ChatApp AI.
+  Widget _aiShortcut() {
+    return GestureDetector(
+      onTap: _openAi,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.55), width: 1.2),
+          boxShadow: [
+            BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.22), blurRadius: 14, spreadRadius: 0.5),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.sparkles, color: AppColors.neonCyan, size: 16),
+            const SizedBox(width: 7),
+            Text(
+              'AI',
+              style: TextStyle(color: AppColors.neonCyan, fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openAi() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ChatDetailScreen(conversation: AppChats.aiAssistant)),
+    );
+  }
+
+  /// Эълони нав аз ҳамон навъе ки дар Бозор интихоб шудааст.
+  void _openCreateListing() {
+    final kind = _marketplaceKey.currentState?.kind ?? ListingKind.product;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => CreateListingScreen(kind: kind)));
   }
 
   @override
@@ -206,15 +293,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
           child: Column(
             children: [
               _buildAppBar(),
+              // Сатри ҷустуҷӯ танҳо дар он ҷадвалҳое ки чизе барои ҷустуҷӯ
+              // доранд. Дар «Статус» ва «Зангҳо» он танҳо ҷой мегирифт.
+              if (_currentIndex == 0 || _currentIndex == 2) _buildSearchField(),
               const ConnectionBanner(),
               Expanded(
                 child: IndexedStack(
                   index: _currentIndex,
-                  children: const [
-                    ChatsTab(),
-                    StatusTab(),
-                    CommunitiesTab(),
-                    CallsTab(),
+                  children: [
+                    const ChatsTab(),
+                    const StatusTab(),
+                    MarketplaceTab(key: _marketplaceKey),
+                    const CommunitiesTab(),
+                    const CallsTab(),
                   ],
                 ),
               ),
@@ -233,8 +324,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
       case 1:
         return tr('k045');
       case 2:
-        return tr('k046');
+        return tr('k556');
       case 3:
+        return tr('k046');
+      case 4:
         return tr('k047');
       default:
         return null;
@@ -245,7 +338,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final title = _tabTitle;
     // Таби "Зангҳо" менюи худашро дорад (шортикатҳо + 3-нуқта дар боло),
     // бинобар ин ин қатори сарлавҳа дар он ҳоло танҳо ном нишон медиҳад.
-    final isCallsTab = _currentIndex == 3;
+    final isCallsTab = _currentIndex == 4;
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 14, 14, 8),
       child: Row(
@@ -280,8 +373,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   _iconButton(LucideIcons.camera, onTap: _openCameraStatus),
                   const SizedBox(width: 8),
                 ],
-                _iconButton(LucideIcons.search, onTap: _openSearch),
-                const SizedBox(width: 8),
+                // Дар ҷадвалҳое ки сатри ҷустуҷӯ доранд, нишонаи ҷустуҷӯ дар
+                // сарлавҳа такрор мешавад — он ҷо пинҳон мешавад.
+                if (_currentIndex != 0 && _currentIndex != 2) ...[
+                  _iconButton(LucideIcons.search, onTap: _openSearch),
+                  const SizedBox(width: 8),
+                ],
                 _iconButton(LucideIcons.ellipsis_vertical, onTap: _openMainMenu),
               ],
             ),
@@ -346,6 +443,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 destinations: [
                   NavigationDestination(icon: const Icon(LucideIcons.message_circle), label: tr('k044')),
                   NavigationDestination(icon: const Icon(LucideIcons.circle), label: tr('k045')),
+                  NavigationDestination(icon: const Icon(LucideIcons.store), label: tr('k556')),
                   NavigationDestination(icon: const Icon(LucideIcons.users), label: tr('k046')),
                   NavigationDestination(icon: const Icon(LucideIcons.phone), label: tr('k047')),
                 ],

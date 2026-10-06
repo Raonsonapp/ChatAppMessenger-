@@ -6,7 +6,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
@@ -24,9 +23,6 @@ import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
 import '../sheets/contact_picker_sheet.dart';
 import 'contact_info_screen.dart';
-import 'shared_media_screen.dart';
-import 'chat_theme_screen.dart';
-import '../services/conversation_actions.dart';
 import 'call_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
@@ -42,6 +38,17 @@ import 'create_poll_screen.dart';
 import '../theme/app_scope.dart';
 import '../utils/upload_error.dart';
 import '../widgets/upload_indicator.dart';
+import '../services/message_status_service.dart';
+import '../sheets/chat_menu_sheet.dart';
+import '../services/chat_export_service.dart';
+import '../services/conversation_actions.dart';
+import 'chat_theme_screen.dart';
+import '../sheets/report_sheet.dart';
+import '../services/report_service.dart';
+import 'package:share_plus/share_plus.dart';
+import 'shared_media_screen.dart';
+import '../theme/chat_theme_controller.dart';
+import 'schedule_call_screen.dart';
 
 /// Экрани чати воқеӣ байни ду корбари бо телефон бақайдгирифташуда.
 /// Сарлавҳа ба ContactInfoScreen мегузарад; агар корбар манъ (block)
@@ -107,6 +114,32 @@ class _UserChatScreenState extends State<UserChatScreen> {
   bool _searching = false;
   String _searchQuery = '';
 
+  /// Чанд паёми охирин бор мешавад.
+  ///
+  /// Пештар ҷараён БЕ ҲАДД буд: чати 10 000-паёма ҳамаашро мехонд — ин ҳам
+  /// пули Firestore, ҳам хотира ва ҳам сустӣ. Ҳоло танҳо охиринҳо бор мешаванд
+  /// ва корбар боқимондаро худаш хоҳиш мекунад.
+  int _messageLimit = _initialMessageLimit;
+  static const int _initialMessageLimit = 300;
+  static const int _messagePage = 300;
+
+  /// Ҳадди паёмҳо ҳангоми ҷустуҷӯ. Ҷустуҷӯ дар равзанаи хурд бемаънӣ мешавад —
+  /// корбар паёми ҳафтаи гузаштаро меҷӯяд.
+  static const int _searchMessageLimit = 1500;
+
+  /// Оё равзана аллакай барои паёмҳои нохонда васеъ карда шудааст.
+  ///
+  /// Бе ин корбаре ки 500 паёми нохонда дорад, танҳо 300-тои охиринро мехонд —
+  /// яъне фиристанда барои 200-тои боқимонда ҳељ гоҳ ✓✓ намегирифт, ҳарчанд
+  /// гиранда чатро кушода бошад. Равзана як маротиба васеъ мешавад.
+  bool _grewForUnread = false;
+
+  /// Пас аз «Паёмҳои пештараро бор кардан» ба поён напаридан.
+  ///
+  /// Бе ин корбар тугмаро пахш мекард ва рӯйхат фавран ба поён мепарид — яъне
+  /// паёмҳои пештара, ки ӯ мехост бинад, аз чашм мерафтанд.
+  bool _keepScrollAfterLoadMore = false;
+
   DocumentReference<Map<String, dynamic>> get _conversationRef =>
       FirebaseFirestore.instance.collection('conversations').doc(widget.conversationId);
 
@@ -121,7 +154,11 @@ class _UserChatScreenState extends State<UserChatScreen> {
     await _conversationRef.set({
       'lastMessage': preview,
       // Навъи паём — то гиранда матни кӯтоҳро бо забони худаш бубинад.
-      if (type != null) 'lastMessageType': type,
+      //
+      // Барои паёми МАТНӢ майдон бардошта мешавад. Пештар он танҳо ҳангоми
+      // мавҷуд будани навъ навишта мешуд, бинобар ин пас аз як паёми овозӣ
+      // ҳамаи паёмҳои матнӣ низ «Паёми овозӣ» менамуданд.
+      'lastMessageType': type ?? FieldValue.delete(),
       'lastMessageTime': FieldValue.serverTimestamp(),
       'lastSenderId': uid,
       'unread': {widget.otherUserId: FieldValue.increment(1)},
@@ -250,6 +287,17 @@ class _UserChatScreenState extends State<UserChatScreen> {
       final unread = (data?['unread'] as Map<String, dynamic>?)?[uid];
       _myUnread = (unread as num?)?.toInt() ?? 0;
       if (!mounted) return;
+
+      // Равзана то ҳама паёмҳои нохонда васеъ мешавад — вагарна қайди
+      // «хонда шуд» ба паёмҳои кӯҳнатар намерасад. Ҳадди боло гузошта шудааст,
+      // то ҳисоби бемаънии калон барномаро вазнин накунад.
+      if (!_grewForUnread && _myUnread + 50 > _messageLimit) {
+        _grewForUnread = true;
+        setState(() {
+          _messageLimit = (_myUnread + 50).clamp(_initialMessageLimit, _searchMessageLimit);
+        });
+      }
+
       if (value != _disappearIn || pinned != _pinnedText) {
         setState(() {
           _disappearIn = value;
@@ -314,6 +362,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         onDocumentPicked: _sendDocumentMessage,
         onLocationTap: _sendLocationMessage,
         onPollTap: _sendPoll,
+        onEventTap: _openScheduleCall,
         onStickerTap: _openStickerPicker,
       ),
     );
@@ -340,7 +389,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
       'mediaType': 'sticker',
     });
     await _touchConversation(tr('k314'), type: 'sticker');
-    _notifyOther('$sticker Стикер');
+    _notifyOther('$sticker Стикер', mediaType: 'sticker');
     _scrollToBottom();
   }
 
@@ -387,7 +436,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         'mediaType': mediaType,
       });
       await _touchConversation(tr('k311'), type: 'image');
-      _notifyOther(tr('k311'));
+      _notifyOther(tr('k311'), mediaType: 'image');
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
@@ -421,6 +470,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         disappearInSeconds: _disappearIn,
       ),
       tr('k286'),
+      mediaType: 'location',
     );
   }
 
@@ -461,11 +511,15 @@ class _UserChatScreenState extends State<UserChatScreen> {
     });
   }
 
-  Future<void> _sendMedia(Future<bool> Function() send, String preview) async {
+  Future<void> _sendMedia(
+    Future<bool> Function() send,
+    String preview, {
+    String? mediaType,
+  }) async {
     setState(() => _isUploading = true);
     try {
       if (await send()) {
-        _notifyOther(preview);
+        _notifyOther(preview, mediaType: mediaType);
         _scrollToBottom();
       }
     } catch (e) {
@@ -489,6 +543,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         disappearInSeconds: _disappearIn,
         ),
         tr('k313'),
+        mediaType: 'video',
       );
 
   Future<void> _sendDocumentMessage(PlatformFile picked) => _sendMedia(
@@ -501,6 +556,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         disappearInSeconds: _disappearIn,
         ),
         trf('k316', [picked.name]),
+        mediaType: 'document',
       );
 
   Future<void> _sendVoiceMessage(File file, Duration duration, List<int> waveform) {
@@ -512,12 +568,12 @@ class _UserChatScreenState extends State<UserChatScreen> {
         storageFolder: _storageFolder,
         file: file,
         duration: duration,
-        // Мавҷи воқеии садо, ки ҳангоми сабт аз микрофон гирифта шуд.
         waveform: waveform,
         unreadFor: [widget.otherUserId],
         disappearInSeconds: _disappearIn,
       ),
       tr('k312'),
+      mediaType: 'audio',
     );
   }
 
@@ -555,7 +611,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
 
   /// Ба ҳамсӯҳбат огоҳиномаи push мефиристад. Номи фиристанда аз ҳуҷҷати
   /// сӯҳбат гирифта мешавад, то дар огоҳинома номи воқеӣ намоён шавад.
-  Future<void> _notifyOther(String preview) async {
+  Future<void> _notifyOther(String preview, {String? mediaType}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final convo = await _conversationRef.get();
@@ -577,6 +633,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
         'threadName': myName,
         'senderId': uid,
         'senderName': myName,
+        // Матн ва навъ ҲАТМАН фиристода мешаванд: бе онҳо огоҳиномае ки
+        // барнома худаш месозад, ҳамеша «Паёми нав» менависад.
+        'text': preview,
+        if (mediaType != null) 'mediaType': mediaType,
       },
     );
   }
@@ -621,18 +681,11 @@ class _UserChatScreenState extends State<UserChatScreen> {
   }
 
   void _markIncomingAsReadInner(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, String currentUid) {
-    final unread = docs.where((d) {
-      final data = d.data();
-      return data['senderId'] != currentUid && (data['read'] != true);
-    }).toList();
-    if (unread.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _clearMyUnread(currentUid));
-      return;
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      for (final d in unread) {
-        d.reference.update({'read': true});
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Аввал «расид»: паём ба дастгоҳ омад, ҳарчанд корбар ҳанӯз чатро
+      // кушода набошад. Баъд «хонда шуд» — чат кушода аст.
+      await MessageStatusService.markDelivered(docs);
+      await MessageStatusService.markRead(docs);
       _clearMyUnread(currentUid);
     });
   }
@@ -658,6 +711,26 @@ class _UserChatScreenState extends State<UserChatScreen> {
       ),
     );
   }
+
+
+  /// Нишонаи интихобкардаи ин чат, ё `null`.
+  IconData? get _chatIcon => ChatThemeScreen.iconByName(
+        chatThemeController.styleFor(widget.conversationId).icon,
+      );
+
+  /// Ранги ҳубобчаи паёмҳои ман — аз мавзӯи ҳамин чат.
+  Color? get _chatBubbleColor {
+    final style = chatThemeController.styleFor(widget.conversationId);
+    final value = style.bubbleColor;
+    return value == null ? null : Color(value);
+  }
+
+
+  /// Банақшагирии занг аз феҳристи замима.
+  void _openScheduleCall() => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ScheduleCallScreen()),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -696,7 +769,12 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         ChatWallpaper(
                         chatId: widget.conversationId,
                         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
+                      // `limitToLast` бо `orderBy` охирин N паёмро бо тартиби
+                      // афзоянда медиҳад — маҳз он чизе ки чат мехоҳад.
+                      stream: _messagesRef
+                          .orderBy('createdAt', descending: false)
+                          .limitToLast(_messageLimit)
+                          .snapshots(),
                       builder: (context, snapshot) {
                         if (snapshot.hasError) {
                           return Center(
@@ -751,14 +829,44 @@ class _UserChatScreenState extends State<UserChatScreen> {
                           );
                         }
                         // Ҳангоми ҷустуҷӯ ба поён намепарем — натиҷа гум мешавад.
-                        if (_searchQuery.isEmpty) {
+                        // Ҳамчунин пас аз боркунии паёмҳои пештара.
+                        if (_searchQuery.isEmpty && !_keepScrollAfterLoadMore) {
                           WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
                         }
+                        _keepScrollAfterLoadMore = false;
+                        // Агар шумораи паёмҳои расида ба ҳадд баробар бошад,
+                        // эҳтимол паёмҳои пештара ҳастанд. Тугмаи возеҳ ба ҷои
+                        // боркунии худкор ҳангоми варақ задан: он ҷаҳиши
+                        // ғайричашмдошти рӯйхат намедиҳад.
+                        final maybeMore = snapshot.data!.docs.length >= _messageLimit;
+
                         return ListView.builder(
                           controller: _scrollController,
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          itemCount: docs.length,
-                          itemBuilder: (context, index) {
+                          itemCount: docs.length + (maybeMore ? 1 : 0),
+                          itemBuilder: (context, rawIndex) {
+                            if (maybeMore && rawIndex == 0) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Center(
+                                  child: TextButton(
+                                    onPressed: () => setState(() {
+                                      _messageLimit += _messagePage;
+                                      _keepScrollAfterLoadMore = true;
+                                    }),
+                                    child: Text(
+                                      tr('k642'),
+                                      style: TextStyle(
+                                        color: AppColors.neonCyan,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            final index = maybeMore ? rawIndex - 1 : rawIndex;
                             final message = ChatMessage.fromDoc(docs[index]);
                             final previousMessage =
                                 index == 0 ? null : ChatMessage.fromDoc(docs[index - 1]);
@@ -767,7 +875,11 @@ class _UserChatScreenState extends State<UserChatScreen> {
                               message: message,
                               isMe: message.senderId == currentUid,
                               currentUid: currentUid,
+                              bubbleColor: _chatBubbleColor,
                               showReadReceipts: readReceipts,
+                              // Дар чати шахсӣ як ҳамсӯҳбат — ✓✓ вақте
+                              // пайдо мешавад, ки МАҲЗ ӯ гирифта/хонда бошад.
+                              otherParticipants: [widget.otherUserId],
                               animateIn: index == docs.length - 1,
                               grouped: isGroupedWithPrevious(previousMessage, message),
                               selectionActive: _selected.isNotEmpty,
@@ -976,7 +1088,256 @@ class _UserChatScreenState extends State<UserChatScreen> {
     );
   }
 
-  void _openSearch() => setState(() => _searching = true);
+  void _openSearch() => setState(() {
+        _searching = true;
+        // Ҳангоми ҷустуҷӯ равзана васеътар мешавад, вагарна ҷустуҷӯ танҳо
+        // паёмҳои дар экран бударо мебинад.
+        if (_messageLimit < _searchMessageLimit) _messageLimit = _searchMessageLimit;
+      });
+
+  /// Менюи сенуқтагии чат.
+  void _openChatMenu() {
+    ChatMenuSheet.show(
+      context,
+      title: widget.otherUserName,
+      actions: [
+        ChatMenuAction(
+          icon: LucideIcons.user,
+          label: tr('k444'),
+          onTap: _openContactInfo,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.search,
+          label: tr('k048'),
+          onTap: _openSearch,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.image,
+          label: tr('k445'),
+          onTap: _openSharedMedia,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.bell_off,
+          label: tr('k446'),
+          onTap: _toggleMute,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.timer,
+          label: tr('k447'),
+          onTap: _openDisappearing,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.palette,
+          label: tr('k429'),
+          onTap: _openChatTheme,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.ellipsis,
+          label: tr('k448'),
+          hasSubmenu: true,
+          onTap: _openMoreMenu,
+        ),
+      ],
+    );
+  }
+
+  /// Зермену «Боз».
+  void _openMoreMenu() {
+    ChatMenuSheet.show(
+      context,
+      title: tr('k448'),
+      actions: [
+        ChatMenuAction(
+          icon: LucideIcons.flag,
+          label: tr('k415'),
+          onTap: _openReport,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.slash,
+          label: tr('k076'),
+          danger: true,
+          onTap: _blockFromMenu,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.eraser,
+          label: tr('k449'),
+          danger: true,
+          onTap: _confirmClearChat,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.download,
+          label: tr('k450'),
+          onTap: _exportChat,
+        ),
+        ChatMenuAction(
+          icon: LucideIcons.star,
+          label: tr('k451'),
+          onTap: _toggleFavorite,
+        ),
+      ],
+    );
+  }
+
+  void _openDisappearing() =>
+      ContactInfoScreen.showDisappearOptions(
+        context,
+        widget.conversationId,
+        _disappearIn,
+      );
+
+  void _openSharedMedia() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SharedMediaScreen(
+          parentPath: _conversationRef.path,
+          title: widget.otherUserName,
+        ),
+      ),
+    );
+  }
+
+  void _openChatTheme() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatThemeScreen(
+          chatId: widget.conversationId,
+          title: widget.otherUserName,
+        ),
+      ),
+    );
+  }
+
+  void _openReport() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => ReportSheet(
+        target: ReportTarget.user,
+        targetId: widget.otherUserId,
+        contextPath: _conversationRef.path,
+      ),
+    );
+  }
+
+  Future<void> _toggleMute() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final snapshot = await _conversationRef.get();
+    final muted =
+        List<String>.from(snapshot.data()?['mutedBy'] as List? ?? const []);
+    final willMute = !muted.contains(uid);
+    await ConversationActions.setMuted(widget.conversationId, uid, willMute);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(willMute ? tr('k452') : tr('k453'))),
+    );
+  }
+
+  Future<void> _toggleFavorite() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    // «Дӯстдошта» дар ҳуҷҷати сӯҳбат (`favoriteBy`) нигоҳ дошта мешавад —
+    // ҳамон ҷое ки pin/archive/mute мемонанд. Ҳолати ҳозира аз ҳуҷҷат хонда
+    // мешавад, то тугма воқеан иваз кунад, на ҳамеша илова.
+    final snap = await _conversationRef.get();
+    final current = List<String>.from(snap.data()?['favoriteBy'] as List? ?? const []);
+    final added = !current.contains(uid);
+    await ConversationActions.setFavorite(widget.conversationId, uid, added);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(added ? tr('k454') : tr('k455'))),
+    );
+  }
+
+  Future<void> _blockFromMenu() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'blockedUsers': FieldValue.arrayUnion([widget.otherUserId]),
+    }, SetOptions(merge: true));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(tr('k456'))),
+    );
+  }
+
+  /// Тоза кардани чат бозгашт надорад, бинобар ин тасдиқ пурсида мешавад.
+  Future<void> _confirmClearChat() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(tr('k449'),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 17)),
+        content: Text(
+          tr('k457'),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(tr('k020'),
+                style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(tr('k449'),
+                style: const TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    // Паёмҳо танҳо БАРОИ МАН пинҳон мешаванд: ҳамсӯҳбат таърихи худро гум
+    // намекунад.
+    final docs = await _messagesRef.get();
+    for (var i = 0; i < docs.docs.length; i += 400) {
+      final batch = FirebaseFirestore.instance.batch();
+      for (final doc in docs.docs.skip(i).take(400)) {
+        batch.update(doc.reference, {
+          'deletedFor': FieldValue.arrayUnion([uid]),
+        });
+      }
+      await batch.commit().catchError((_) {});
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(tr('k458'))),
+    );
+  }
+
+  Future<void> _exportChat() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(tr('k459'))),
+    );
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+      final file = await ChatExportService.export(
+        messagesRef: _messagesRef,
+        chatTitle: widget.otherUserName,
+        nameByUid: {
+          uid: FirebaseAuth.instance.currentUser?.displayName ?? tr('k015'),
+          widget.otherUserId: widget.otherUserName,
+        },
+      );
+      if (!mounted) return;
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], text: widget.otherUserName),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('k460'))),
+      );
+    }
+  }
 
   void _closeSearch() {
     _searchController.clear();
@@ -1026,34 +1387,6 @@ class _UserChatScreenState extends State<UserChatScreen> {
     );
   }
 
-  /// Хомӯш/фаъол кардани огоҳинома бевосита аз менюи сарлавҳа — ҳамон
-  /// амали воқеии `ConversationActions.setMuted`, ки дар ContactInfoScreen
-  /// ҳам истифода мешавад.
-  Future<void> _toggleMuteFromHeader() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-    final snap = await _conversationRef.get();
-    final mutedBy = List<String>.from(snap.data()?['mutedBy'] as List? ?? []);
-    final muted = mutedBy.contains(uid);
-    await ConversationActions.setMuted(widget.conversationId, uid, !muted);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(muted ? tr('k268') : tr('k267'))));
-    }
-  }
-
-  PopupMenuItem<void> _menuItem(IconData icon, String label, VoidCallback onTap) {
-    return PopupMenuItem<void>(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: AppColors.textPrimary),
-          const SizedBox(width: 14),
-          Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(6, 10, 6, 10),
@@ -1079,10 +1412,26 @@ class _UserChatScreenState extends State<UserChatScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            widget.otherUserName,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  widget.otherUserName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                                ),
+                              ),
+                              // Нишонаи интихобкардаи ин чат — то корбар
+                              // фавран бинад, ки чат мавзӯи худро дорад.
+                              if (_chatIcon != null) ...[
+                                const SizedBox(width: 6),
+                                Icon(
+                                  _chatIcon,
+                                  size: 14,
+                                  color: _chatBubbleColor ?? AppColors.neonEmerald,
+                                ),
+                              ],
+                            ],
                           ),
                           // «дар шабака» / «2 соат пеш» — бо эҳтироми танзимоти
                           // махфияти худи ҳамсӯҳбат.
@@ -1142,32 +1491,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
               onPressed: () => _startCall(CallType.audio),
               icon: Icon(LucideIcons.phone, color: AppColors.textSecondary, size: 18),
             ),
-            PopupMenuButton<void>(
-              icon: Icon(LucideIcons.ellipsis_vertical, color: AppColors.textSecondary, size: 19),
-              color: AppColors.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: AppColors.glassBorder)),
-              itemBuilder: (menuContext) => [
-                _menuItem(LucideIcons.user, tr('k072'), _openContactInfo),
-                _menuItem(LucideIcons.search, tr('k048'), _openSearch),
-                _menuItem(LucideIcons.images, tr('k294'), () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SharedMediaScreen(
-                          parentPath: 'conversations/${widget.conversationId}',
-                          title: tr('k294'),
-                        ),
-                      ),
-                    )),
-                _menuItem(LucideIcons.bell_off, tr('k267'), _toggleMuteFromHeader),
-                _menuItem(LucideIcons.timer, tr('k299'), _openContactInfo),
-                _menuItem(LucideIcons.palette, tr('k420'), () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChatThemeScreen(chatId: widget.conversationId, chatTitle: widget.otherUserName),
-                      ),
-                    )),
-                _menuItem(LucideIcons.ellipsis, tr('k181'), _openContactInfo),
-              ],
+            IconButton(
+              onPressed: _openChatMenu,
+              icon: Icon(LucideIcons.ellipsis_vertical,
+                  color: AppColors.textSecondary, size: 19),
             ),
           ],
         ),
