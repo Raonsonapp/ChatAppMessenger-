@@ -10,8 +10,6 @@ import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/app_scope.dart';
-import '../chat_theme_screen.dart';
-import '../../theme/chat_theme_controller.dart';
 
 class AppearanceSettingsScreen extends StatefulWidget {
   const AppearanceSettingsScreen({super.key});
@@ -21,8 +19,8 @@ class AppearanceSettingsScreen extends StatefulWidget {
 }
 
 class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
-  Future<void> _selectMode(AppThemeMode mode) async {
-    await themeController.setMode(mode);
+  Future<void> _select(bool dark) async {
+    await themeController.setDark(dark);
     if (mounted) setState(() {});
   }
 
@@ -47,7 +45,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     AppScope.watch(context);
-    final mode = themeController.mode;
+    final isDark = themeController.isDark;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -92,80 +90,22 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                       child: Column(
                         children: [
-                          // «Мисли система» — мавзӯъ аз танзими телефон
-                          // гирифта мешавад ва ҳангоми иваз шудани он дарҳол
-                          // тағйир меёбад.
-                          _option(
-                            icon: LucideIcons.smartphone,
-                            label: tr('k540'),
-                            description: themeController.isDark ? tr('k542') : tr('k541'),
-                            selected: mode == AppThemeMode.system,
-                            onTap: () => _selectMode(AppThemeMode.system),
-                          ),
-                          Divider(color: AppColors.glassBorder, height: 1),
                           _option(
                             icon: LucideIcons.moon,
                             label: tr('k149'),
                             description: tr('k150'),
-                            selected: mode == AppThemeMode.dark,
-                            onTap: () => _selectMode(AppThemeMode.dark),
+                            selected: isDark,
+                            onTap: () => _select(true),
                           ),
                           Divider(color: AppColors.glassBorder, height: 1),
                           _option(
                             icon: LucideIcons.sun,
                             label: tr('k151'),
                             description: tr('k152'),
-                            selected: mode == AppThemeMode.light,
-                            onTap: () => _selectMode(AppThemeMode.light),
+                            selected: !isDark,
+                            onTap: () => _select(false),
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    // Намуди умумии чат — ранги ҳубобҳо, гӯшаҳо ва нишона.
-                    // Пештар ба он танҳо аз дохили як чат расидан мумкин буд,
-                    // яъне онро ҳамчун танзими умумӣ касе намедид.
-                    GlassContainer(
-                      borderRadius: 18,
-                      padding: EdgeInsets.zero,
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(18),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ChatThemeScreen(
-                                chatId: ChatThemeController.defaultChatId,
-                                title: tr('k555'),
-                              ),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-                            child: Row(
-                              children: [
-                                Icon(LucideIcons.palette, color: AppColors.neonCyan, size: 19),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Text(
-                                    tr('k555'),
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14.5,
-                                    ),
-                                  ),
-                                ),
-                                Icon(
-                                  LucideIcons.chevron_right,
-                                  color: AppColors.textSecondary.withValues(alpha: 0.6),
-                                  size: 17,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       ),
                     ),
                     const SizedBox(height: 22),

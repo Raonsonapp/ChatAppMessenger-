@@ -1,12 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
+import '../../widgets/user_avatar.dart';
+import '../edit_profile_screen.dart';
 import 'privacy_settings_screen.dart';
 import 'notifications_settings_screen.dart';
 import 'appearance_settings_screen.dart';
@@ -15,23 +17,40 @@ import 'storage_settings_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
 import 'delete_account_screen.dart';
-import 'account_settings_screen.dart';
-import 'plus_screen.dart';
-import '../business/business_center_screen.dart';
-import 'linked_devices_screen.dart';
-import '../edit_profile_screen.dart';
-import '../../widgets/user_avatar.dart';
+import 'account_screen.dart';
+import 'lists_screen.dart';
+import 'chats_settings_screen.dart';
+import 'accessibility_settings_screen.dart';
+import '../linked_devices_screen.dart';
+import '../coming_soon_screen.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/app_scope.dart';
-import '../../widgets/plus_badge.dart';
-import '../../services/plus_service.dart';
 
+/// Танзимот — экрани воҳиди пурра, мисли WhatsApp: сарлавҳаи профил дар боло
+/// (расм/ном/телефони воқеӣ), сонаш ҳамаи бахшҳои воқеии барнома. Ҳар банд
+/// ба экрани ВОҚЕИИ худаш мебарад — ягон банди "холӣ" нест.
+///
+/// "Назорати волидон" ҳоло backend надорад (пайвасти ҷудогонаи ҳисоби
+/// волидайн/кӯдак), бинобар ин экрани ҳалоли "омода нест"-ро мекушояд —
+/// мувофиқи қоидаи "ҳеҷ чизи қалбакӣ".
 class SettingsHomeScreen extends StatelessWidget {
   const SettingsHomeScreen({super.key});
+
+  Future<void> _inviteFriend(BuildContext context) async {
+    final phone = FirebaseAuth.instance.currentUser?.phoneNumber ?? '';
+    final text = trf('k459', [phone]);
+    await Clipboard.setData(ClipboardData(text: text));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k353'))));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     AppScope.watch(context);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final phone = FirebaseAuth.instance.currentUser?.phoneNumber ?? '—';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: NeonBackdrop(
@@ -58,44 +77,70 @@ class SettingsHomeScreen extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   children: [
-                    _profileHub(context),
+                    // Сарлавҳаи профил — расм/ном/телефони воқеӣ, зер карданаш
+                    // ба таҳрири профил мебарад.
+                    if (uid != null)
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(18),
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen())),
+                          child: GlassContainer(
+                            borderRadius: 18,
+                            padding: const EdgeInsets.all(14),
+                            child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                              stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+                              builder: (context, snapshot) {
+                                final data = snapshot.data?.data();
+                                final name = data?['name'] as String?;
+                                final shown = (name == null || name.isEmpty) ? tr('k002') : name;
+                                return Row(
+                                  children: [
+                                    UserAvatar(name: shown, photoUrl: data?['photoUrl'] as String?, size: 52),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(shown, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+                                          const SizedBox(height: 2),
+                                          Text(phone, style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 17),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 14),
                     _sectionCard(context, [
                       _row(
                         context,
-                        icon: LucideIcons.sparkles,
-                        label: tr('k587'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const PlusScreen()),
-                        ),
+                        icon: LucideIcons.user,
+                        label: tr('k443'),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountScreen())),
                       ),
                       _row(
                         context,
-                        icon: LucideIcons.circle_user,
-                        label: tr('k506'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const AccountSettingsScreen()),
-                        ),
+                        icon: LucideIcons.shield,
+                        label: tr('k174'),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacySettingsScreen())),
                       ),
                       _row(
                         context,
-                        icon: LucideIcons.store,
-                        label: tr('k619'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const BusinessCenterScreen()),
-                        ),
+                        icon: Icons.list_alt_rounded,
+                        label: tr('k444'),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ListsScreen())),
                       ),
                       _row(
                         context,
-                        icon: LucideIcons.monitor_smartphone,
-                        label: tr('k494'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const LinkedDevicesScreen()),
-                        ),
+                        icon: LucideIcons.smartphone,
+                        label: tr('k411'),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LinkedDevicesScreen())),
                         showDivider: false,
                       ),
                     ]),
@@ -103,51 +148,57 @@ class SettingsHomeScreen extends StatelessWidget {
                     _sectionCard(context, [
                       _row(
                         context,
-                        icon: LucideIcons.shield,
-                        label: tr('k174'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const PrivacySettingsScreen()),
-                        ),
+                        icon: LucideIcons.message_circle,
+                        label: tr('k044'),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChatsSettingsScreen())),
+                      ),
+                      _row(
+                        context,
+                        icon: LucideIcons.eye,
+                        label: tr('k147'),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AppearanceSettingsScreen())),
                       ),
                       _row(
                         context,
                         icon: LucideIcons.bell,
                         label: tr('k146'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const NotificationsSettingsScreen()),
-                        ),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsSettingsScreen())),
+                      ),
+                      _row(
+                        context,
+                        icon: LucideIcons.database,
+                        label: tr('k182'),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StorageSettingsScreen())),
+                        showDivider: false,
                       ),
                     ]),
                     const SizedBox(height: 14),
                     _sectionCard(context, [
                       _row(
                         context,
-                        icon: LucideIcons.eye,
-                        label: tr('k147'),
+                        icon: LucideIcons.users,
+                        label: tr('k445'),
                         onTap: () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const AppearanceSettingsScreen()),
+                          MaterialPageRoute(builder: (_) => ComingSoonScreen(title: tr('k445'), icon: LucideIcons.users)),
                         ),
                       ),
                       _row(
                         context,
-                        icon: LucideIcons.database,
-                        label: tr('k182'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const StorageSettingsScreen()),
-                        ),
+                        icon: Icons.accessibility_new_rounded,
+                        label: tr('k446'),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccessibilitySettingsScreen())),
+                        showDivider: false,
                       ),
+                    ]),
+                    const SizedBox(height: 14),
+                    _sectionCard(context, [
                       _row(
                         context,
                         icon: LucideIcons.globe,
                         label: tr('k183'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const LanguageSettingsScreen()),
-                        ),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageSettingsScreen())),
+                        showDivider: false,
                       ),
                     ]),
                     const SizedBox(height: 14),
@@ -156,25 +207,19 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.circle_question_mark,
                         label: tr('k169'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const HelpScreen()),
-                        ),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpScreen())),
+                      ),
+                      _row(
+                        context,
+                        icon: Icons.ios_share_rounded,
+                        label: tr('k447'),
+                        onTap: () => _inviteFriend(context),
                       ),
                       _row(
                         context,
                         icon: LucideIcons.info,
                         label: tr('k139'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const AboutScreen()),
-                        ),
-                      ),
-                      _row(
-                        context,
-                        icon: LucideIcons.user_plus,
-                        label: tr('k510'),
-                        onTap: () => _inviteFriend(context),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen())),
                         showDivider: false,
                       ),
                     ]),
@@ -187,10 +232,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         icon: LucideIcons.trash,
                         label: tr('k385'),
                         danger: true,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const DeleteAccountScreen()),
-                        ),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DeleteAccountScreen())),
                         showDivider: false,
                       ),
                     ]),
@@ -200,106 +242,6 @@ class SettingsHomeScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  /// Корти профил дар болои танзимот — мисли WhatsApp ва Telegram.
-  ///
-  /// Ном, `@username` ва акс воқеӣ аз `users/{uid}` меоянд; пахш ба экрани
-  /// таҳрири профил мебарад.
-  Widget _profileHub(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    final phone = FirebaseAuth.instance.currentUser?.phoneNumber ?? '';
-
-    return GlassContainer(
-      borderRadius: 18,
-      padding: EdgeInsets.zero,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-              stream: uid == null
-                  ? null
-                  : FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
-              builder: (context, snapshot) {
-                final data = snapshot.data?.data();
-                final rawName = (data?['name'] as String?)?.trim() ?? '';
-                final name = rawName.isEmpty ? tr('k002') : rawName;
-                final username = (data?['username'] as String?)?.trim() ?? '';
-                final about = (data?['about'] as String?)?.trim() ?? '';
-                // Сатри дуюм: `@username`, вагарна «Дар бораи», вагарна рақам.
-                final second = username.isNotEmpty
-                    ? '@$username'
-                    : (about.isNotEmpty ? about : phone);
-
-                return Row(
-                  children: [
-                    UserAvatar(name: name, photoUrl: data?['photoUrl'] as String?, size: 56),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 16.5,
-                                  ),
-                                ),
-                              ),
-                              // Нишон аз ҳамон ҳуҷҷат меояд, ки сервер
-                              // менависад — барнома онро худаш намесозад.
-                              PlusBadge(
-                                status: PlusStatus.fromUserDoc(data),
-                                compact: true,
-                              ),
-                            ],
-                          ),
-                          if (second.isNotEmpty) ...[
-                            const SizedBox(height: 3),
-                            Text(
-                              second,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 18),
-                  ],
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Даъвати дӯст — матни даъват ба варақаи мубодилаи худи система дода мешавад.
-  Future<void> _inviteFriend(BuildContext context) async {
-    final box = context.findRenderObject() as RenderBox?;
-    await SharePlus.instance.share(
-      ShareParams(
-        text: tr('k518'),
-        sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
       ),
     );
   }
