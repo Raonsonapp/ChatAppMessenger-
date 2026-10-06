@@ -23,6 +23,7 @@ class UserConversationTile extends StatelessWidget {
     final pinned = conversation.isPinned(currentUid);
     final archived = conversation.isArchived(currentUid);
     final muted = conversation.isMuted(currentUid);
+    final favorite = conversation.isFavorite(currentUid);
 
     showModalBottomSheet(
       context: context,
@@ -57,19 +58,18 @@ class UserConversationTile extends StatelessWidget {
                 label: muted ? tr('k268') : tr('k267'),
                 onTap: () => ConversationActions.setMuted(conversation.id, currentUid, !muted),
               ),
+              _actionTile(
+                sheetContext,
+                icon: favorite ? LucideIcons.star_off : LucideIcons.star,
+                label: favorite ? tr('k436') : tr('k435'),
+                onTap: () => ConversationActions.setFavorite(conversation.id, currentUid, !favorite),
+              ),
               if (conversation.unreadFor(currentUid) > 0)
                 _actionTile(
                   sheetContext,
                   icon: LucideIcons.check_check,
                   label: tr('k271'),
                   onTap: () => ConversationActions.markRead(conversation.id, currentUid),
-                )
-              else
-                _actionTile(
-                  sheetContext,
-                  icon: LucideIcons.mail,
-                  label: tr('k416'),
-                  onTap: () => ConversationActions.markUnread(conversation.id, currentUid),
                 ),
               _actionTile(
                 sheetContext,
