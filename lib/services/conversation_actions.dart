@@ -27,6 +27,14 @@ class ConversationActions {
     }, SetOptions(merge: true));
   }
 
+  /// Чатро ба "Интихобшуда" (Favorites) илова/хориҷ мекунад — мисли
+  /// мустаҳкам кардан, вале рӯйхати алоҳида дорад.
+  static Future<void> setFavorite(String conversationId, String uid, bool favorite) {
+    return _ref(conversationId).set({
+      'favoriteBy': favorite ? FieldValue.arrayUnion([uid]) : FieldValue.arrayRemove([uid]),
+    }, SetOptions(merge: true));
+  }
+
   /// Чатро танҳо барои ҳамин корбар нест мекунад: он аз рӯйхат мебарояд ва
   /// таърихи паёмҳо барои ӯ пинҳон мешавад. Тарафи муқобил чати худро пурра
   /// мебинад — мисли WhatsApp. Паёми нав чатро дубора бармегардонад.
@@ -58,46 +66,30 @@ class ConversationActions {
     }, SetOptions(merge: true));
   }
 
-  /// Ҳама чатҳо ва гурӯҳҳои корбарро хонда қайд мекунад.
-  ///
-  /// Танҳо онҳое навишта мешаванд ки воқеан ҳисоби нохонда доранд — то як
-  /// пахши тугма садҳо навиштани бефоида ба Firestore накунад. Натиҷа шумораи
-  /// чатҳои тағйирёфта аст.
+  /// Ҳамаи чатҳои шахсии дорои паёми нохонда барои ин корбарро якбора
+  /// хондашуда қайд мекунад (тугмаи "Ҳама хонда шуд" дар менюи 3-нуқта).
+  /// Танҳо сӯҳбатҳои 1ба1-ро фаро мегирад — гурӯҳҳо ҳоло ин амалро надоранд.
   static Future<int> markAllRead(String uid) async {
-    final db = FirebaseFirestore.instance;
-    final conversations = await db
+    final snapshot = await FirebaseFirestore.instance
         .collection('conversations')
         .where('participants', arrayContains: uid)
         .get();
-    final groups = await db.collection('groups').where('members', arrayContains: uid).get();
-
-    final targets = <DocumentReference<Map<String, dynamic>>>[];
-    for (final doc in [...conversations.docs, ...groups.docs]) {
-      final unread = doc.data()['unread'];
-      final mine = unread is Map ? unread[uid] : null;
-      if (mine is num && mine > 0) targets.add(doc.reference);
-    }
-    if (targets.isEmpty) return 0;
-
-    // Ҳудуди як batch дар Firestore 500 амал аст.
+    final toUpdate = snapshot.docs.where((doc) {
+      final unread = (doc.data()['unread'] as Map<String, dynamic>?) ?? {};
+      return ((unread[uid] as num?)?.toInt() ?? 0) > 0;
+    }).toList();
+    if (toUpdate.isEmpty) return 0;
+    final db = FirebaseFirestore.instance;
     const chunk = 400;
-    for (var start = 0; start < targets.length; start += chunk) {
+    for (var i = 0; i < toUpdate.length; i += chunk) {
       final batch = db.batch();
-      for (final ref in targets.skip(start).take(chunk)) {
-        batch.set(ref, {'unread': {uid: 0}}, SetOptions(merge: true));
+      for (final doc in toUpdate.skip(i).take(chunk)) {
+        batch.set(doc.reference, {
+          'unread': {uid: 0},
+        }, SetOptions(merge: true));
       }
       await batch.commit();
     }
-    return targets.length;
-  }
-
-  /// Чатро ҳамчун нохонда қайд мекунад — то корбар баъдтар ба он баргардад.
-  ///
-  /// Як нишони нохонда гузошта мешавад, на ҳисоби воқеӣ: ҳадаф хотиррасон
-  /// кардан аст, на ҳисоб кардани паёмҳо.
-  static Future<void> markUnread(String conversationId, String uid) {
-    return _ref(conversationId).set({
-      'unread': {uid: 1},
-    }, SetOptions(merge: true));
+    return toUpdate.length;
   }
 }
