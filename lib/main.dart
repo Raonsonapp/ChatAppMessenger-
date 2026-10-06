@@ -8,13 +8,12 @@ import 'theme/app_theme.dart';
 import 'theme/app_scope.dart';
 import 'theme/theme_controller.dart';
 import 'theme/wallpaper_controller.dart';
-import 'theme/chat_theme_controller.dart';
 import 'theme/text_scale_controller.dart';
+import 'theme/accessibility_controller.dart';
 import 'services/draft_store.dart';
 import 'l10n/locale_controller.dart';
 import 'screens/auth_gate.dart';
 import 'services/notification_service.dart';
-import 'services/media_settings_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,9 +35,11 @@ void main() async {
   await _safely(localeController.load);
   await _safely(wallpaperController.load);
   await _safely(textScaleController.load);
+  await _safely(accessibilityController.load);
   await _safely(draftStore.load);
-  await _safely(chatThemeController.load);
-  await _safely(mediaSettings.load);
+  // Якҷошавии мавзӯи торик/равшан бо контрасти баланд — пеш аз аввалин
+  // кашидан, вагарна якеи ин ду танзимот то боздиди экран дида намешавад.
+  AppColors.applyFlags(isDark: themeController.isDark, highContrast: accessibilityController.highContrast);
 
   // Огоҳиномаҳо дар баъзе дастгоҳҳо (масалан бе Google Play) истисно
   // мепартоянд. Пештар ин истисно то `runApp` мерасид ва барнома умуман
@@ -76,9 +77,8 @@ class _ChatAppState extends State<ChatApp> {
     localeController,
     wallpaperController,
     textScaleController,
+    accessibilityController,
     draftStore,
-    chatThemeController,
-    mediaSettings,
   ]);
 
   @override
@@ -93,7 +93,14 @@ class _ChatAppState extends State<ChatApp> {
     super.dispose();
   }
 
-  void _onSettingsChanged() => setState(() => _version++);
+  void _onSettingsChanged() {
+    // Ҳар бор, вақте ки мавзӯъ Ё контрасти баланд тағйир меёбад, бояд якҷо
+    // дубора ҳисоб карда шавад — вагарна фаъол кардани контрасти баланд дар
+    // мавзӯи торик, пас аз иваз кардани мавзӯъ ба равшан (ё баракс), гум
+    // мешавад.
+    AppColors.applyFlags(isDark: themeController.isDark, highContrast: accessibilityController.highContrast);
+    setState(() => _version++);
+  }
 
   @override
   Widget build(BuildContext context) {
