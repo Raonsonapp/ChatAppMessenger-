@@ -30,6 +30,9 @@ class AppConversation {
   final List<String> archivedBy;
   final List<String> mutedBy;
 
+  /// Корбароне, ки ин чатро ба "Интихобшуда" (Favorites) илова кардаанд.
+  final List<String> favoriteBy;
+
   /// Корбароне, ки чатро танҳо аз рӯйхати худ нест кардаанд.
   final List<String> deletedBy;
 
@@ -46,6 +49,7 @@ class AppConversation {
     this.pinnedBy = const [],
     this.archivedBy = const [],
     this.mutedBy = const [],
+    this.favoriteBy = const [],
     this.deletedBy = const [],
   });
 
@@ -66,6 +70,7 @@ class AppConversation {
       pinnedBy: List<String>.from(data['pinnedBy'] as List? ?? []),
       archivedBy: List<String>.from(data['archivedBy'] as List? ?? []),
       mutedBy: List<String>.from(data['mutedBy'] as List? ?? []),
+      favoriteBy: List<String>.from(data['favoriteBy'] as List? ?? []),
       deletedBy: List<String>.from(data['deletedBy'] as List? ?? []),
     );
   }
@@ -81,6 +86,7 @@ class AppConversation {
   bool isPinned(String currentUid) => pinnedBy.contains(currentUid);
   bool isArchived(String currentUid) => archivedBy.contains(currentUid);
   bool isMuted(String currentUid) => mutedBy.contains(currentUid);
+  bool isFavorite(String currentUid) => favoriteBy.contains(currentUid);
   bool isDeleted(String currentUid) => deletedBy.contains(currentUid);
 
   String otherUid(String currentUid) {
