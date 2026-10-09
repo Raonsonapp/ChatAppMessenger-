@@ -1,0 +1,15 @@
+name: Keep OTP bot awake
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Пинг кардани сервери OTP-бот
+        run: |
+          curl -fsS --max-time 20 "https://chatappmessenger.onrender.com/" -o response.json -w "HTTP %{http_code}\n"
+          cat response.json
