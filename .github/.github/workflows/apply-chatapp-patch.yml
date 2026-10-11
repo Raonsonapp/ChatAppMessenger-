@@ -1,0 +1,56 @@
+name: Apply ChatApp Settings and Icon Patch
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  apply-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Validate current Android launcher setup
+        run: |
+          set -euo pipefail
+          test -f android/app/src/main/AndroidManifest.xml
+          test -f android/app/src/main/kotlin/com/example/chatapp/MainActivity.kt
+          test "$(grep -c '<activity-alias' android/app/src/main/AndroidManifest.xml)" -eq 10
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            for number in $(seq -w 1 10); do
+              test -f "android/app/src/main/res/mipmap-${density}/ic_launcher_${number}.png"
+            done
+          done
+
+      - name: Apply patch files
+        run: |
+          set -euo pipefail
+          test -f ChatApp_Settings_And_Dynamic_Icons_Patch.zip
+          unzip -o ChatApp_Settings_And_Dynamic_Icons_Patch.zip -d .
+          python scripts/apply_chatapp_patch.py
+          rm -f scripts/apply_chatapp_patch.py
+          rmdir scripts 2>/dev/null || true
+          rm ChatApp_Settings_And_Dynamic_Icons_Patch.zip
+          git add PATCH_README_TJ.md INSTALL_DYNAMIC_ICONS_TJ.md pubspec.yaml
+          git add assets/app_icons lib/l10n/strings_tj.dart lib/l10n/strings_ru.dart lib/l10n/strings_en.dart
+          git add lib/screens/settings/account_settings_screen.dart lib/screens/settings/app_icon_intro_screen.dart lib/screens/settings/app_icon_picker_screen.dart lib/screens/settings/plus_screen.dart lib/screens/settings/settings_home_screen.dart lib/services/launcher_icon_service.dart
+          if git diff --cached --quiet; then
+            echo 'Patch did not produce changes; stopping.'
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Add ChatApp Plus icon picker and account settings'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Trigger Android build and tests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run build.yml --ref "${GITHUB_REF_NAME}"
