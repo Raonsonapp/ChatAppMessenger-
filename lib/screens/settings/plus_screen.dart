@@ -233,7 +233,7 @@ class _PlusScreenState extends State<PlusScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Column(
         children: [
-          _feature(LucideIcons.smile, tr('k670'), () => _showUpcomingFeature(tr('k670'))),
+          _feature(LucideIcons.message_circle, tr('k670'), () => _showUpcomingFeature(tr('k670'))),
           _feature(LucideIcons.smartphone, tr('k643'), () {
             if (!_status.active) {
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k645'))));
