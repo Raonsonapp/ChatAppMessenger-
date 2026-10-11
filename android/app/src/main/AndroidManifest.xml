@@ -45,11 +45,128 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+        </activity>
+        <activity-alias
+            android:name=".MainActivityIcon01"
+            android:targetActivity=".MainActivity"
+            android:label="ChatApp"
+            android:icon="@mipmap/ic_launcher_01"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainActivityIcon02"
+            android:targetActivity=".MainActivity"
+            android:label="ChatApp"
+            android:icon="@mipmap/ic_launcher_02"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainActivityIcon03"
+            android:targetActivity=".MainActivity"
+            android:label="ChatApp"
+            android:icon="@mipmap/ic_launcher_03"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainActivityIcon04"
+            android:targetActivity=".MainActivity"
+            android:label="ChatApp"
+            android:icon="@mipmap/ic_launcher_04"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainActivityIcon05"
+            android:targetActivity=".MainActivity"
+            android:label="ChatApp"
+            android:icon="@mipmap/ic_launcher_05"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainActivityIcon06"
+            android:targetActivity=".MainActivity"
+            android:label="ChatApp"
+            android:icon="@mipmap/ic_launcher_06"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainActivityIcon07"
+            android:targetActivity=".MainActivity"
+            android:label="ChatApp"
+            android:icon="@mipmap/ic_launcher_07"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainActivityIcon08"
+            android:targetActivity=".MainActivity"
+            android:label="ChatApp"
+            android:icon="@mipmap/ic_launcher_08"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainActivityIcon09"
+            android:targetActivity=".MainActivity"
+            android:label="ChatApp"
+            android:icon="@mipmap/ic_launcher_09"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainActivityIcon10"
+            android:targetActivity=".MainActivity"
+            android:label="ChatApp"
+            android:icon="@mipmap/ic_launcher_10"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+
         <!-- Канали пешфарзи огоҳиномаҳои FCM.
              Бе ин дар Android 8+ огоҳиномае ки ҳангоми пӯшида будани
              барнома меояд, ХОМӮШОНА партофта мешавад: система канали
