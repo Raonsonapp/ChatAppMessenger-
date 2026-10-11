@@ -10,6 +10,8 @@ import '../../widgets/neon_backdrop.dart';
 import '../../widgets/plus_badge.dart';
 import 'admin_panel_screen.dart';
 import 'appearance_settings_screen.dart';
+import 'app_icon_intro_screen.dart';
+import 'lists_screen.dart';
 
 /// ChatApp Plus: ҳолат, моҳи муфт ва — барои соҳиб — гузаргоҳ ба панели соҳиб.
 class PlusScreen extends StatefulWidget {
@@ -231,13 +233,43 @@ class _PlusScreenState extends State<PlusScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Column(
         children: [
+          _feature(LucideIcons.smile, tr('k670'), () => _showUpcomingFeature(tr('k670'))),
+          _feature(LucideIcons.smartphone, tr('k643'), () {
+            if (!_status.active) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k645'))));
+              return;
+            }
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AppIconIntroScreen()),
+            );
+          }),
           _feature(LucideIcons.palette, tr('k616'), () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const AppearanceSettingsScreen()),
             );
           }),
+          _feature(LucideIcons.bell_ring, tr('k671'), () => _showUpcomingFeature(tr('k671'))),
+          _feature(LucideIcons.list, tr('k672'), () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ListsScreen()));
+          }),
+          _feature(LucideIcons.pin, tr('k673'), () => _showUpcomingFeature(tr('k673'))),
           _feature(LucideIcons.badge_check, tr('k617'), null, last: true),
+        ],
+      ),
+    );
+  }
+
+  void _showUpcomingFeature(String label) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(label, style: TextStyle(color: AppColors.textPrimary)),
+        content: Text(tr('k674'), style: TextStyle(color: AppColors.textSecondary, height: 1.4)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('k277'))),
         ],
       ),
     );

@@ -17,7 +17,7 @@ import 'storage_settings_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
 import 'delete_account_screen.dart';
-import 'account_screen.dart';
+import 'account_settings_screen.dart';
 import 'lists_screen.dart';
 import 'chats_settings_screen.dart';
 import 'accessibility_settings_screen.dart';
@@ -27,14 +27,11 @@ import '../../l10n/l10n.dart';
 import '../../theme/app_scope.dart';
 import 'plus_screen.dart';
 import '../business/business_center_screen.dart';
+import '../../widgets/plus_badge.dart';
+import '../../services/plus_service.dart';
 
-/// Танзимот — экрани воҳиди пурра, мисли WhatsApp: сарлавҳаи профил дар боло
-/// (расм/ном/телефони воқеӣ), сонаш ҳамаи бахшҳои воқеии барнома. Ҳар банд
-/// ба экрани ВОҚЕИИ худаш мебарад — ягон банди "холӣ" нест.
-///
-/// "Назорати волидон" ҳоло backend надорад (пайвасти ҷудогонаи ҳисоби
-/// волидайн/кӯдак), бинобар ин экрани ҳалоли "омода нест"-ро мекушояд —
-/// мувофиқи қоидаи "ҳеҷ чизи қалбакӣ".
+/// Танзимот — экрани воҳиди пурра. Профили калон, ChatApp Plus ва бахшҳои
+/// воқеии танзимоти барнома дар як рӯйхат ҷойгиранд.
 class SettingsHomeScreen extends StatelessWidget {
   const SettingsHomeScreen({super.key});
 
@@ -79,38 +76,82 @@ class SettingsHomeScreen extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   children: [
-                    // Сарлавҳаи профил — расм/ном/телефони воқеӣ, зер карданаш
-                    // ба таҳрири профил мебарад.
+                    // Профили калон: маълумот аз Firestore меояд ва таҳриршаванда аст.
                     if (uid != null)
                       Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(22),
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen())),
                           child: GlassContainer(
-                            borderRadius: 18,
-                            padding: const EdgeInsets.all(14),
+                            borderRadius: 22,
+                            padding: EdgeInsets.zero,
                             child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                               stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
                               builder: (context, snapshot) {
                                 final data = snapshot.data?.data();
-                                final name = data?['name'] as String?;
-                                final shown = (name == null || name.isEmpty) ? tr('k002') : name;
-                                return Row(
+                                final rawName = (data?['name'] as String?)?.trim() ?? '';
+                                final name = rawName.isEmpty ? tr('k002') : rawName;
+                                final username = (data?['username'] as String?)?.trim() ?? '';
+                                final about = (data?['about'] as String?)?.trim() ?? '';
+                                final second = username.isNotEmpty ? '@$username' : (about.isNotEmpty ? about : phone);
+                                return Stack(
                                   children: [
-                                    UserAvatar(name: shown, photoUrl: data?['photoUrl'] as String?, size: 52),
-                                    const SizedBox(width: 14),
-                                    Expanded(
+                                    Positioned(
+                                      top: 0,
+                                      left: 0,
+                                      right: 0,
+                                      child: Container(
+                                        height: 100,
+                                        decoration: BoxDecoration(
+                                          gradient: AppColors.neonGradient,
+                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(18, 36, 18, 18),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(shown, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
-                                          const SizedBox(height: 2),
-                                          Text(phone, style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                                          UserAvatar(name: name, photoUrl: data?['photoUrl'] as String?, size: 100),
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  name,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 21),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              PlusBadge(status: PlusStatus.fromUserDoc(data), compact: true),
+                                            ],
+                                          ),
+                                          if (second.isNotEmpty) ...[
+                                            const SizedBox(height: 5),
+                                            Text(second, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                                          ],
+                                          if (phone.isNotEmpty) ...[
+                                            const SizedBox(height: 3),
+                                            Text(phone, style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                                          ],
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(LucideIcons.pencil, size: 15, color: AppColors.neonCyan),
+                                              const SizedBox(width: 7),
+                                              Text(tr('k115'), style: TextStyle(color: AppColors.neonCyan, fontWeight: FontWeight.w700, fontSize: 13)),
+                                            ],
+                                          ),
                                         ],
                                       ),
                                     ),
-                                    Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 17),
                                   ],
                                 );
                               },
@@ -124,30 +165,24 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.sparkles,
                         label: tr('k587'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const PlusScreen()),
-                        ),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PlusScreen())),
+                      ),
+                      _row(
+                        context,
+                        icon: LucideIcons.circle_user,
+                        label: tr('k506'),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountSettingsScreen())),
                       ),
                       _row(
                         context,
                         icon: LucideIcons.store,
                         label: tr('k619'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const BusinessCenterScreen()),
-                        ),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BusinessCenterScreen())),
                         showDivider: false,
                       ),
                     ]),
                     const SizedBox(height: 14),
                     _sectionCard(context, [
-                      _row(
-                        context,
-                        icon: LucideIcons.user,
-                        label: tr('k443'),
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountScreen())),
-                      ),
                       _row(
                         context,
                         icon: LucideIcons.shield,
@@ -202,10 +237,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.users,
                         label: tr('k445'),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => ComingSoonScreen(title: tr('k445'), icon: LucideIcons.users)),
-                        ),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ComingSoonScreen(title: tr('k445'), icon: LucideIcons.users))),
                       ),
                       _row(
                         context,
@@ -248,8 +280,7 @@ class SettingsHomeScreen extends StatelessWidget {
                       ),
                     ]),
                     const SizedBox(height: 14),
-                    // Нест кардани ҳисоб дар охир ва бо ранги сурх — то
-                    // тасодуфан пахш нашавад.
+                    // Нест кардани ҳисоб дар охир ва бо ранги сурх — то тасодуфан пахш нашавад.
                     _sectionCard(context, [
                       _row(
                         context,
@@ -301,9 +332,7 @@ class SettingsHomeScreen extends StatelessWidget {
                 children: [
                   Icon(icon, color: tint, size: 19),
                   const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(label, style: TextStyle(color: labelColor, fontWeight: FontWeight.w600, fontSize: 14.5)),
-                  ),
+                  Expanded(child: Text(label, style: TextStyle(color: labelColor, fontWeight: FontWeight.w600, fontSize: 14.5))),
                   Icon(LucideIcons.chevron_right, color: AppColors.textSecondary.withValues(alpha: 0.6), size: 17),
                 ],
               ),
