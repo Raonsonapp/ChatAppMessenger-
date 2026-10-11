@@ -72,7 +72,7 @@ class AccountSettingsScreen extends StatelessWidget {
                         children: [
                           _row(
                             context,
-                            icon: LucideIcons.fingerprint,
+                            icon: LucideIcons.scan_face,
                             label: tr('k653'),
                             onTap: () => _showInfo(context, tr('k659')),
                           ),
