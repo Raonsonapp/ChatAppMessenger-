@@ -33,6 +33,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _categoryController = TextEditingController();
+  String? _selectedCategory;
+  static const Map<String, List<String>> _categoriesByKind = {
+    'product': ['k685','k686','k688','k689','k690','k691','k692'],
+    'service': ['k686','k692'], 'job': ['k686','k692'], 'ad': ['k687','k692'],
+  };
 
   final List<XFile> _images = [];
   bool _saving = false;
@@ -59,6 +64,24 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       };
 
   String get _priceLabel => widget.kind == ListingKind.job ? tr('k579') : tr('k565');
+
+  List<String> get _categoryKeys => _categoriesByKind[widget.kind.code] ?? const ['k692'];
+
+  Widget _categoryPicker() {
+    final keys = _categoryKeys;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(tr('k576'), style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600)),
+      const SizedBox(height: 6),
+      GlassContainer(borderRadius: 14, padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2), child: DropdownButtonHideUnderline(child: DropdownButton<String>(
+        value: keys.map(tr).contains(_selectedCategory) ? _selectedCategory : null, isExpanded: true, dropdownColor: AppColors.surface,
+        hint: Text(tr('k693'), style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+        items: [for (final key in keys) DropdownMenuItem(value: tr(key), child: Text(tr(key), style: TextStyle(color: AppColors.textPrimary)))],
+        onChanged: (value) => setState(() { _selectedCategory = value; _categoryController.text = value ?? ''; }),
+      ))),
+      const SizedBox(height: 6),
+      TextField(controller: _categoryController, style: TextStyle(color: AppColors.textPrimary, fontSize: 14), decoration: InputDecoration(hintText: tr('k693'), hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 12), isDense: true)),
+    ]);
+  }
 
   Future<void> _addImage() async {
     if (_images.length >= _maxImages) return;
@@ -181,7 +204,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     const SizedBox(height: 14),
                     _field(tr('k566'), _cityController),
                     const SizedBox(height: 14),
-                    _field(tr('k576'), _categoryController),
+                    _categoryPicker(),
                     const SizedBox(height: 14),
                     _field(tr('k564'), _descriptionController, maxLines: 5),
                     if (_error != null) ...[
