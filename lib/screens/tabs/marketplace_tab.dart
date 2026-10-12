@@ -31,6 +31,7 @@ class MarketplaceTabState extends State<MarketplaceTab> {
 
   /// Танҳо эълонҳои худи корбар.
   bool _mineOnly = false;
+  String? _categoryFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +42,7 @@ class MarketplaceTabState extends State<MarketplaceTab> {
       children: [
         _kindBar(),
         if (uid != null) _mineToggle(),
+        if (!_mineOnly) _categoryBar(),
         Expanded(
           child: StreamBuilder<List<Listing>>(
             stream: _mineOnly && uid != null
@@ -64,7 +66,9 @@ class MarketplaceTabState extends State<MarketplaceTab> {
               // Дар ҳолати «Эълонҳои ман» ҳама навъҳо меоянд — филтри навъ
               // ин ҷо татбиқ намешавад, вагарна корбар эълонҳои худашро
               // намебинад ва фикр мекунад ки онҳо гум шудаанд.
-              final items = snapshot.data ?? const <Listing>[];
+              final allItems = snapshot.data ?? const <Listing>[];
+              final selectedCategory = _categoryFilter == null ? null : tr(_categoryFilter!);
+              final items = selectedCategory == null ? allItems : allItems.where((item) => item.category == selectedCategory || item.category == _categoryFilter).toList();
               if (items.isEmpty) {
                 return EmptyState(
                   icon: ListingCard.iconFor(_kind),
@@ -114,6 +118,7 @@ class MarketplaceTabState extends State<MarketplaceTab> {
                   onTap: () => setState(() {
                     _kind = entry.$1;
                     _mineOnly = false;
+                    _categoryFilter = null;
                   }),
                 ),
               ),
@@ -121,6 +126,27 @@ class MarketplaceTabState extends State<MarketplaceTab> {
         ),
       ),
     );
+  }
+
+
+  Widget _categoryBar() {
+    final categories = <(String, IconData)>[
+      ('k693', LucideIcons.layout_grid), ('k685', LucideIcons.smartphone),
+      ('k686', LucideIcons.cpu), ('k687', LucideIcons.house), ('k688', LucideIcons.car),
+      ('k689', LucideIcons.shirt), ('k690', LucideIcons.sofa), ('k691', LucideIcons.hammer),
+      ('k692', LucideIcons.package),
+    ];
+    return SizedBox(height: 38, child: ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 12), scrollDirection: Axis.horizontal,
+      children: [
+        for (final category in categories)
+          Padding(padding: const EdgeInsets.only(right: 7), child: _chip(
+            label: tr(category.$1), icon: category.$2,
+            selected: category.$1 == 'k693' ? _categoryFilter == null : _categoryFilter == category.$1,
+            onTap: () => setState(() => _categoryFilter = category.$1 == 'k693' ? null : category.$1),
+          )),
+      ],
+    ));
   }
 
   Widget _mineToggle() {
