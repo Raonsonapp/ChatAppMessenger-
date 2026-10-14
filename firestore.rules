@@ -371,5 +371,66 @@ service cloud.firestore {
       allow update, delete: if signedIn() && uid() in resource.data.participants;
       allow create: if signedIn() && uid() in request.resource.data.participants;
     }
-  }
-}
+
+    // Фармоишҳои Marketplace.
+    match /orders/{orderId} {
+      function signedIn() {
+        return request.auth != null;
+      }
+
+      function isBuyer() {
+        return signedIn()
+          && resource.data.buyerId == request.auth.uid;
+      }
+
+      function isSeller() {
+        return signedIn()
+          && resource.data.sellerId == request.auth.uid;
+      }
+
+      allow create: if signedIn()
+        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.sellerId is string
+        && request.resource.data.sellerId != request.auth.uid
+        && request.resource.data.listingId is string
+        && request.resource.data.quantity is int
+        && request.resource.data.quantity >= 1
+        && request.resource.data.quantity <= 20
+        && request.resource.data.unitPrice is number
+        && request.resource.data.unitPrice > 0
+        && request.resource.data.subtotal
+             == request.resource.data.unitPrice
+                * request.resource.data.quantity
+        && request.resource.data.total
+             == request.resource.data.subtotal
+        && request.resource.data.currency == 'TJS'
+        && request.resource.data.deliveryMethod
+             in ['delivery', 'pickup']
+        && request.resource.data.status
+             == 'pending_seller_confirmation'
+        && request.resource.data.paymentStatus == 'unpaid'
+        && get(
+          /databases/$(database)/documents/listings/$(request.resource.data.listingId)
+        ).data.ownerId == request.resource.data.sellerId
+        && get(
+          /databases/$(database)/documents/listings/$(request.resource.data.listingId)
+        ).data.price == request.resource.data.unitPrice;
+
+      allow read: if isBuyer() || isSeller();
+
+      // Фурӯшанда танҳо ҳолат ва шартҳои расониданро тағйир медиҳад.
+      allow update: if isSeller()
+        && request.resource.data.diff(resource.data)
+          .affectedKeys()
+          .hasOnly([
+            'status',
+            'deliveryStatus',
+            'deliveryFee',
+            'total',
+            'sellerNote',
+            'updatedAt'
+          ]);
+
+      allow delete: if false;
+    }
+  
