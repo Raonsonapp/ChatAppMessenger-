@@ -216,8 +216,59 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              
+Padding(
+  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+  child: SizedBox(
+    width: double.infinity,
+    child: _isMine
+        ? Text(
+            tr('k586'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          )
+        : Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _busy ? null : _chatWithOwner,
+                  icon: const Icon(Icons.chat_outlined),
+                  label: const Text('Сӯҳбат'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MarketplaceOrderScreen(
+                          listing: _listing,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.shopping_cart_outlined),
+                  label: const Text('Харид'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.neonEmerald,
+                    foregroundColor: AppColors.background,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+  ),
+),
+
                 child: SizedBox(
                   width: double.infinity,
                   child: _isMine
