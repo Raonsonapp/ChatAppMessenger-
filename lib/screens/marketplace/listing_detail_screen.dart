@@ -16,6 +16,7 @@ import '../../widgets/net_image.dart';
 import '../../widgets/user_avatar.dart';
 import '../image_viewer_screen.dart';
 import '../user_chat_screen.dart';
+import 'marketplace_order_screen.dart';
 
 /// Тафсилоти эълон. Тугмаи асосӣ — сӯҳбат бо соҳиб.
 ///
