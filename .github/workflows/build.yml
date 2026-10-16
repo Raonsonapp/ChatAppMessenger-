@@ -126,6 +126,7 @@ jobs:
       # ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
       # ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.
       - name: Configure stable Android release signing
+        if: github.event_name != 'pull_request'
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
