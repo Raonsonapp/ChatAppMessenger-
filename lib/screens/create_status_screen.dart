@@ -4,6 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../theme/app_theme.dart';
 import '../models/app_status.dart';
@@ -30,6 +31,8 @@ class CreateStatusScreen extends StatefulWidget {
 class _CreateStatusScreenState extends State<CreateStatusScreen> {
   final TextEditingController _textController = TextEditingController();
   XFile? _pickedImage;
+  String? _pickedMusicUrl;
+  String? _pickedMusicName;
   bool _isPosting = false;
 
   /// Шакли статуси матнӣ. Ҳангоми интихоби акс истифода намешавад.
@@ -53,6 +56,74 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
     if (file != null) setState(() => _pickedImage = file);
   }
 
+  Future<void> _pickMusic() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+      final file = result?.files.single;
+      if (file == null || file.path == null || !mounted) return;
+      setState(() => _isPosting = true);
+      final url = await MediaService.uploadFile(
+        File(file.path!),
+        file.name,
+        'statuses/$uid/music',
+      );
+      if (!mounted) return;
+      setState(() {
+        _pickedMusicUrl = url;
+        _pickedMusicName = file.name;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(describeUploadError(e))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPosting = false);
+    }
+  }
+
+  Widget _mediaStyleEditor() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _editorLabel('Чорчӯбаи акс'),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (var i = 0; i < 4; i++)
+              _chip(
+                selected: _style.frame == i,
+                onTap: () => setState(() => _style = _style.copyWith(frame: i)),
+                child: Text(
+                  const ['Не', 'Сафед', 'Сабз', 'Гулобӣ'][i],
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _editorLabel('Эффекти акс'),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (var i = 0; i < 4; i++)
+              _chip(
+                selected: _style.effect == i,
+                onTap: () => setState(() => _style = _style.copyWith(effect: i)),
+                child: Text(
+                  const ['Аслӣ', 'Сиёҳу сафед', 'Гарм', 'Кабуд'][i],
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Future<void> _post() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -74,6 +145,8 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
         ownerName: myName,
         text: text.isEmpty ? null : text,
         imageUrl: imageUrl,
+        musicUrl: _pickedMusicUrl,
+        musicName: _pickedMusicName,
         style: _style,
       );
       await FirebaseFirestore.instance.collection('statuses').doc(uid).collection('items').add(status.toMap());
@@ -236,9 +309,29 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                   child: Column(
                     children: [
                       if (_pickedImage != null)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Image.file(File(_pickedImage!.path), height: 300, width: double.infinity, fit: BoxFit.cover),
+                        Container(
+                          padding: EdgeInsets.all(_style.frame == 0 ? 0 : 5),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(22),
+                            border: _style.frame == 0
+                                ? null
+                                : Border.all(color: _style.frameColor!, width: 4),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: ColorFiltered(
+                              colorFilter: _style.imageFilter ?? const ColorFilter.mode(
+                                Colors.transparent,
+                                BlendMode.dst,
+                              ),
+                              child: Image.file(
+                                File(_pickedImage!.path),
+                                height: 300,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
                         )
                       else
                         Container(
@@ -256,11 +349,34 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                             style: _style.textStyleFor(_textController.text, base: 22),
                           ),
                         ),
-                      // Танзими шакл танҳо барои статуси матнӣ маъно дорад.
                       if (_pickedImage == null) ...[
                         const SizedBox(height: 16),
                         _styleEditor(),
+                      ] else ...[
+                        const SizedBox(height: 16),
+                        _mediaStyleEditor(),
                       ],
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _isPosting ? null : _pickMusic,
+                        icon: const Icon(Icons.music_note),
+                        label: Text(
+                          _pickedMusicName == null
+                              ? 'Илова кардани мусиқӣ'
+                              : 'Мусиқӣ: $_pickedMusicName',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (_pickedMusicName != null)
+                        TextButton.icon(
+                          onPressed: () => setState(() {
+                            _pickedMusicUrl = null;
+                            _pickedMusicName = null;
+                          }),
+                          icon: const Icon(Icons.close),
+                          label: const Text('Хориҷ кардани мусиқӣ'),
+                        ),
                       const SizedBox(height: 16),
                       GlassContainer(
                         borderRadius: 14,
