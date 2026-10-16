@@ -30,11 +30,11 @@ class _VoiceTranscriptPanelState extends State<VoiceTranscriptPanel> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(tr('k242')),
+            child: Text(tr('k715')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(tr('k694')),
+            child: Text(tr('k714')),
           ),
         ],
       ),
@@ -112,7 +112,7 @@ class _VoiceTranscriptPanelState extends State<VoiceTranscriptPanel> {
                   Expanded(child: SelectableText(_transcript!, style: TextStyle(color: AppColors.textPrimary, fontSize: 13, height: 1.35))),
                   IconButton(
                     visualDensity: VisualDensity.compact,
-                    tooltip: tr('k432'),
+                    tooltip: tr('k716'),
                     onPressed: () => Clipboard.setData(ClipboardData(text: _transcript!)),
                     icon: Icon(LucideIcons.copy, size: 16, color: AppColors.textSecondary),
                   ),
