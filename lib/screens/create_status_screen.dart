@@ -60,8 +60,8 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     try {
-      final result = await FilePicker.pickFiles(type: FileType.audio);
-      final file = result?.files.single;
+      final files = await FilePicker.pickFiles(type: FileType.audio);
+      final file = files.isEmpty ? null : files.first;
       if (file == null || file.path == null || !mounted) return;
       setState(() => _isPosting = true);
       final url = await MediaService.uploadFile(
