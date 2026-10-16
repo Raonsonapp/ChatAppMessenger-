@@ -140,10 +140,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _savedUsername = desired;
       }
 
-      // Ном дар профил ва рӯйхати ҳамаи чатҳо нав карда мешавад.
+      // Аввал профилро сабт мекунем.
       final db = FirebaseFirestore.instance;
-      final batch = db.batch();
-      batch.set(db.collection('users').doc(uid), {
+      await db.collection('users').doc(uid).set({
         'name': name,
         'nickname': _nicknameController.text.trim(),
         'about': _aboutController.text.trim(),
@@ -151,19 +150,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'website': _cleanUrl(_websiteController.text),
       }, SetOptions(merge: true));
 
+      // Номи намоишӣ дар ҳамаи чатҳо нав мешавад. Ба batch-и Firestore
+      // ҳадди аксар 400 навсозӣ медиҳем, то лимити 500 вайрон нашавад.
       final conversations = await db
           .collection('conversations')
           .where('participants', arrayContains: uid)
           .get();
-
-      // Ҳар сӯҳбат танҳо participantNames-и ҳамин UID-ро иваз мекунад.
-      // Ин номро дар тарафи худи барномаи чатҳо нишон медиҳад.
-      for (final convo in conversations.docs) {
-        batch.set(convo.reference, {
-          'participantNames': {uid: name},
-        }, SetOptions(merge: true));
+      const batchLimit = 400;
+      for (var offset = 0; offset < conversations.docs.length; offset += batchLimit) {
+        final batch = db.batch();
+        for (final convo in conversations.docs.skip(offset).take(batchLimit)) {
+          batch.update(convo.reference, {'participantNames.$uid': name});
+        }
+        await batch.commit();
       }
-      await batch.commit();
       if (!mounted) return;
       setState(() {
         _isSaving = false;
