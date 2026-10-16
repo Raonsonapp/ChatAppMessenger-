@@ -1,4 +1,5 @@
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
+import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
 
 import '../l10n/l10n.dart';
 
@@ -23,23 +24,29 @@ class TranslateService {
       throw const TranslateFailure(TranslateFailureKind.unsupportedLanguage);
     }
 
-    final identifier = OnDeviceLanguageIdentifier(confidenceThreshold: 0.5);
-    TranslateLanguage sourceLanguage;
+    final identifier = LanguageIdentifier(confidenceThreshold: 0.5);
+    TranslateLanguage? sourceLanguage;
     try {
       final detected = await identifier.identifyLanguage(text);
-      sourceLanguage = _language(detected ?? '') ?? TranslateLanguage.english;
+      sourceLanguage = detected == 'und'
+          ? null
+          : TranslateLanguage.values.where((language) => language.bcpCode == detected).firstOrNull;
+      if (sourceLanguage == null) {
+        throw const TranslateFailure(TranslateFailureKind.unsupportedLanguage);
+      }
     } finally {
       await identifier.close();
     }
-    if (sourceLanguage == targetLanguage) return text;
+    final resolvedSource = sourceLanguage;
+    if (resolvedSource == targetLanguage) return text;
 
     final manager = OnDeviceTranslatorModelManager();
     final translator = OnDeviceTranslator(
-      sourceLanguage: sourceLanguage,
+      sourceLanguage: resolvedSource,
       targetLanguage: targetLanguage,
     );
     try {
-      for (final language in [sourceLanguage.bcpCode, targetLanguage.bcpCode]) {
+      for (final language in [resolvedSource.bcpCode, targetLanguage.bcpCode]) {
         if (!await manager.isModelDownloaded(language)) {
           await manager.downloadModel(language);
         }
