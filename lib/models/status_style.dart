@@ -6,24 +6,30 @@ import 'package:flutter/material.dart';
 /// ранги омода. Ин маънои онро дорад, ки палитраро баъдтар иваз карда
 /// метавонем ва статусҳои кӯҳна вайрон намешаванд.
 class StatusStyle {
-  const StatusStyle({this.background = 0, this.font = 0, this.align = 1});
+  const StatusStyle({this.background = 0, this.font = 0, this.align = 1, this.frame = 0, this.effect = 0});
 
   final int background;
   final int font;
 
   /// 0 — чап, 1 — марказ, 2 — рост.
   final int align;
+  final int frame;
+  final int effect;
 
-  StatusStyle copyWith({int? background, int? font, int? align}) => StatusStyle(
+  StatusStyle copyWith({int? background, int? font, int? align, int? frame, int? effect}) => StatusStyle(
         background: background ?? this.background,
         font: font ?? this.font,
         align: align ?? this.align,
+        frame: frame ?? this.frame,
+        effect: effect ?? this.effect,
       );
 
   Map<String, dynamic> toMap() => {
         'styleBackground': background,
         'styleFont': font,
         'styleAlign': align,
+        'styleFrame': frame,
+        'styleEffect': effect,
       };
 
   factory StatusStyle.fromMap(Map<String, dynamic> data) {
@@ -31,6 +37,8 @@ class StatusStyle {
       background: _clamp(data['styleBackground'], backgrounds.length),
       font: _clamp(data['styleFont'], fonts.length),
       align: _clamp(data['styleAlign'], 3, fallback: 1),
+      frame: _clamp(data['styleFrame'], 4),
+      effect: _clamp(data['styleEffect'], 4),
     );
   }
 
@@ -69,6 +77,35 @@ class StatusStyle {
     TextStyle(fontWeight: FontWeight.w700, fontStyle: FontStyle.italic, letterSpacing: 0.2),
     TextStyle(fontWeight: FontWeight.w400, letterSpacing: 1.2),
   ];
+
+  Color? get frameColor => switch (frame) {
+        1 => Colors.white,
+        2 => const Color(0xFF00E5A0),
+        3 => const Color(0xFFF107A3),
+        _ => null,
+      };
+
+  ColorFilter? get imageFilter => switch (effect) {
+        1 => const ColorFilter.matrix(<double>[
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0, 0, 0, 1, 0,
+          ]),
+        2 => const ColorFilter.matrix(<double>[
+            1.08, 0.04, 0.02, 0, 8,
+            0.03, 1.02, 0.01, 0, 4,
+            0.01, 0.02, 0.88, 0, 0,
+            0, 0, 0, 1, 0,
+          ]),
+        3 => const ColorFilter.matrix(<double>[
+            0.85, 0.02, 0.08, 0, 0,
+            0.02, 0.95, 0.08, 0, 0,
+            0.08, 0.12, 1.12, 0, 8,
+            0, 0, 0, 1, 0,
+          ]),
+        _ => null,
+      };
 
   LinearGradient get gradient => LinearGradient(
         colors: backgrounds[background],
