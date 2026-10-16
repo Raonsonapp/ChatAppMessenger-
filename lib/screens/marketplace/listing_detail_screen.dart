@@ -216,91 +216,55 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   ],
                 ),
               ),
-              
-Padding(
-  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-  child: SizedBox(
-    width: double.infinity,
-    child: _isMine
-        ? Text(
-            tr('k586'),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-            ),
-          )
-        : Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _busy ? null : _chatWithOwner,
-                  icon: const Icon(Icons.chat_outlined),
-                  label: const Text('Сӯҳбат'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => MarketplaceOrderScreen(
-                          listing: _listing,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.shopping_cart_outlined),
-                  label: const Text('Харид'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.neonEmerald,
-                    foregroundColor: AppColors.background,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
-              ),
-            ],
-          ),
-  ),
-),
 
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: SizedBox(
                   width: double.infinity,
                   child: _isMine
-                      // Ба худаш нависондан маъно надорад — ба ҷои тугма
-                      // танҳо эзоҳ нишон дода мешавад.
                       ? Text(
                           tr('k586'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
                         )
-                      : ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.neonEmerald,
-                            foregroundColor: AppColors.background,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                          onPressed: _busy ? null : _chatWithOwner,
-                          icon: _busy
-                              ? SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.background,
-                                  ),
-                                )
-                              : const Icon(LucideIcons.message_circle, size: 18),
-                          label: Text(
-                            _chatLabel,
-                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                          ),
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _busy ? null : _chatWithOwner,
+                                icon: const Icon(Icons.chat_outlined),
+                                label: const Text('Сӯҳбат'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => MarketplaceOrderScreen(
+                                        listing: _listing,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.shopping_cart_outlined),
+                                label: const Text('Харид'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.neonEmerald,
+                                  foregroundColor: AppColors.background,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                 ),
               ),
