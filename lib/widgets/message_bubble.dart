@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../services/media_service.dart';
 import '../services/star_service.dart';
 import 'audio_message_player.dart';
+import 'voice_transcript_panel.dart';
 import 'video_message_player.dart';
 import '../models/chat_message.dart';
 import '../l10n/l10n.dart';
@@ -857,7 +858,7 @@ class MessageBubble extends StatelessWidget {
                               ],
                             ),
                           ),
-                        if (hasAudio)
+                        if (hasAudio) ...[
                           Padding(
                             padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
                             child: AudioMessagePlayer(
@@ -867,6 +868,8 @@ class MessageBubble extends StatelessWidget {
                               waveform: message.waveform,
                             ),
                           ),
+                          VoiceTranscriptPanel(audioUrl: message.mediaUrl!),
+                        ],
                         if (hasVideo)
                           Padding(
                             padding: const EdgeInsets.all(3),
