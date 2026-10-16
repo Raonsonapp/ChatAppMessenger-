@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../theme/app_theme.dart';
 import '../models/app_status.dart';
@@ -29,6 +30,7 @@ class StatusViewerScreen extends StatefulWidget {
 
 class _StatusViewerScreenState extends State<StatusViewerScreen> {
   bool _saving = false;
+  final AudioPlayer _musicPlayer = AudioPlayer();
 
   /// Акси навсозиро ба галерея мегузорад.
   Future<void> _saveStatus(String url) async {
@@ -61,6 +63,7 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
     super.initState();
     _startTimer();
     _markViewed();
+    _syncMusic();
   }
 
   void _startTimer() {
@@ -130,6 +133,16 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
     });
   }
 
+  Future<void> _syncMusic() async {
+    await _musicPlayer.stop();
+    final url = widget.statuses[_index].musicUrl;
+    if (url == null || url.isEmpty) return;
+    try {
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+      await _musicPlayer.play(UrlSource(url), volume: 0.7);
+    } catch (_) {}
+  }
+
   void _next() {
     if (_index >= widget.statuses.length - 1) {
       Navigator.pop(context);
@@ -137,12 +150,15 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
     }
     setState(() => _index++);
     _markViewed();
+    _syncMusic();
     _startTimer();
   }
 
   void _prev() {
     if (_index == 0) return;
     setState(() => _index--);
+    _syncMusic();
+    _markViewed();
     _startTimer();
   }
 
@@ -150,6 +166,7 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
   void dispose() {
     _timer?.cancel();
     _replyController.dispose();
+    _musicPlayer.dispose();
     super.dispose();
   }
 
@@ -240,10 +257,26 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
             fit: StackFit.expand,
             children: [
               if (status.imageUrl != null)
-                InteractiveViewer(
-                  minScale: 1,
-                  maxScale: 4,
-                  child: NetImage(url: status.imageUrl!, fit: BoxFit.contain),
+                Container(
+                  margin: EdgeInsets.all(status.style.frame == 0 ? 0 : 10),
+                  padding: EdgeInsets.all(status.style.frame == 0 ? 0 : 5),
+                  decoration: BoxDecoration(
+                    border: status.style.frame == 0
+                        ? null
+                        : Border.all(color: status.style.frameColor!, width: 4),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: InteractiveViewer(
+                    minScale: 1,
+                    maxScale: 4,
+                    child: ColorFiltered(
+                      colorFilter: status.style.imageFilter ?? const ColorFilter.mode(
+                        Colors.transparent,
+                        BlendMode.dst,
+                      ),
+                      child: NetImage(url: status.imageUrl!, fit: BoxFit.contain),
+                    ),
+                  ),
                 )
               else
                 Container(
