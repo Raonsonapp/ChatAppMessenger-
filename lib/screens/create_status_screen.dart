@@ -33,6 +33,10 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
   XFile? _pickedImage;
   String? _pickedMusicUrl;
   String? _pickedMusicName;
+  String? _selectedSticker;
+  bool _drawingEnabled = false;
+  final List<List<Offset>> _drawingStrokes = [];
+  List<Offset>? _activeStroke;
   bool _isPosting = false;
 
   /// Шакли статуси матнӣ. Ҳангоми интихоби акс истифода намешавад.
@@ -48,6 +52,32 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
   void dispose() {
     _textController.dispose();
     super.dispose();
+  }
+
+  Offset _normalizedPoint(Offset point, Size size) => Offset(
+        (point.dx / size.width).clamp(0.0, 1.0).toDouble(),
+        (point.dy / size.height).clamp(0.0, 1.0).toDouble(),
+      );
+
+  void _beginStroke(Offset point, Size size) {
+    final stroke = <Offset>[_normalizedPoint(point, size)];
+    setState(() { _activeStroke = stroke; _drawingStrokes.add(stroke); });
+  }
+
+  void _extendStroke(Offset point, Size size) {
+    final stroke = _activeStroke;
+    if (stroke != null) setState(() => stroke.add(_normalizedPoint(point, size)));
+  }
+
+  void _finishStroke() => _activeStroke = null;
+
+  void _undoStroke() {
+    if (_drawingStrokes.isEmpty) return;
+    setState(() { _drawingStrokes.removeLast(); _activeStroke = null; });
+  }
+
+  void _clearStrokes() {
+    setState(() { _drawingStrokes.clear(); _activeStroke = null; });
   }
 
   Future<void> _pick(bool fromCamera) async {
@@ -147,6 +177,8 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
         imageUrl: imageUrl,
         musicUrl: _pickedMusicUrl,
         musicName: _pickedMusicName,
+        stickerEmoji: _selectedSticker,
+        drawingStrokes: _drawingStrokes.map((stroke) => List<Offset>.from(stroke)).toList(),
         style: _style,
       );
       await FirebaseFirestore.instance.collection('statuses').doc(uid).collection('items').add(status.toMap());
@@ -319,17 +351,39 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(16),
-                            child: ColorFiltered(
-                              colorFilter: _style.imageFilter ?? const ColorFilter.mode(
-                                Colors.transparent,
-                                BlendMode.dst,
-                              ),
-                              child: Image.file(
-                                File(_pickedImage!.path),
-                                height: 300,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                ColorFiltered(
+                                  colorFilter: _style.imageFilter ?? const ColorFilter.mode(
+                                    Colors.transparent,
+                                    BlendMode.dst,
+                                  ),
+                                  child: Image.file(File(_pickedImage!.path), fit: BoxFit.cover),
+                                ),
+                                if (_drawingStrokes.isNotEmpty)
+                                  Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _StoryDrawingPainter(_drawingStrokes)))),
+                                if (_drawingEnabled)
+                                  Positioned.fill(
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        final size = Size(constraints.maxWidth, constraints.maxHeight);
+                                        return GestureDetector(
+                                          behavior: HitTestBehavior.opaque,
+                                          onPanStart: (d) => _beginStroke(d.localPosition, size),
+                                          onPanUpdate: (d) => _extendStroke(d.localPosition, size),
+                                          onPanEnd: (_) => _finishStroke(),
+                                          child: CustomPaint(
+                                            painter: _StoryDrawingPainter(_drawingStrokes),
+                                            child: const SizedBox.expand(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                if (_selectedSticker != null)
+                                  Positioned(right: 14, bottom: 14, child: Text(_selectedSticker!, style: const TextStyle(fontSize: 58))),
+                              ],
                             ),
                           ),
                         )
@@ -357,6 +411,35 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                         _mediaStyleEditor(),
                       ],
                       const SizedBox(height: 12),
+                      if (_pickedImage != null) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => setState(() => _drawingEnabled = !_drawingEnabled),
+                                icon: Icon(_drawingEnabled ? Icons.edit_off : Icons.draw),
+                                label: Text(_drawingEnabled ? 'Қалам: фаъол' : 'Қалам'),
+                              ),
+                            ),
+                            IconButton(tooltip: 'Як қадам бекор кардан', onPressed: _drawingStrokes.isEmpty ? null : _undoStroke, icon: const Icon(Icons.undo)),
+                            IconButton(tooltip: 'Тоза кардан', onPressed: _drawingStrokes.isEmpty ? null : _clearStrokes, icon: const Icon(Icons.delete_outline)),
+                          ],
+                        ),
+                        Align(alignment: Alignment.centerLeft, child: _editorLabel('Стикер / эмодзи')),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            for (final emoji in const ['❤️','😂','🔥','🥳','😍','✨','🌸','😎','🐼'])
+                              ChoiceChip(
+                                label: Text(emoji, style: const TextStyle(fontSize: 20)),
+                                selected: _selectedSticker == emoji,
+                                onSelected: (selected) => setState(() => _selectedSticker = selected ? emoji : null),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                      ],
                       OutlinedButton.icon(
                         onPressed: _isPosting ? null : _pickMusic,
                         icon: const Icon(Icons.music_note),
@@ -453,4 +536,36 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
       ),
     );
   }
+}
+
+
+class _StoryDrawingPainter extends CustomPainter {
+  const _StoryDrawingPainter(this.strokes);
+  final List<List<Offset>> strokes;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+    for (final stroke in strokes) {
+      if (stroke.isEmpty) continue;
+      if (stroke.length == 1) {
+        canvas.drawCircle(Offset(stroke.first.dx * size.width, stroke.first.dy * size.height), 2.2, paint..style = PaintingStyle.fill);
+        paint.style = PaintingStyle.stroke;
+        continue;
+      }
+      final path = Path()..moveTo(stroke.first.dx * size.width, stroke.first.dy * size.height);
+      for (final point in stroke.skip(1)) {
+        path.lineTo(point.dx * size.width, point.dy * size.height);
+      }
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StoryDrawingPainter oldDelegate) => true;
 }
