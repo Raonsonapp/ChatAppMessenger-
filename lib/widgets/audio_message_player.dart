@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
@@ -35,8 +36,12 @@ class AudioMessagePlayer extends StatefulWidget {
   State<AudioMessagePlayer> createState() => _AudioMessagePlayerState();
 }
 
-class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
+class _AudioMessagePlayerState extends State<AudioMessagePlayer> with SingleTickerProviderStateMixin {
   late final AudioPlayer _player = AudioPlayer();
+  late final AnimationController _waveAnimation = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 520),
+  );
   final List<StreamSubscription<dynamic>> _subs = [];
 
   Duration _position = Duration.zero;
@@ -64,6 +69,8 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
         setState(() {
           _playing = false;
           _position = Duration.zero;
+          _waveAnimation.stop();
+          _waveAnimation.value = 0;
         });
       }
     }));
@@ -88,6 +95,7 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
   Future<void> _toggle() async {
     if (_playing) {
       await _player.pause();
+      _waveAnimation.stop();
       if (mounted) setState(() => _playing = false);
       return;
     }
@@ -97,13 +105,17 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
     } catch (_) {
       // Пештар ин истисно гирифта намешуд ва овоз хомӯшона кор намекард.
       if (!mounted) return;
+      _waveAnimation.stop();
       setState(() => _playing = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(tr('k384'))),
       );
       return;
     }
-    if (mounted) setState(() => _playing = true);
+    if (mounted) {
+      setState(() => _playing = true);
+      _waveAnimation.repeat(reverse: true);
+    }
   }
 
   /// Агар файл дар кэш бошад, аз диск хонда мешавад — фавран ва бе интернет.
@@ -126,6 +138,7 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> {
     for (final s in _subs) {
       s.cancel();
     }
+    _waveAnimation.dispose();
     _player.dispose();
     super.dispose();
   }
@@ -246,11 +259,13 @@ class _WaveformPainter extends CustomPainter {
     required this.values,
     required this.progress,
     required this.color,
+    this.phase = 0,
   });
 
   final List<double> values;
   final double progress;
   final Color color;
+  final double phase;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -268,7 +283,8 @@ class _WaveformPainter extends CustomPainter {
 
     for (var i = 0; i < values.length; i++) {
       final x = slot * i + slot / 2;
-      final height = size.height * Waveform.displayHeight(values[i]);
+      final pulse = 1 + 0.22 * math.sin(phase * math.pi * 2 + i * 0.48);
+      final height = size.height * (Waveform.displayHeight(values[i]) * pulse).clamp(0.12, 1.0);
       final top = (size.height - height) / 2;
 
       paint.color = x <= playedUntil ? color : color.withValues(alpha: 0.32);
@@ -280,6 +296,7 @@ class _WaveformPainter extends CustomPainter {
   bool shouldRepaint(_WaveformPainter oldDelegate) {
     return oldDelegate.progress != progress ||
         oldDelegate.color != color ||
+        oldDelegate.phase != phase ||
         oldDelegate.values != values;
   }
 }
