@@ -10,6 +10,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../edit_profile_screen.dart';
+import '../welcome_screen.dart';
 import 'blocked_users_screen.dart';
 import 'delete_account_screen.dart';
 import 'linked_devices_screen.dart';
@@ -386,7 +387,12 @@ class AccountSettingsScreen extends StatelessWidget {
     if (confirmed != true || !context.mounted) return;
     await AccountService.signOut();
     if (!context.mounted) return;
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    // ChatListScreen can be the root route after phone OTP sign-in; merely
+    // popping to the first route would leave a signed-out user on the chat UI.
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+      (route) => false,
+    );
   }
 
   Widget _sectionLabel(String text) {
