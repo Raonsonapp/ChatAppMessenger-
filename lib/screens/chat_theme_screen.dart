@@ -9,6 +9,7 @@ import '../theme/app_scope.dart';
 import '../theme/app_theme.dart';
 import '../theme/chat_theme_controller.dart';
 import '../widgets/glass_container.dart';
+import '../widgets/chat_wallpaper.dart';
 import '../widgets/neon_backdrop.dart';
 
 /// Намуди як чат: маҷмӯа, ранг, нишона ва замина.
@@ -374,19 +375,97 @@ class _ChatThemeScreenState extends State<ChatThemeScreen> {
           _option(LucideIcons.image, tr('k432'), _pickWallpaper),
           Divider(color: AppColors.glassBorder, height: 1),
           _option(LucideIcons.palette, tr('k433'), _pickWallpaperColor),
-          if (_style.wallpaperPath != null || _style.wallpaperColor != null) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(tr('k428'), style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w700)),
+            ),
+          ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _designCard('2d', tr('k706')),
+              _designCard('3d', tr('k707')),
+              _designCard('landscape', tr('k708')),
+            ],
+          ),
+          if (_style.wallpaperPath != null || _style.wallpaperColor != null || _style.wallpaperDesign != null) ...[
             Divider(color: AppColors.glassBorder, height: 1),
             _option(
               LucideIcons.trash,
               tr('k434'),
               () => _apply(_style.copyWith(
                 wallpaperPath: null,
+                wallpaperDesign: null,
                 wallpaperColor: null,
               )),
               danger: true,
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _designCard(String design, String label) {
+    final selected = _style.wallpaperDesign == design;
+    return GestureDetector(
+      onTap: () => _apply(_style.copyWith(
+        wallpaperDesign: design,
+        wallpaperPath: null,
+        wallpaperColor: null,
+      )),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: 92,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(
+            color: selected ? AppColors.neonCyan : AppColors.glassBorder,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(9),
+              child: SizedBox(
+                height: 58,
+                width: double.infinity,
+                child: ChatWallpaperArtwork(
+                  design: design,
+                  child: Center(
+                    child: Icon(
+                      design == '2d'
+                          ? LucideIcons.layers
+                          : design == '3d'
+                              ? LucideIcons.box
+                              : LucideIcons.mountain,
+                      size: 21,
+                      color: Colors.white.withValues(alpha: .9),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: selected ? AppColors.neonCyan : AppColors.textPrimary,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -451,6 +530,7 @@ class _ChatThemeScreenState extends State<ChatThemeScreen> {
     await _apply(_style.copyWith(
       wallpaperColor: chosen.toARGB32(),
       wallpaperPath: null,
+      wallpaperDesign: null,
     ));
   }
 
