@@ -120,8 +120,39 @@ jobs:
             --config firebase.emulator.json \
             "node test/firestore_rules/rules.test.mjs"
 
+      # Build versionCode must increase on every installable update.
+      # A stable keystore is required for Android to accept this APK over an
+      # older installation. Configure these repository Actions secrets:
+      # ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+      # ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.
+      - name: Configure stable Android release signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "::warning::Stable release signing is not configured. The APK will be debug-signed and may not update an already installed APK. Add all four Android signing secrets in GitHub Settings."
+            exit 0
+          fi
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+
       - name: Build release APK
-        run: flutter build apk --release
+        run: |
+          BUILD_NUMBER="$((GITHUB_RUN_NUMBER + 1))"
+          PUBSPEC_BUILD_NUMBER="$(awk -F'[+]' '/^version:/ { split($2, a, " "); print a[1] }' pubspec.yaml)"
+          if [ "$BUILD_NUMBER" -le "$PUBSPEC_BUILD_NUMBER" ]; then
+            BUILD_NUMBER="$((PUBSPEC_BUILD_NUMBER + GITHUB_RUN_NUMBER + 1))"
+          fi
+          echo "Building ChatApp with Android versionCode=$BUILD_NUMBER"
+          flutter build apk --release --build-number "$BUILD_NUMBER"
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
