@@ -221,19 +221,19 @@ class AccountSettingsScreen extends StatelessWidget {
 
   Future<void> _manageEmail(BuildContext context, User? user) async {
     if (user == null) return;
-    if ((user.email ?? '').isNotEmpty) {
-      _showInfo(context, '${tr('k655')}: ${user.email!}');
-      return;
-    }
 
-    final emailController = TextEditingController();
+    final currentEmail = user.email?.trim() ?? '';
+    final emailController = TextEditingController(text: currentEmail);
     final passwordController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     final values = await showDialog<List<String>?>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: Text(tr('k655'), style: TextStyle(color: AppColors.textPrimary)),
+        title: Text(
+          currentEmail.isEmpty ? 'Илова кардани Gmail' : 'Иваз кардани Gmail',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
         content: Form(
           key: formKey,
           child: Column(
@@ -243,28 +243,48 @@ class AccountSettingsScreen extends StatelessWidget {
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
-                decoration: InputDecoration(labelText: tr('k655')),
-                validator: (value) => (value == null || !value.contains('@')) ? tr('k664') : null,
+                decoration: InputDecoration(
+                  labelText: currentEmail.isEmpty ? 'Gmail / Email' : 'Gmail / Email-и нав',
+                ),
+                validator: (value) {
+                  final email = value?.trim() ?? '';
+                  if (!email.contains('@') || !email.contains('.')) {
+                    return tr('k664');
+                  }
+                  if (email.toLowerCase() == currentEmail.toLowerCase()) {
+                    return 'Email-и навро ворид кунед.';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: passwordController,
                 obscureText: true,
-                decoration: InputDecoration(labelText: tr('k654')),
-                validator: (value) => (value == null || value.length < 6) ? tr('k665') : null,
+                decoration: InputDecoration(
+                  labelText: currentEmail.isEmpty ? tr('k654') : 'Пароли Gmail-и ҷорӣ',
+                ),
+                validator: (value) =>
+                    (value == null || value.length < 6) ? tr('k665') : null,
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('k277'))),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(tr('k277')),
+          ),
           FilledButton(
             onPressed: () {
               if (formKey.currentState?.validate() ?? false) {
-                Navigator.pop(dialogContext, [emailController.text.trim(), passwordController.text]);
+                Navigator.pop(dialogContext, [
+                  emailController.text.trim(),
+                  passwordController.text,
+                ]);
               }
             },
-            child: Text(tr('k663')),
+            child: Text(currentEmail.isEmpty ? 'Илова кардан' : 'Иваз кардан'),
           ),
         ],
       ),
@@ -274,20 +294,45 @@ class AccountSettingsScreen extends StatelessWidget {
     if (values == null || !context.mounted) return;
 
     try {
-      final credential = EmailAuthProvider.credential(email: values[0], password: values[1]);
-      final linked = await user.linkWithCredential(credential);
-      await linked.user?.sendEmailVerification();
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k666'))));
+      if (currentEmail.isEmpty) {
+        final credential = EmailAuthProvider.credential(
+          email: values[0],
+          password: values[1],
+        );
+        final linked = await user.linkWithCredential(credential);
+        await linked.user?.sendEmailVerification();
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Паёми тасдиқ ба email фиристода шуд.')),
+        );
+      } else {
+        final credential = EmailAuthProvider.credential(
+          email: currentEmail,
+          password: values[1],
+        );
+        await user.reauthenticateWithCredential(credential);
+        await user.verifyBeforeUpdateEmail(values[0]);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ба email-и нав пайванди тасдиқ фиристода шуд.'),
+          ),
+        );
+      }
     } on FirebaseAuthException catch (error) {
       if (!context.mounted) return;
-      final message = error.code == 'email-already-in-use'
-          ? tr('k667')
-          : tr('k668');
+      final message = switch (error.code) {
+        'email-already-in-use' => tr('k667'),
+        'wrong-password' || 'invalid-credential' => 'Парол нодуруст аст.',
+        'requires-recent-login' => 'Аз нав ворид шавед ва баъд email-ро иваз кунед.',
+        _ => error.message ?? tr('k668'),
+      };
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k668'))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('k668'))),
+      );
     }
   }
 
