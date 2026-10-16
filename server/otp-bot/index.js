@@ -160,7 +160,7 @@ async function launchBotWithRetry() {
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Ҳолати бот, то бидуни логҳои Railway ҳам фаҳмидан мумкин бошад, ки бот дар
 // кадом усул кор мекунад ва чаро.
@@ -689,6 +689,77 @@ app.post('/api/translate', async (req, res) => {
   } catch (err) {
     console.warn('Хатои тарҷума:', err?.message ?? err);
     res.status(502).json({ error: 'translate-failed' });
+  }
+});
+
+
+/** Табдили паёми овозӣ ба матн тавассути Gemini API (калид танҳо дар сервер). */
+const TRANSCRIBE_QUOTA_PER_HOUR = 20;
+const transcribeQuota = new Map();
+
+app.post('/api/transcribe', async (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!idToken) return res.status(401).json({ error: 'authorization-required' });
+
+  let user;
+  try {
+    user = await getAuth().verifyIdToken(idToken);
+  } catch {
+    return res.status(401).json({ error: 'invalid-token' });
+  }
+
+  if (overQuota(transcribeQuota, user.uid, TRANSCRIBE_QUOTA_PER_HOUR)) {
+    return res.status(429).json({ error: 'too-many-requests' });
+  }
+
+  const body = req.body ?? {};
+  const audioBase64 = String(body.audioBase64 ?? '');
+  const mimeType = String(body.mimeType ?? '').toLowerCase().split(';')[0];
+  if (!audioBase64) return res.status(400).json({ error: 'audio-required' });
+  if (audioBase64.length > 7 * 1024 * 1024) {
+    return res.status(413).json({ error: 'audio-too-large' });
+  }
+  if (!/^audio\/(wav|mpeg|mp3|mp4|aac|ogg|flac|webm|3gpp|amr|x-m4a)$/.test(mimeType)) {
+    return res.status(415).json({ error: 'unsupported-audio-type' });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'transcription-not-configured' });
+
+  const model = process.env.GEMINI_TRANSCRIBE_MODEL || 'gemini-2.5-flash';
+  try {
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/' +
+        encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: 'Transcribe the spoken words in this audio exactly as spoken. Return only the transcript, preserving the original language and script. Do not translate, summarize, or add commentary. If there is no intelligible speech, return an empty string.' },
+              { inlineData: { mimeType, data: audioBase64 } },
+            ],
+          }],
+          generationConfig: { temperature: 0 },
+        }),
+        signal: AbortSignal.timeout(45000),
+      },
+    );
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.warn('Gemini transcription failed:', response.status);
+      return res.status(response.status === 429 ? 429 : 502).json({ error: 'transcription-failed' });
+    }
+    const transcript = (data?.candidates?.[0]?.content?.parts ?? [])
+      .map((part) => typeof part.text === 'string' ? part.text : '')
+      .join('')
+      .trim();
+    return res.json({ text: transcript });
+  } catch (err) {
+    console.warn('Хатои транскрипсияи овоз:', err?.message ?? err);
+    return res.status(502).json({ error: 'transcription-failed' });
   }
 });
 
