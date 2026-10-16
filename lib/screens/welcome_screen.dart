@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/app_logo.dart';
-import '../widgets/lamp_pull_reveal.dart';
+import '../widgets/neon_backdrop.dart';
 import 'phone_entry_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_scope.dart';
@@ -13,14 +13,13 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     AppScope.watch(context);
-    // Корбар бояд сими чароғро кашад, то чароғ равшан шуда, мундариҷаи
-    // воқеии хушомадгӯӣ (бо худи ҳамон тугмаи "Давом" ва мантиқи аслии он)
-    // пайдо шавад. Ин танҳо намоиши визуалӣ аст — аутентификатсияи воқеӣ
-    // (PhoneEntryScreen → OtpScreen) бетағйир мемонад.
+    // Экран мустақим кушода мешавад; сабти ном танҳо бо рақами телефон
+    // идома меёбад. Аниматсияи мувофиқ дар PhoneEntryScreen ҷойгир аст.
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: LampPullReveal(
-        child: Padding(
+      body: NeonBackdrop(
+        child: SafeArea(
+          child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -66,6 +65,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),
