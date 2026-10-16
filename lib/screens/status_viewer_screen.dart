@@ -289,6 +289,10 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
                     style: TextStyle(color: AppColors.background, fontWeight: FontWeight.w800, fontSize: 26),
                   ),
                 ),
+              if (status.imageUrl != null && status.drawingStrokes.isNotEmpty)
+                Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _StoryDrawingPainter(status.drawingStrokes)))),
+              if (status.imageUrl != null && status.stickerEmoji != null)
+                Positioned(right: 28, bottom: 120, child: Text(status.stickerEmoji!, style: const TextStyle(fontSize: 68))),
               if (status.imageUrl != null && status.text != null && status.text!.isNotEmpty)
                 Positioned(
                   left: 0,
@@ -472,4 +476,36 @@ class _ViewerRow extends StatelessWidget {
       },
     );
   }
+}
+
+
+class _StoryDrawingPainter extends CustomPainter {
+  const _StoryDrawingPainter(this.strokes);
+  final List<List<Offset>> strokes;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+    for (final stroke in strokes) {
+      if (stroke.isEmpty) continue;
+      if (stroke.length == 1) {
+        canvas.drawCircle(Offset(stroke.first.dx * size.width, stroke.first.dy * size.height), 2.2, paint..style = PaintingStyle.fill);
+        paint.style = PaintingStyle.stroke;
+        continue;
+      }
+      final path = Path()..moveTo(stroke.first.dx * size.width, stroke.first.dy * size.height);
+      for (final point in stroke.skip(1)) {
+        path.lineTo(point.dx * size.width, point.dy * size.height);
+      }
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StoryDrawingPainter oldDelegate) => true;
 }
