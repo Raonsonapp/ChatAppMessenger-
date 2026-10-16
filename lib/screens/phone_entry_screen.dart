@@ -16,14 +16,22 @@ class PhoneEntryScreen extends StatefulWidget {
   State<PhoneEntryScreen> createState() => _PhoneEntryScreenState();
 }
 
-class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
+class _PhoneEntryScreenState extends State<PhoneEntryScreen> with SingleTickerProviderStateMixin {
+  late final AnimationController _phoneAnimation;
   final TextEditingController _codeController = TextEditingController(text: '992');
   final TextEditingController _numberController = TextEditingController();
   bool _isOpeningBot = false;
   String? _errorText;
 
   @override
+  void initState() {
+    super.initState();
+    _phoneAnimation = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..repeat(reverse: true);
+  }
+
+  @override
   void dispose() {
+    _phoneAnimation.dispose();
     _codeController.dispose();
     _numberController.dispose();
     super.dispose();
@@ -76,7 +84,8 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
       backgroundColor: AppColors.background,
       body: NeonBackdrop(
         child: SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
+            child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +104,72 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                   tr('k137'),
                   style: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.85), fontSize: 13),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 18),
+                Center(
+                  child: AnimatedBuilder(
+                    animation: _phoneAnimation,
+                    builder: (context, child) {
+                      final scale = 0.94 + (_phoneAnimation.value * 0.08);
+                      final ringOpacity = 0.18 + (_phoneAnimation.value * 0.24);
+                      return SizedBox(
+                        width: 112,
+                        height: 104,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 92,
+                              height: 92,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.neonEmerald.withValues(alpha: ringOpacity), width: 2),
+                              ),
+                            ),
+                            Container(
+                              width: 72,
+                              height: 72,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.neonEmerald.withValues(alpha: 0.10),
+                                boxShadow: [
+                                  BoxShadow(color: AppColors.neonEmerald.withValues(alpha: ringOpacity), blurRadius: 20, spreadRadius: 2),
+                                ],
+                              ),
+                            ),
+                            Transform.scale(
+                              scale: scale,
+                              child: Container(
+                                width: 58,
+                                height: 58,
+                                decoration: BoxDecoration(color: AppColors.neonEmerald, borderRadius: BorderRadius.circular(19)),
+                                child: Icon(LucideIcons.smartphone, size: 29, color: AppColors.background),
+                              ),
+                            ),
+                            Positioned(
+                              right: 8,
+                              bottom: 7,
+                              child: Container(
+                                width: 27,
+                                height: 27,
+                                decoration: BoxDecoration(color: AppColors.background, shape: BoxShape.circle, border: Border.all(color: AppColors.neonEmerald, width: 1.5)),
+                                child: Icon(LucideIcons.check, size: 15, color: AppColors.neonEmerald),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Center(
+                  child: Text(
+                    tr('k136'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 15),
+                  ),
+                ),
+                const SizedBox(height: 14),
                 GlassContainer(
                   borderRadius: 16,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -161,6 +235,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> {
                   ),
                 ),
               ],
+            ),
             ),
           ),
         ),
