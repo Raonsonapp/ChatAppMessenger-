@@ -44,6 +44,9 @@ class TranslateService {
       await identifier.close();
     }
     final resolvedSource = sourceLanguage;
+    if (resolvedSource == null) {
+      throw const TranslateFailure(TranslateFailureKind.unsupportedLanguage);
+    }
     if (resolvedSource == targetLanguage) return text;
 
     final manager = OnDeviceTranslatorModelManager();
