@@ -28,9 +28,15 @@ class TranslateService {
     TranslateLanguage? sourceLanguage;
     try {
       final detected = await identifier.identifyLanguage(text);
-      sourceLanguage = detected == 'und'
-          ? null
-          : TranslateLanguage.values.where((language) => language.bcpCode == detected).firstOrNull;
+      sourceLanguage = null;
+      if (detected != 'und') {
+        for (final language in TranslateLanguage.values) {
+          if (language.bcpCode == detected) {
+            sourceLanguage = language;
+            break;
+          }
+        }
+      }
       if (sourceLanguage == null) {
         throw const TranslateFailure(TranslateFailureKind.unsupportedLanguage);
       }
