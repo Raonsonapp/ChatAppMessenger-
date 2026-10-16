@@ -2,7 +2,7 @@ import 'package:chatapp/models/status_style.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Шакли статус ҳамчун се рақам дар Firestore мемонад.
+/// Шакли статус дар Firestore ҳамчун рақамҳои хурд нигоҳ дошта мешавад.
 ///
 /// Маҳз ҳамин ҷо хатари воқеӣ ҳаст: рақами кӯҳна, нодуруст ё берун аз ҳудуд
 /// набояд экрани дидани статусро вайрон кунад — вагарна статуси як корбар
@@ -18,6 +18,8 @@ void main() {
       expect(style.background, 3);
       expect(style.font, 2);
       expect(style.align, 0);
+      expect(style.frame, 0);
+      expect(style.effect, 0);
     });
 
     test('статуси кӯҳна бе шакл заминаи аввалро мегирад', () {
@@ -33,10 +35,14 @@ void main() {
         'styleBackground': 999,
         'styleFont': -1,
         'styleAlign': 7,
+        'styleFrame': 99,
+        'styleEffect': -1,
       });
       expect(style.background, 0);
       expect(style.font, 0);
       expect(style.align, 1);
+      expect(style.frame, 0);
+      expect(style.effect, 0);
     });
 
     test('навъи нодуруст барномаро вайрон намекунад', () {
@@ -101,6 +107,10 @@ void main() {
       expect(restored.background, style.background);
       expect(restored.font, style.font);
       expect(restored.align, style.align);
+      const mediaStyle = StatusStyle(frame: 2, effect: 3);
+      final restoredMediaStyle = StatusStyle.fromMap(mediaStyle.toMap());
+      expect(restoredMediaStyle.frame, mediaStyle.frame);
+      expect(restoredMediaStyle.effect, mediaStyle.effect);
     });
   });
 }
