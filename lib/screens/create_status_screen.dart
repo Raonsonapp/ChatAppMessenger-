@@ -342,6 +342,8 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                     children: [
                       if (_pickedImage != null)
                         Container(
+                          width: double.infinity,
+                          height: 300,
                           padding: EdgeInsets.all(_style.frame == 0 ? 0 : 5),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(22),
