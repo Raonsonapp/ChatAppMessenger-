@@ -695,4 +695,10 @@ const Map<String, String> stringsEn = {
   'k697': 'Contact seller',
   'k698': 'Report submitted',
   'k699': 'User blocked',
+  'k700': 'Voice transcript',
+  'k701': 'Downloading language model…',
+  'k702': 'Audio transcription is not supported on this device',
+  'k703': 'This language is not supported for translation',
+  'k704': 'Downloading translation model…',
+  'k705': 'No text was detected',
 };
