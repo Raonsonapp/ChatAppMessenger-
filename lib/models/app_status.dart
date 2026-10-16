@@ -10,6 +10,8 @@ class AppStatus {
   final String ownerName;
   final String? text;
   final String? imageUrl;
+  final String? musicUrl;
+  final String? musicName;
   final DateTime? createdAt;
   final DateTime? expiresAt;
   final List<String> viewedBy;
@@ -23,6 +25,8 @@ class AppStatus {
     required this.ownerName,
     this.text,
     this.imageUrl,
+    this.musicUrl,
+    this.musicName,
     this.createdAt,
     this.expiresAt,
     this.viewedBy = const [],
@@ -43,6 +47,8 @@ class AppStatus {
       ownerName: (data['ownerName'] ?? tr('k002')) as String,
       text: data['text'] as String?,
       imageUrl: data['imageUrl'] as String?,
+      musicUrl: data['musicUrl'] as String?,
+      musicName: data['musicName'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
       viewedBy: List<String>.from(data['viewedBy'] as List? ?? []),
@@ -57,6 +63,8 @@ class AppStatus {
       'ownerName': ownerName,
       if (text != null) 'text': text,
       if (imageUrl != null) 'imageUrl': imageUrl,
+      if (musicUrl != null) 'musicUrl': musicUrl,
+      if (musicName != null) 'musicName': musicName,
       'createdAt': FieldValue.serverTimestamp(),
       'expiresAt': Timestamp.fromDate(now.add(const Duration(hours: 24))),
       'viewedBy': <String>[],
