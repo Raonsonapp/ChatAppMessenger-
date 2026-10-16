@@ -29,8 +29,9 @@
    - `R2_*` — бе онҳо боркунии медиа кор намекунад
    - `OWNER_UID` — uid-и соҳиби ChatApp. Бе он панели соҳиб дар ҳељ ҳисоб
      намоён намешавад ва гранти Plus 403 мегирад. Ниг. `PLUS_SETUP.md`
-   - `TRANSLATE_ENDPOINT` ва `TRANSLATE_API_KEY` — бе онҳо тарҷума рӯирост
-     мегӯяд, ки танзим нашудааст
+   - `TRANSLATE_ENDPOINT` ва `TRANSLATE_API_KEY` — барои тарҷумаи серверӣ; тарҷумаи матнии дохили телефон аз Google ML Kit истифода мекунад.
+   - `GEMINI_API_KEY` — калиди Gemini API барои табдил додани паёми овозӣ ба матн. Калидро танҳо дар Railway Variables гузоред, на дар Flutter APK. Сатҳи ройгон маҳдудият дорад; файлҳои овозӣ барои транскрипсия ба Google фиристода мешаванд.
+   - `GEMINI_TRANSCRIBE_MODEL` — ихтиёрӣ, номи модели Gemini; пешфарз `gemini-2.5-flash`.
 5. Railway худкор deploy мекунад — тавассути `Dockerfile`-и ҳамин папка
    (Settings → Build → Builder: Dockerfile). Пас аз deploy, дар Settings →
    Networking → "Generate Domain" домен созед, target port-ро `3000` гузоред.
