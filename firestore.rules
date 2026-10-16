@@ -374,63 +374,91 @@ service cloud.firestore {
 
     // Фармоишҳои Marketplace.
     match /orders/{orderId} {
-      function signedIn() {
-        return request.auth != null;
+      function orderBuyer() {
+        return signedIn() && resource.data.buyerId == uid();
       }
 
-      function isBuyer() {
-        return signedIn()
-          && resource.data.buyerId == request.auth.uid;
-      }
-
-      function isSeller() {
-        return signedIn()
-          && resource.data.sellerId == request.auth.uid;
+      function orderSeller() {
+        return signedIn() && resource.data.sellerId == uid();
       }
 
       allow create: if signedIn()
-        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.keys().hasAll([
+          'listingId',
+          'listingTitle',
+          'buyerId',
+          'sellerId',
+          'quantity',
+          'unitPrice',
+          'subtotal',
+          'currency',
+          'deliveryMethod',
+          'deliveryAddress',
+          'buyerPhone',
+          'note',
+          'deliveryFee',
+          'total',
+          'status',
+          'deliveryStatus',
+          'paymentStatus',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.buyerId == uid()
         && request.resource.data.sellerId is string
-        && request.resource.data.sellerId != request.auth.uid
+        && request.resource.data.sellerId != uid()
         && request.resource.data.listingId is string
         && request.resource.data.quantity is int
         && request.resource.data.quantity >= 1
         && request.resource.data.quantity <= 20
-        && request.resource.data.unitPrice is number
+        && (request.resource.data.unitPrice is int
+            || request.resource.data.unitPrice is float)
         && request.resource.data.unitPrice > 0
         && request.resource.data.subtotal
-             == request.resource.data.unitPrice
-                * request.resource.data.quantity
-        && request.resource.data.total
-             == request.resource.data.subtotal
+          == request.resource.data.unitPrice * request.resource.data.quantity
+        && request.resource.data.total == request.resource.data.subtotal
         && request.resource.data.currency == 'TJS'
-        && request.resource.data.deliveryMethod
-             in ['delivery', 'pickup']
-        && request.resource.data.status
-             == 'pending_seller_confirmation'
+        && request.resource.data.deliveryMethod in ['delivery', 'pickup']
+        && request.resource.data.status == 'pending_seller_confirmation'
         && request.resource.data.paymentStatus == 'unpaid'
         && get(
           /databases/$(database)/documents/listings/$(request.resource.data.listingId)
         ).data.ownerId == request.resource.data.sellerId
         && get(
           /databases/$(database)/documents/listings/$(request.resource.data.listingId)
-        ).data.price == request.resource.data.unitPrice;
+        ).data.price == request.resource.data.unitPrice
+        && get(
+          /databases/$(database)/documents/listings/$(request.resource.data.listingId)
+        ).data.active != false;
 
-      allow read: if isBuyer() || isSeller();
+      allow read: if orderBuyer() || orderSeller();
 
-      // Фурӯшанда танҳо ҳолат ва шартҳои расониданро тағйир медиҳад.
-      allow update: if isSeller()
-        && request.resource.data.diff(resource.data)
-          .affectedKeys()
-          .hasOnly([
-            'status',
-            'deliveryStatus',
-            'deliveryFee',
-            'total',
-            'sellerNote',
-            'updatedAt'
-          ]);
+      // Фурӯшанда танҳо ҳолати фармоиш ва шартҳои расониданро нав мекунад.
+      allow update: if orderSeller()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'deliveryStatus',
+          'deliveryFee',
+          'total',
+          'sellerNote',
+          'updatedAt'
+        ])
+        && request.resource.data.buyerId == resource.data.buyerId
+        && request.resource.data.sellerId == resource.data.sellerId
+        && request.resource.data.listingId == resource.data.listingId
+        && request.resource.data.unitPrice == resource.data.unitPrice
+        && request.resource.data.quantity == resource.data.quantity
+        && request.resource.data.subtotal == resource.data.subtotal
+        && request.resource.data.currency == resource.data.currency
+        && request.resource.data.total >= request.resource.data.subtotal
+        && (
+          request.resource.data.deliveryFee == null
+          || ((request.resource.data.deliveryFee is int
+              || request.resource.data.deliveryFee is float)
+              && request.resource.data.deliveryFee >= 0)
+        );
 
       allow delete: if false;
     }
-  
+  }
+}
