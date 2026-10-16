@@ -19,6 +19,9 @@ class ChatStyle {
   /// Роҳи файли замина — акси интихобшуда.
   final String? wallpaperPath;
 
+  /// Намуди заминаи расмшудаи дохили барнома: 2d, 3d ё landscape.
+  final String? wallpaperDesign;
+
   /// Ранги якрангаи замина, агар акс интихоб нашуда бошад.
   final int? wallpaperColor;
 
@@ -30,6 +33,7 @@ class ChatStyle {
     this.bubbleColor,
     this.accentColor,
     this.wallpaperPath,
+    this.wallpaperDesign,
     this.wallpaperColor,
     this.icon,
   });
@@ -39,6 +43,7 @@ class ChatStyle {
       bubbleColor == null &&
       accentColor == null &&
       wallpaperPath == null &&
+      wallpaperDesign == null &&
       wallpaperColor == null &&
       icon == null;
 
@@ -47,6 +52,7 @@ class ChatStyle {
     Object? bubbleColor = _unset,
     Object? accentColor = _unset,
     Object? wallpaperPath = _unset,
+    Object? wallpaperDesign = _unset,
     Object? wallpaperColor = _unset,
     Object? icon = _unset,
   }) {
@@ -71,6 +77,7 @@ class ChatStyle {
         if (bubbleColor != null) 'bubbleColor': bubbleColor,
         if (accentColor != null) 'accentColor': accentColor,
         if (wallpaperPath != null) 'wallpaperPath': wallpaperPath,
+        if (wallpaperDesign != null) 'wallpaperDesign': wallpaperDesign,
         if (wallpaperColor != null) 'wallpaperColor': wallpaperColor,
         if (icon != null) 'icon': icon,
       };
@@ -80,6 +87,7 @@ class ChatStyle {
         bubbleColor: (json['bubbleColor'] as num?)?.toInt(),
         accentColor: (json['accentColor'] as num?)?.toInt(),
         wallpaperPath: json['wallpaperPath'] as String?,
+        wallpaperDesign: json['wallpaperDesign'] as String?,
         wallpaperColor: (json['wallpaperColor'] as num?)?.toInt(),
         icon: json['icon'] as String?,
       );
@@ -181,7 +189,7 @@ class ChatThemeController extends ChangeNotifier {
     final previous = styleFor(chatId).wallpaperPath;
     await update(
       chatId,
-      styleFor(chatId).copyWith(wallpaperPath: target, wallpaperColor: null),
+      styleFor(chatId).copyWith(wallpaperPath: target, wallpaperDesign: null, wallpaperColor: null),
     );
     // Акси кӯҳна ҷои бехударо ишғол мекунад.
     if (previous != null && previous != target) {
