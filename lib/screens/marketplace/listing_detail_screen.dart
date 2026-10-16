@@ -39,15 +39,6 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   bool get _isMine => FirebaseAuth.instance.currentUser?.uid == _listing.ownerId;
 
-  /// Матни тугмаи сӯҳбат аз навъи эълон вобаста аст — «фурӯшанда» барои
-  /// ҷойи кор маъно надорад.
-  String get _chatLabel => switch (_listing.kind) {
-        ListingKind.product => tr('k567'),
-        ListingKind.service => tr('k578'),
-        ListingKind.job => tr('k577'),
-        ListingKind.ad => tr('k567'),
-      };
-
   Future<void> _chatWithOwner() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
