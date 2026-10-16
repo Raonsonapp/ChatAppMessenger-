@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import '../l10n/l10n.dart';
 import 'status_style.dart';
 
@@ -12,6 +13,8 @@ class AppStatus {
   final String? imageUrl;
   final String? musicUrl;
   final String? musicName;
+  final String? stickerEmoji;
+  final List<List<Offset>> drawingStrokes;
   final DateTime? createdAt;
   final DateTime? expiresAt;
   final List<String> viewedBy;
@@ -27,6 +30,8 @@ class AppStatus {
     this.imageUrl,
     this.musicUrl,
     this.musicName,
+    this.stickerEmoji,
+    this.drawingStrokes = const [],
     this.createdAt,
     this.expiresAt,
     this.viewedBy = const [],
@@ -49,6 +54,15 @@ class AppStatus {
       imageUrl: data['imageUrl'] as String?,
       musicUrl: data['musicUrl'] as String?,
       musicName: data['musicName'] as String?,
+      stickerEmoji: data['stickerEmoji'] as String?,
+      drawingStrokes: ((data['drawingStrokes'] as List?) ?? const [])
+          .whereType<List>()
+          .map((stroke) => stroke.whereType<Map>().map((point) {
+                final x = (point['x'] as num?)?.toDouble() ?? 0.0;
+                final y = (point['y'] as num?)?.toDouble() ?? 0.0;
+                return Offset(x.clamp(0.0, 1.0).toDouble(), y.clamp(0.0, 1.0).toDouble());
+              }).toList())
+          .toList(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
       viewedBy: List<String>.from(data['viewedBy'] as List? ?? []),
@@ -65,6 +79,8 @@ class AppStatus {
       if (imageUrl != null) 'imageUrl': imageUrl,
       if (musicUrl != null) 'musicUrl': musicUrl,
       if (musicName != null) 'musicName': musicName,
+      if (stickerEmoji != null) 'stickerEmoji': stickerEmoji,
+      'drawingStrokes': drawingStrokes.map((stroke) => stroke.map((point) => {'x': point.dx, 'y': point.dy}).toList()).toList(),
       'createdAt': FieldValue.serverTimestamp(),
       'expiresAt': Timestamp.fromDate(now.add(const Duration(hours: 24))),
       'viewedBy': <String>[],
