@@ -231,6 +231,7 @@ class _ChatThemeScreenState extends State<ChatThemeScreen> {
             accentColor: preset.accent.toARGB32(),
             wallpaperColor: preset.wallpaper.toARGB32(),
             wallpaperPath: null,
+            wallpaperDesign: null,
           )),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 240),
