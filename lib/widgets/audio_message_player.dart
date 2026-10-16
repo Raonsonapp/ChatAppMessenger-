@@ -199,13 +199,17 @@ class _AudioMessagePlayerState extends State<AudioMessagePlayer> with SingleTick
                               )
                             : SizedBox(
                                 height: 26,
-                                child: CustomPaint(
-                                  painter: _WaveformPainter(
-                                    values: widget.waveform,
-                                    progress: progress,
-                                    color: tint,
+                                child: AnimatedBuilder(
+                                  animation: _waveAnimation,
+                                  builder: (context, _) => CustomPaint(
+                                    painter: _WaveformPainter(
+                                      values: widget.waveform,
+                                      progress: progress,
+                                      color: tint,
+                                      phase: _playing ? _waveAnimation.value : 0,
+                                    ),
+                                    size: Size.infinite,
                                   ),
-                                  size: Size.infinite,
                                 ),
                               ),
                       ),
