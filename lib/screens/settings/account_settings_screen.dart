@@ -13,6 +13,7 @@ import '../edit_profile_screen.dart';
 import 'blocked_users_screen.dart';
 import 'delete_account_screen.dart';
 import 'linked_devices_screen.dart';
+import 'change_phone_screen.dart';
 
 /// Танзимоти ҳисоб. Амалҳое, ки backend-и ҷудогона талаб мекунанд, равшан
 /// ҳамчун ҳанӯз дастгирӣнашуда нишон дода мешаванд, на ҳамчун функсияи қалбакӣ.
@@ -139,7 +140,10 @@ class AccountSettingsScreen extends StatelessWidget {
                             context,
                             icon: LucideIcons.phone_forwarded,
                             label: tr('k675'),
-                            onTap: () => _showInfo(context, tr('k678')),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ChangePhoneScreen()),
+                            ),
                           ),
                           _row(
                             context,
