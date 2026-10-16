@@ -207,21 +207,29 @@ class _MarketplaceOrderScreenState
             'Тарзи гирифтани мол',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          RadioListTile<String>(
-            value: 'delivery',
+          RadioGroup<String>(
             groupValue: _delivery,
-            title: const Text('Доставка'),
-            subtitle: const Text(
-              'Арзиши расониданро бо фурӯшанда мувофиқа кун.',
+            onChanged: (value) {
+              if (value != null) setState(() => _delivery = value);
+            },
+            child: Column(
+              children: [
+                RadioListTile<String>(
+                  value: 'delivery',
+                  title: const Text('Доставка'),
+                  subtitle: const Text(
+                    'Арзиши расониданро бо фурӯшанда мувофиқа кун.',
+                  ),
+                ),
+                RadioListTile<String>(
+                  value: 'pickup',
+                  title: const Text('Худам мегирам'),
+                  subtitle: const Text(
+                    'Ҷойи гирифтани молро мувофиқа кун.',
+                  ),
+                ),
+              ],
             ),
-            onChanged: (v) => setState(() => _delivery = v!),
-          ),
-          RadioListTile<String>(
-            value: 'pickup',
-            groupValue: _delivery,
-            title: const Text('Худам мегирам'),
-            subtitle: const Text('Ҷойи гирифтани молро мувофиқа кун.'),
-            onChanged: (v) => setState(() => _delivery = v!),
           ),
 
           if (_delivery == 'delivery') ...[
