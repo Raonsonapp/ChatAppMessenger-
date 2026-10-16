@@ -140,14 +140,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _savedUsername = desired;
       }
 
-      // САБТ: навсозии воқеии профил дар Cloud Firestore
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      // Ном дар профил ва рӯйхати ҳамаи чатҳо нав карда мешавад.
+      final db = FirebaseFirestore.instance;
+      final batch = db.batch();
+      batch.set(db.collection('users').doc(uid), {
         'name': name,
         'nickname': _nicknameController.text.trim(),
         'about': _aboutController.text.trim(),
         'instagram': _cleanHandle(_instagramController.text),
         'website': _cleanUrl(_websiteController.text),
       }, SetOptions(merge: true));
+
+      final conversations = await db
+          .collection('conversations')
+          .where('participants', arrayContains: uid)
+          .get();
+
+      // Ҳар сӯҳбат танҳо participantNames-и ҳамин UID-ро иваз мекунад.
+      // Ин номро дар тарафи худи барномаи чатҳо нишон медиҳад.
+      for (final convo in conversations.docs) {
+        batch.set(convo.reference, {
+          'participantNames': {uid: name},
+        }, SetOptions(merge: true));
+      }
+      await batch.commit();
       if (!mounted) return;
       setState(() {
         _isSaving = false;
