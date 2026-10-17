@@ -5,7 +5,8 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test:web-search": "node --test web_search.test.mjs"
   },
   "engines": {
     "node": ">=18"
