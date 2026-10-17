@@ -6,6 +6,10 @@ import 'package:http/http.dart' as http;
 /// Калиди API ва дархост ба сервери Render лозим нест.
 /// Аввал DuckDuckGo HTML; агар натиҷа наояд, Wikipedia Search API.
 class ChatAiSearchService {
+  ChatAiSearchService({http.Client? client}) : _client = client ?? http.Client();
+
+  final http.Client _client;
+
   static final RegExp _intent = RegExp(
     r'(ҷустуҷӯ|ҷустуҷӯ кун|аз интернет|дар интернет|аз гугл|гуглда|google|search (?:the )?web|search online|look up|find online|интернетда ёб|найди в интернете|поиск в интернете|поищи)',
     caseSensitive: false,
@@ -14,7 +18,7 @@ class ChatAiSearchService {
   static bool isSearchQuestion(String prompt) => _intent.hasMatch(prompt);
 
   /// Барои саволҳои одӣ null; барои дархости ҷустуҷӯ ҷавоб бо истинод.
-  static Future<String?> answerIfSearch(String prompt) async {
+  Future<String?> answerIfSearch(String prompt) async {
     if (!isSearchQuestion(prompt)) return null;
     final query = _extractQuery(prompt);
     if (query.isEmpty) return _localized(
@@ -59,9 +63,9 @@ class ChatAiSearchService {
     return query.length > 180 ? query.substring(0, 180) : query;
   }
 
-  static Future<List<ChatAiWebResult>> _searchDuckDuckGo(String query) async {
+  Future<List<ChatAiWebResult>> _searchDuckDuckGo(String query) async {
     final uri = Uri.https('html.duckduckgo.com', '/html/', {'q': query});
-    final response = await http.get(uri, headers: {
+    final response = await _client.get(uri, headers: {
       'User-Agent': 'Mozilla/5.0 (compatible; ChatAppMessenger/1.0)',
       'Accept': 'text/html',
     }).timeout(const Duration(seconds: 10));
@@ -99,7 +103,7 @@ class ChatAiSearchService {
     return results;
   }
 
-  static Future<List<ChatAiWebResult>> _searchWikipedia(String query) async {
+  Future<List<ChatAiWebResult>> _searchWikipedia(String query) async {
     final uri = Uri.https('en.wikipedia.org', '/w/api.php', {
       'action': 'query',
       'list': 'search',
@@ -157,9 +161,9 @@ class ChatAiSearchService {
     }
     buffer.writeln(_localized(
       prompt,
-      '\\nИн истинодҳо натиҷаи ҷустуҷӯ мебошанд; пеш аз истифода маълумотро аз манбаъ санҷ.',
-      '\\nЭто результаты поиска; проверьте информацию в источнике перед использованием.',
-      '\\nThese are search results; verify details on the source pages before relying on them.',
+      '\nИн истинодҳо натиҷаи ҷустуҷӯ мебошанд; пеш аз истифода маълумотро аз манбаъ санҷ.',
+      '\nЭто результаты поиска; проверьте информацию в источнике перед использованием.',
+      '\nThese are search results; verify details on the source pages before relying on them.',
     ));
     return buffer.toString().trim();
   }
