@@ -57,6 +57,9 @@ jobs:
       - name: Test server link preview
         run: node --test server/otp-bot/link_preview.test.mjs
 
+      - name: Test ChatAI web search fallback
+        run: node --test server/otp-bot/web_search.test.mjs
+
       - name: Test server Agora token
         run: |
           cd server/otp-bot
