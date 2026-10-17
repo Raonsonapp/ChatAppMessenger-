@@ -22,6 +22,7 @@ class ChatAiService {
         )
         .timeout(const Duration(seconds: 40));
 
+    if (response.statusCode == 429) throw const ChatAiFailure(quotaExceeded: true);
     if (response.statusCode != 200) throw const ChatAiFailure();
     final data = jsonDecode(response.body);
     if (data is! Map<String, dynamic> ||
@@ -88,5 +89,6 @@ class GeneratedChatMedia {
 }
 
 class ChatAiFailure implements Exception {
-  const ChatAiFailure();
+  final bool quotaExceeded;
+  const ChatAiFailure({this.quotaExceeded = false});
 }
