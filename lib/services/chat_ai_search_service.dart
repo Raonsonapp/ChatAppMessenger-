@@ -127,7 +127,7 @@ class ChatAiSearchService {
       final slug = title.replaceAll(' ', '_');
       results.add(ChatAiWebResult(
         title: title,
-        url: 'https://en.wikipedia.org/wiki/\${Uri.encodeComponent(slug).replaceAll('%2F', '/')}',
+        url: 'https://en.wikipedia.org/wiki/${Uri.encodeComponent(slug).replaceAll('%2F', '/')}',
         snippet: _cleanHtml((item['snippet'] ?? '').toString()),
       ));
     }
@@ -151,7 +151,7 @@ class ChatAiSearchService {
       final item = results[i];
       buffer
         ..writeln()
-        ..writeln('\${i + 1}. \${item.title}');
+        ..writeln('${i + 1}. ${item.title}');
       if (item.snippet.isNotEmpty) buffer.writeln(item.snippet);
       buffer.writeln(item.url);
     }
