@@ -304,6 +304,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 )),
               ),
               if (_replyingTo != null) _buildReplyPreview(),
+              if (convo.isAIChat) _buildAiTools(),
               _buildInputBar(),
             ],
           ),
@@ -338,6 +339,131 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildAiTools() {
+    return SizedBox(
+      height: 54,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        children: [
+          _aiToolButton(LucideIcons.image, tr('k720'), 'image'),
+          const SizedBox(width: 8),
+          _aiToolButton(LucideIcons.video, tr('k721'), 'video'),
+          const SizedBox(width: 8),
+          _aiToolButton(LucideIcons.music, tr('k722'), 'music'),
+        ],
+      ),
+    );
+  }
+
+  Widget _aiToolButton(IconData icon, String label, String kind) {
+    return OutlinedButton.icon(
+      onPressed: _isAITyping || _isUploading ? null : () => _openMediaGeneration(kind),
+      icon: Icon(icon, size: 16),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.neonCyan,
+        side: BorderSide(color: AppColors.glassBorder),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
+
+  Future<void> _openMediaGeneration(String kind) async {
+    final promptController = TextEditingController();
+    var durationSeconds = 8;
+    final prompt = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            kind == 'image' ? tr('k720') : kind == 'video' ? tr('k721') : tr('k722'),
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: promptController,
+                  autofocus: true,
+                  maxLines: 4,
+                  minLines: 2,
+                  style: TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: tr('k042'),
+                    hintStyle: TextStyle(color: AppColors.textSecondary),
+                  ),
+                ),
+                if (kind == 'video') ...[
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('${tr('k723')}: $durationSeconds'),
+                  ),
+                  Slider(
+                    value: durationSeconds.toDouble(),
+                    min: 1,
+                    max: 30,
+                    divisions: 29,
+                    label: '$durationSeconds',
+                    onChanged: (value) => setDialogState(() => durationSeconds = value.round()),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Text(tr('k728'), style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(tr('k715')),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value = promptController.text.trim();
+                if (value.length >= 3) Navigator.pop(dialogContext, value);
+              },
+              child: Text(tr('k724')),
+            ),
+          ],
+        ),
+      ),
+    );
+    promptController.dispose();
+    if (prompt == null || prompt.trim().isEmpty || !mounted) return;
+
+    setState(() => _isAITyping = true);
+    try {
+      final result = await ChatAiService.generateMedia(
+        kind: kind,
+        prompt: prompt,
+        durationSeconds: durationSeconds,
+      );
+      await _messagesRef.add({
+        'text': prompt,
+        'senderId': 'ai_bot',
+        'isAI': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'mediaUrl': result.url,
+        'mediaType': kind == 'music' ? 'audio' : kind,
+        if (result.durationSeconds != null) 'mediaDuration': result.durationSeconds,
+      });
+      _scrollToBottom();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k726'))));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k730'))));
+      }
+    } finally {
+      if (mounted) setState(() => _isAITyping = false);
+    }
   }
 
   Widget _buildEmptyAiState() {
