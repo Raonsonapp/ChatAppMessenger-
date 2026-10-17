@@ -173,7 +173,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         prompt: prompt.trim(),
         durationSeconds: 30,
       );
-      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
       await _messagesRef.add({
         'text': prompt.trim(),
         'senderId': 'ai_bot',
