@@ -1,59 +1,47 @@
 # ChatApp OTP Bot
 
-Ин сервер SMS-и Firebase-ро иваз мекунад: корбар боти Telegram-ро оғоз мекунад,
-рақами телефони худро мубодила мекунад, ва бот дар ҳамон чат рамзи 6-рақама
-мефиристад. Апп он рамзро тавассути `/api/otp/verify` тасдиқ мекунад ва дар
-ҷавоб як Firebase custom token мегирад, то `signInWithCustomToken`-ро истифода
-барад (Firestore/Storage/Agora ҳамчунон бо ҳамон Firebase Auth UID кор мекунанд).
+Ин сервер барои воридшавии ChatApp бо рақами телефон тавассути Telegram истифода мешавад. Он инчунин endpoint-ҳои серверии тарҷума ва табдили овоз ба матнро таъмин мекунад. Калидҳои махфӣ бояд танҳо дар Environment-и хостинг бошанд.
 
-## Насб дар Railway
+## Deploy дар Render
 
-1. **Боти Telegram созед**: дар Telegram ба [@BotFather](https://t.me/BotFather)
-   нависед, `/newbot`-ро иҷро кунед, ном ва username диҳед — токенро нигоҳ доред.
-2. **Service Account-и Firebase**: Firebase Console → Project Settings →
-   [Service accounts](https://console.firebase.google.com/project/chatapp-57fb2/settings/serviceaccounts/adminsdk)
-   → "Generate new private key" — файли `.json` боргирӣ мешавад.
-3. Дар [railway.com](https://railway.com) лоиҳаи нав созед → "Deploy from GitHub
-   repo" → ҳамин репозиторийро интихоб кунед. **ҲАТМӢ:** дар Service →
-   Settings → Source → **Root Directory**-ро ба `server/otp-bot` танзим кунед.
-   Бе ин, Railway решаи репозиторий (лоиҳаи Flutter)-ро build карданӣ мешавад
-   ва бо хатогӣ мешиканад, чунки дар он ҷо `package.json` нест.
-4. Дар Variables-и Railway ду тағйирёбандаро илова кунед:
-   - `TELEGRAM_BOT_TOKEN` — токени BotFather
-   - `FIREBASE_SERVICE_ACCOUNT_JSON` — тамоми матни файли JSON-и қадами 2-ро
-     АЙНАН нусхабардорӣ карда дар ин ҷо часпонед (якҷоя бо `{` ва `}`).
-     Base64 лозим нест — Railway қиматҳои бисёрхаттаро қабул мекунад.
+1. Дар Telegram ба [@BotFather](https://t.me/BotFather) нависед, `/newbot`-ро иҷро кунед ва токени ботро нигоҳ доред.
+2. Дар Firebase Console → Project Settings → Service accounts ба [Firebase service accounts](https://console.firebase.google.com/project/chatapp-57fb2/settings/serviceaccounts/adminsdk) равед ва private key-и JSON-ро гиред.
+3. Дар [Render Dashboard](https://dashboard.render.com/) интихоб кунед: **New → Web Service** ва репозитории `Raonsonapp/ChatAppMessenger-`-ро пайваст кунед.
+4. Дар танзимоти service:
+   - **Runtime:** Docker
+   - **Dockerfile Path:** `server/otp-bot/Dockerfile`
+   - **Branch:** `main`
+   - Агар Render Root Directory талаб кунад, онро ба `server/otp-bot` гузоред ва боварӣ ҳосил кунед, ки Dockerfile path ба ҳамин ҷой мувофиқ аст.
+5. Дар **Environment** тағйирёбандаҳои зеринро илова кунед:
+   - `TELEGRAM_BOT_TOKEN` — токени аз BotFather гирифташуда
+   - `FIREBASE_SERVICE_ACCOUNT_JSON` — тамоми матни JSON-и private key
+   - `GEMINI_API_KEY` — барои `/api/transcribe` ва тарҷумаи серверӣ, агар Gemini-ро истифода мебаред
+   - `GEMINI_TRANSCRIBE_MODEL` — ихтиёрӣ; пешфарз `gemini-2.5-flash`
+   - `GEMINI_TRANSLATE_MODEL` — ихтиёрӣ; барои тарҷума низ пешфарз `gemini-2.5-flash`
+   - `TRANSLATE_ENDPOINT` ва `TRANSLATE_API_KEY` — танҳо агар тарҷумони алтернативии сервериро истифода баред
+   - `AGORA_APP_ID` ва `AGORA_APP_CERTIFICATE` — агар зангҳои Agora фаъол бошанд
+   - `OWNER_UID` — UID-и соҳиби барнома барои функсияҳои Plus; тафсилот дар `PLUS_SETUP.md`
+   - тағйирёбандаҳои `R2_*` — агар боркунии media тавассути Cloudflare R2 истифода шавад
+6. `Save, rebuild, and deploy`-ро интихоб кунед. Дар Render бояд public URL-и service пайдо шавад. Сервер бояд ба `process.env.PORT` ва host-и `0.0.0.0` гӯш кунад.
+7. Дар `lib/config/otp_server_config.dart` қимати `baseUrl`-ро ба URL-и воқеии Render service гузоред ва `telegramBotUsername`-ро ба username-и воқеии бот иваз кунед.
 
-   Тағйирёбандаҳои иловагӣ (ихтиёрӣ, вале барои баъзе имкониятҳо ҳатмӣ):
-   - `AGORA_APP_ID` ва `AGORA_APP_CERTIFICATE` — бе онҳо занг кор намекунад
-   - `R2_*` — бе онҳо боркунии медиа кор намекунад
-   - `OWNER_UID` — uid-и соҳиби ChatApp. Бе он панели соҳиб дар ҳељ ҳисоб
-     намоён намешавад ва гранти Plus 403 мегирад. Ниг. `PLUS_SETUP.md`
-   - `TRANSLATE_ENDPOINT` ва `TRANSLATE_API_KEY` — барои тарҷумаи серверӣ; тарҷумаи матнии дохили телефон аз Google ML Kit истифода мекунад.
-   - `GEMINI_API_KEY` — калиди Gemini API барои табдил додани паёми овозӣ ба матн. Калидро танҳо дар Railway Variables гузоред, на дар Flutter APK. Сатҳи ройгон маҳдудият дорад; файлҳои овозӣ барои транскрипсия ба Google фиристода мешаванд.
-   - `GEMINI_TRANSCRIBE_MODEL` — ихтиёрӣ, номи модели Gemini; пешфарз `gemini-2.5-flash`.
-5. Railway худкор deploy мекунад — тавассути `Dockerfile`-и ҳамин папка
-   (Settings → Build → Builder: Dockerfile). Пас аз deploy, дар Settings →
-   Networking → "Generate Domain" домен созед, target port-ро `3000` гузоред.
-6. Дар апп: `lib/config/otp_server_config.dart`-ро кушоед ва `baseUrl`-ро ба
-   ҳамон домен иваз кунед, ва `telegramBotUsername`-ро ба username-и боти
-   сохтаатон (бе `@`).
+## Амният
 
-> Эзоҳ: Railway "Config as Code"-ро (`railway.json`) аз кор мебарорад ва
-> хидматҳои нав онро истифода бурда наметавонанд, бинобар ин ҳамаи танзимот
-> дастӣ дар UI-и Railway гузошта мешаванд.
+- Калидҳои API, Telegram token ва Firebase service-account JSON-ро ҳеҷ гоҳ ба GitHub, APK ё паёмҳои чат нагузоред.
+- Агар калид тасодуфан дар репозитории ҷамъиятӣ нашр шавад, онро revoke/rotate кунед.
+- Овози корбар ҳангоми истифодаи транскрипсияи Gemini ба Google фиристода мешавад; барнома пеш аз фиристодан бояд розигии корбарро гирад.
 
 ## Санҷиши маҳаллӣ
 
 ```bash
 cd server/otp-bot
-cp .env.example .env   # TELEGRAM_BOT_TOKEN ва FIREBASE_SERVICE_ACCOUNT_JSON-ро пур кунед
+cp .env.example .env
 npm install
 npm start
 ```
 
+Дар муҳити маҳаллӣ `.env`-ро пур кунед. Файли `.env`-ро ба GitHub commit накунед.
+
 ## Маҳдудият
 
-Рамзҳо дар хотираи процесс (`Map` дар RAM) нигоҳ дошта мешаванд — агар сервер
-рестарт шавад, рамзҳои дар интизор буда гум мешаванд (корбар бояд аз нав
-дархост кунад). Барои миқёси калон, ин Map-ро ба Redis/Firestore иваз кунед.
+Рамзҳои якдафъаина ҳоло дар хотираи процесс нигоҳ дошта мешаванд; баъди restart онҳо гум мешаванд. Барои истеҳсолот ва миқёси калон, нигоҳдории муваққатиро ба Redis ё Firestore кӯчонидан лозим аст.
