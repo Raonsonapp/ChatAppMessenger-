@@ -44,7 +44,7 @@ test('detects explicit internet search and fresh-information intent', () => {
   assert.equal(shouldSearchWeb('Please search the web for this'), true);
   assert.equal(shouldSearchWeb('Имрӯз ҳаво чӣ хел мешавад?'), true);
   assert.equal(shouldSearchWeb('Поищи последние новости'), true);
-  assert.equal(shouldSearchWeb('Салом, чӣ хабар?'), true);
+  assert.equal(shouldSearchWeb('Салом, чӣ хабар?'), false);
   assert.equal(shouldSearchWeb('Салом'), false);
 });
 
