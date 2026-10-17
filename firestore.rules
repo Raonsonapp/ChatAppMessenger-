@@ -56,6 +56,12 @@ service cloud.firestore {
       match /devices/{deviceId} {
         allow read, write: if signedIn() && uid() == userId;
       }
+
+      // Таърихи ChatApp AI танҳо барои соҳиби ҳисоби воридшуда дастрас аст.
+      // Роҳи база: users/{uid}/aiChat/main/messages/{messageId}.
+      match /aiChat/{chatId}/messages/{messageId} {
+        allow read, write: if signedIn() && uid() == userId;
+      }
     }
 
     // Номҳои ягонаи корбар (`@username`).
