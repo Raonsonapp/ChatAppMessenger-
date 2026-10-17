@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:chatapp_messenger/services/chat_ai_search_service.dart';
+import 'package:chatapp/services/chat_ai_search_service.dart';
 
 void main() {
   group('ChatAiSearchService intent detection', () {
