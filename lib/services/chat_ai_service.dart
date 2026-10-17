@@ -91,6 +91,57 @@ class GeneratedChatMedia {
     required this.url,
     this.durationSeconds,
   });
+  static Future<GeneratedChatMedia> generateMedia({
+    required String kind,
+    required String prompt,
+    int durationSeconds = 30,
+  }) async {
+    if (!const {'image', 'video', 'music'}.contains(kind)) {
+      throw const ChatAiFailure();
+    }
+    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (token == null) throw const ChatAiFailure();
+
+    final response = await http
+        .post(
+          Uri.parse('${OtpServerConfig.baseUrl}/api/ai/generate/$kind'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'prompt': prompt,
+            if (kind == 'video') 'durationSeconds': durationSeconds,
+          }),
+        )
+        .timeout(const Duration(seconds: 100));
+
+    if (response.statusCode != 200) throw const ChatAiFailure();
+    final data = jsonDecode(response.body);
+    if (data is! Map<String, dynamic> ||
+        data['url'] is! String ||
+        !(data['url'] as String).startsWith('https://')) {
+      throw const ChatAiFailure();
+    }
+    return GeneratedChatMedia(
+      kind: kind,
+      url: data['url'] as String,
+      durationSeconds: data['durationSeconds'] is num
+          ? (data['durationSeconds'] as num).toInt()
+          : null,
+    );
+  }
+}
+
+class GeneratedChatMedia {
+  final String kind;
+  final String url;
+  final int? durationSeconds;
+  const GeneratedChatMedia({
+    required this.kind,
+    required this.url,
+    this.durationSeconds,
+  });
 }
 
 class ChatAiFailure implements Exception {
