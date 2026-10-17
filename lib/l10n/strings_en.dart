@@ -705,10 +705,11 @@ const Map<String, String> stringsEn = {
   'k707': '3D wallpapers',
   'k708': 'Landscapes',
   'k709': 'To transcribe this voice message, its audio file will be sent to Google. Continue?',
-  'k710': 'Transcription is not enabled yet. Add a Gemini API key as GEMINI_API_KEY in Railway Variables.',
+  'k710': 'Transcription is unavailable or the server has not updated yet. Check GEMINI_API_KEY in Render Environment.',
   'k712': 'Audio file is too large (over 5 MB).',
   'k713': 'Transcription limit reached. Try again later.',
   'k714': 'Continue',
   'k715': 'Cancel',
   'k716': 'Copy',
+  'k717': 'AI could not respond. Check the connection, Gemini key, and server status.',
 };
