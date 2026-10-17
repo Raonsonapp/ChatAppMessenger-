@@ -7,8 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
 import '../models/chat_conversation.dart';
-import '../models/mock_ai_replies.dart';
 import '../services/media_service.dart';
+import '../services/chat_ai_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
@@ -35,7 +35,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isAITyping = false;
   bool _isUploading = false;
-  int _lastReplyIndex = -1;
   ChatMessage? _replyingTo;
 
   CollectionReference<Map<String, dynamic>> get _messagesRef => FirebaseFirestore.instance
@@ -129,9 +128,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       'mediaType': 'sticker',
     });
     _scrollToBottom();
-    if (widget.conversation.isAIChat) {
-      _simulateAIReply();
-    }
   }
 
   Future<void> _sendImageMessage(XFile file, {String mediaType = 'image'}) async {
@@ -148,9 +144,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         'mediaType': mediaType,
       });
       _scrollToBottom();
-      if (widget.conversation.isAIChat) {
-        _simulateAIReply();
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -181,7 +174,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _scrollToBottom();
 
     if (widget.conversation.isAIChat) {
-      _simulateAIReply();
+      _requestAIReply(text);
     }
   }
 
@@ -189,30 +182,48 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     await _messagesRef.doc(message.id).update({'deleted': true});
   }
 
-  // ЭЗОҲ: ин ҷавоб ҳанӯз шабеҳсозишуда аст (на AI-и воқеӣ). Барои пайвасти
-  // воқеӣ ба Gemini API, дар ин ҷо ба ҷои интихоб аз рӯйхат, дархости HTTP
-  // фиристода, посухи гирифташударо истифода баред.
-  void _simulateAIReply() {
+  /// Ба AI-и воқеӣ тавассути сервер муроҷиат мекунад; ҷавобҳои сохта истифода намешаванд.
+  Future<void> _requestAIReply(String latestPrompt) async {
+    if (!mounted) return;
     setState(() => _isAITyping = true);
     _scrollToBottom();
-    Future.delayed(const Duration(milliseconds: 1400), () async {
-      if (!mounted) return;
-      int index = DateTime.now().millisecond % MockAIReplies.replies.length;
-      if (index == _lastReplyIndex) {
-        index = (index + 1) % MockAIReplies.replies.length;
+    try {
+      final snapshot = await _messagesRef
+          .orderBy('createdAt', descending: false)
+          .limitToLast(12)
+          .get();
+      final history = <Map<String, String>>[];
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final text = (data['text'] ?? '').toString().trim();
+        if (text.isEmpty || data['deleted'] == true) continue;
+        history.add({
+          'role': data['isAI'] == true ? 'assistant' : 'user',
+          'text': text,
+        });
       }
-      _lastReplyIndex = index;
-      final reply = MockAIReplies.replies[index];
+      if (history.isEmpty ||
+          history.last['role'] != 'user' ||
+          history.last['text'] != latestPrompt) {
+        history.add({'role': 'user', 'text': latestPrompt});
+      }
+      final reply = await ChatAiService.reply(history);
       await _messagesRef.add({
         'text': reply,
         'senderId': 'ai_bot',
         'isAI': true,
         'createdAt': FieldValue.serverTimestamp(),
       });
-      if (!mounted) return;
-      setState(() => _isAITyping = false);
       _scrollToBottom();
-    });
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('k714'))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isAITyping = false);
+    }
   }
 
   @override
