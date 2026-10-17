@@ -112,7 +112,7 @@ class ChatAiSearchService {
       'utf8': '1',
       'srlimit': '5',
     });
-    final response = await http.get(uri, headers: {
+    final response = await _client.get(uri, headers: {
       'User-Agent': 'ChatAppMessenger/1.0 (web search fallback)',
       'Accept': 'application/json',
     }).timeout(const Duration(seconds: 10));
