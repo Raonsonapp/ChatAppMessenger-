@@ -638,20 +638,127 @@ const translateQuota = new Map();
  * матни аслӣ ҳамчун «тарҷума» баргардонида намешавад, зеро ин корбарро
  * фиреб медиҳад.
  */
+
+/**
+ * Квота дар Firestore нигоҳ дошта мешавад, то restart/sleep-и Render онро сифр накунад.
+ * Bucket-ҳои вақтӣ ҳадди умумии хароҷотро нигоҳ медоранд; кэш ва маҳдудияти per-user
+ * аз зиёд шудани даъватҳои такрорӣ пешгирӣ мекунанд.
+ */
+async function reservePersistentQuota({ uid, action, userLimit, globalLimit, windowMs }) {
+  const now = Date.now();
+  const bucket = Math.floor(now / windowMs);
+  const db = getFirestore();
+  const userRef = db.collection('chat_ai_quotas').doc(\`user_\${uid}_\${action}_\${bucket}\`);
+  const globalRef = db.collection('chat_ai_quotas').doc(\`global_\${action}_\${bucket}\`);
+
+  return db.runTransaction(async (tx) => {
+    const refs = globalLimit > 0 ? [userRef, globalRef] : [userRef];
+    const snaps = await Promise.all(refs.map((ref) => tx.get(ref)));
+    const userCount = Number(snaps[0].get('count') || 0);
+    const globalCount = globalLimit > 0 ? Number(snaps[1].get('count') || 0) : 0;
+    if (userCount >= userLimit || (globalLimit > 0 && globalCount >= globalLimit)) {
+      return { allowed: false, userRemaining: Math.max(0, userLimit - userCount), globalRemaining: globalLimit > 0 ? Math.max(0, globalLimit - globalCount) : null };
+    }
+    tx.set(userRef, { count: userCount + 1, action, uid, bucket, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    if (globalLimit > 0) {
+      tx.set(globalRef, { count: globalCount + 1, action, bucket, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    }
+    return { allowed: true, userRemaining: userLimit - userCount - 1, globalRemaining: globalLimit > 0 ? globalLimit - globalCount - 1 : null };
+  });
+}
+
+const AI_CHAT_DAILY_USER_LIMIT = Number(process.env.AI_CHAT_DAILY_USER_LIMIT || 20);
+const AI_CHAT_DAILY_GLOBAL_LIMIT = Number(process.env.AI_CHAT_DAILY_GLOBAL_LIMIT || 300);
+const AI_SEARCH_DAILY_USER_LIMIT = Number(process.env.AI_SEARCH_DAILY_USER_LIMIT || 10);
+const AI_SEARCH_MONTHLY_GLOBAL_LIMIT = Number(process.env.AI_SEARCH_MONTHLY_GLOBAL_LIMIT || 500);
+const AI_CACHE_TTL_MS = 10 * 60 * 1000;
+const aiResponseCache = new Map();
+
+function normalizeAiCacheKey(value) {
+  return String(value).trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 500);
+}
+
+function isExplicitWebSearchRequest(prompt) {
+  return /(?:\bsearch(?:\s+the\s+web|\s+online)?\b|\blook\s+up\b|\bfind\s+(?:sources|links|information|articles)\b|\bcurrent\s+(?:news|information|price|events?)\b|\blatest\b|\bsource(?:s)?\b|ҷустуҷӯ|ҷустучу|аз\s+интернет\s+(?:ёб|ҷустуҷӯ|ҷустучу)|пайванд(?:ҳо)?|манбаъ(?:ҳо)?|маълумоти\s+охирин|маълумот\s+(?:дар\s+бораи|оид\s+ба)|шеъри\s+\S+|достони\s+\S+|тарҷумаи\s+ҳол(?:и)?\s+\S+|найди|найти|поищи|поиск\s+в\s+интернете|ссылк(?:и|у)|источник(?:и|ов)|последние\s+новости|актуальн(?:ая|ые)\s+информация|информаци\w*\s+о\s+\S+|стихотворени\w*\s+\S+|биографи\w*\s+\S+)/i.test(prompt);
+}
+
+async function searchOnline(query, uid) {
+  if (!process.env.TAVILY_API_KEY) return { notConfigured: true };
+  const cacheKey = normalizeAiCacheKey(query);
+  const cached = aiResponseCache.get('search:' + cacheKey);
+  if (cached && Date.now() - cached.at < AI_CACHE_TTL_MS) {
+    return { ...cached.value, cached: true };
+  }
+
+  // Per-user: daily. Global: monthly. They are separate persistent counters.
+  const dailyQuota = await reservePersistentQuota({
+    uid,
+    action: 'web_search_daily',
+    userLimit: AI_SEARCH_DAILY_USER_LIMIT,
+    globalLimit: 0,
+    windowMs: 24 * 60 * 60 * 1000,
+  });
+  if (!dailyQuota.allowed) return { quotaExceeded: true };
+  const monthlyQuota = await reservePersistentQuota({
+    uid: 'all-users',
+    action: 'web_search_monthly',
+    userLimit: AI_SEARCH_MONTHLY_GLOBAL_LIMIT,
+    globalLimit: 0,
+    windowMs: 30 * 24 * 60 * 60 * 1000,
+  });
+  if (!monthlyQuota.allowed) return { quotaExceeded: true };
+
+  const response = await fetch('https://api.tavily.com/search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      api_key: process.env.TAVILY_API_KEY,
+      query: String(query).slice(0, 400),
+      search_depth: 'basic',
+      max_results: 5,
+      include_answer: true,
+      include_raw_content: false,
+    }),
+    signal: AbortSignal.timeout(18000),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    console.warn('Tavily web search failed:', response.status);
+    return null;
+  }
+
+  const results = Array.isArray(data.results) ? data.results.slice(0, 5) : [];
+  const answer = typeof data.answer === 'string' ? data.answer.trim() : '';
+  const sources = results.map((item) => ({
+    title: String(item.title || 'Web result').slice(0, 180),
+    url: String(item.url || ''),
+    content: String(item.content || '').slice(0, 600),
+  })).filter((item) => item.url.startsWith('https://') || item.url.startsWith('http://'));
+
+  if (!answer && !sources.length) return null;
+  const value = { answer, sources };
+  aiResponseCache.set('search:' + cacheKey, { at: Date.now(), value });
+  return value;
+}
+
+function formatWebSearchReply(result) {
+  const lines = [];
+  if (result.answer) lines.push('Натиҷаи ҷустуҷӯи интернет (хулосаи провайдер; маълумоти муҳимро аз манбаъҳо санҷед):', result.answer);
+  else lines.push('Манбаъҳои ёфтшуда дар интернет:');
+  for (const [index, source] of (result.sources || []).entries()) {
+    lines.push(\`\${index + 1}. \${source.title}\`);
+    if (source.content) lines.push(source.content);
+    lines.push(source.url);
+  }
+  lines.push('Манбаъҳо аз интернет гирифта шуданд. Агар хоҳед, метавонам онҳоро шарҳ диҳам ё ба эссе табдил диҳам.');
+  return lines.join('\n\n').slice(0, 6500);
+}
+
 /** AI-и ChatApp. Калиди Gemini танҳо дар environment-и сервер нигоҳ дошта мешавад. */
-const AI_CHAT_QUOTA_PER_HOUR = 30;
-const aiChatQuota = new Map();
 
 app.post('/api/ai/chat', async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
-
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(503).json({ error: 'ai-not-configured' });
-  }
-  if (overQuota(aiChatQuota, user.uid, AI_CHAT_QUOTA_PER_HOUR)) {
-    return res.status(429).json({ error: 'too-many-requests' });
-  }
 
   const rawMessages = Array.isArray(req.body?.messages) ? req.body.messages : [];
   const messages = rawMessages
@@ -665,6 +772,53 @@ app.post('/api/ai/chat', async (req, res) => {
   if (!messages.length) return res.status(400).json({ error: 'messages-required' });
   if (messages.reduce((sum, item) => sum + item.text.length, 0) > 10000) {
     return res.status(413).json({ error: 'conversation-too-long' });
+  }
+
+  const latestPrompt = messages[messages.length - 1].text;
+  const cacheKey = normalizeAiCacheKey(messages.map((item) => item.role + ':' + item.text).join('\n'));
+  const cached = aiResponseCache.get('reply:' + cacheKey);
+  if (cached && Date.now() - cached.at < AI_CACHE_TTL_MS) {
+    return res.json({ reply: cached.value, source: 'cache', cached: true });
+  }
+
+  if (isExplicitWebSearchRequest(latestPrompt)) {
+    try {
+      const result = await searchOnline(latestPrompt, user.uid);
+      if (result?.quotaExceeded) {
+        return res.status(429).json({ error: 'search-quota-reached', message: 'Лимити ҷустуҷӯи интернет ба охир расид. Баъдтар боз кӯшиш кунед.' });
+      }
+      if (result?.notConfigured) {
+        return res.status(503).json({ error: 'web-search-not-configured', message: 'Ҷустуҷӯи интернет ҳоло танзим нашудааст. TAVILY_API_KEY-ро дар муҳити сервер илова кунед.' });
+      }
+      if (result) {
+        const reply = formatWebSearchReply(result);
+        aiResponseCache.set('reply:' + cacheKey, { at: Date.now(), value: reply });
+        return res.json({ reply, source: 'web', sources: result.sources || [] });
+      }
+      return res.status(502).json({ error: 'web-search-unavailable', message: 'Ҷустуҷӯи интернет ҳоло ҷавоб надод. Баъдтар боз кӯшиш кунед.' });
+    } catch (err) {
+      console.warn('Online search error:', err?.message ?? err);
+      return res.status(502).json({ error: 'web-search-unavailable', message: 'Ҷустуҷӯи интернет ҳоло ҷавоб надод. Баъдтар боз кӯшиш кунед.' });
+    }
+    // Роҳи ҷустуҷӯ ҳеҷ гоҳ бе натиҷаи воқеии интернет ба модели генеративӣ намегузарад.
+  }
+
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(503).json({ error: 'ai-not-configured' });
+  }
+  const quota = await reservePersistentQuota({
+    uid: user.uid,
+    action: 'chat',
+    userLimit: AI_CHAT_DAILY_USER_LIMIT,
+    globalLimit: AI_CHAT_DAILY_GLOBAL_LIMIT,
+    windowMs: 24 * 60 * 60 * 1000,
+  });
+  if (!quota.allowed) {
+    return res.status(429).json({
+      error: 'ai-quota-reached',
+      message: 'Лимити ройгони ChatAI муваққатан ба охир расид. Пас аз нав шудани квота боз кӯшиш кунед.',
+      userRemaining: quota.userRemaining,
+    });
   }
 
   try {
@@ -700,7 +854,8 @@ app.post('/api/ai/chat', async (req, res) => {
       .join('')
       .trim();
     if (!reply) return res.status(502).json({ error: 'ai-empty-response' });
-    return res.json({ reply });
+    aiResponseCache.set('reply:' + cacheKey, { at: Date.now(), value: reply });
+    return res.json({ reply, source: 'gemini', cached: false });
   } catch (err) {
     console.warn('Gemini AI chat error:', err?.message ?? err);
     return res.status(502).json({ error: 'ai-request-failed' });
