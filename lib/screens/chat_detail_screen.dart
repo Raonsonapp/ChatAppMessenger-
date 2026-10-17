@@ -34,6 +34,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isAITyping = false;
+  bool _isGeneratingMedia = false;
   bool _isUploading = false;
   ChatMessage? _replyingTo;
 
@@ -88,6 +89,111 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   void _fillPrompt(String prompt) {
     _controller.text = prompt;
     _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
+  }
+
+  Future<void> _showAiMediaMenu() async {
+    final kind = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+          border: Border.all(color: AppColors.glassBorder),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(LucideIcons.image, color: AppColors.neonCyan),
+              title: Text(tr('k720'), style: TextStyle(color: AppColors.textPrimary)),
+              onTap: () => Navigator.pop(sheetContext, 'image'),
+            ),
+            ListTile(
+              leading: Icon(LucideIcons.video, color: AppColors.neonCyan),
+              title: Text(tr('k721'), style: TextStyle(color: AppColors.textPrimary)),
+              onTap: () => Navigator.pop(sheetContext, 'video'),
+            ),
+            ListTile(
+              leading: Icon(LucideIcons.music, color: AppColors.neonCyan),
+              title: Text(tr('k722'), style: TextStyle(color: AppColors.textPrimary)),
+              onTap: () => Navigator.pop(sheetContext, 'music'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (kind != null && mounted) await _openMediaGeneration(kind);
+  }
+
+  Future<void> _openMediaGeneration(String kind) async {
+    final promptController = TextEditingController();
+    final prompt = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          kind == 'image' ? tr('k720') : kind == 'video' ? tr('k721') : tr('k722'),
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: TextField(
+          controller: promptController,
+          autofocus: true,
+          maxLines: 4,
+          minLines: 2,
+          style: TextStyle(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: tr('k033'),
+            hintStyle: TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(tr('k715')),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = promptController.text.trim();
+              if (value.length >= 3) Navigator.pop(dialogContext, value);
+            },
+            child: Text(tr('k724')),
+          ),
+        ],
+      ),
+    );
+    promptController.dispose();
+    if (prompt == null || prompt.trim().length < 3 || !mounted) return;
+
+    setState(() => _isGeneratingMedia = true);
+    try {
+      final result = await ChatAiService.generateMedia(
+        kind: kind,
+        prompt: prompt.trim(),
+        durationSeconds: 30,
+      );
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+      await _messagesRef.add({
+        'text': prompt.trim(),
+        'senderId': 'ai_bot',
+        'isAI': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'mediaUrl': result.url,
+        'mediaType': kind == 'music' ? 'audio' : kind,
+        if (result.durationSeconds != null) 'mediaDuration': result.durationSeconds,
+        'mediaName': 'ChatAI ${result.kind}',
+      });
+      _scrollToBottom();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('k730'))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingMedia = false);
+    }
   }
 
   void _openEmojiPicker() {
@@ -285,9 +391,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     return ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      itemCount: docs.length + (_isAITyping ? 1 : 0),
+                      itemCount: docs.length + ((_isAITyping || _isGeneratingMedia) ? 1 : 0),
                       itemBuilder: (context, index) {
-                        if (_isAITyping && index == docs.length) {
+                        if ((_isAITyping || _isGeneratingMedia) && index == docs.length) {
                           return const TypingBubble();
                         }
                         final message = ChatMessage.fromDoc(docs[index]);
@@ -607,6 +713,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     onPressed: _openEmojiPicker,
                     icon: Icon(LucideIcons.face_slightly_smiling, color: AppColors.textSecondary, size: 21),
                   ),
+                  if (widget.conversation.isAIChat)
+                    IconButton(
+                      onPressed: _isGeneratingMedia ? null : _showAiMediaMenu,
+                      icon: Icon(LucideIcons.sparkles, color: AppColors.neonCyan, size: 20),
+                    ),
                   IconButton(
                     onPressed: _openStickerPicker,
                     icon: Icon(LucideIcons.sticker, color: AppColors.textSecondary, size: 20),
