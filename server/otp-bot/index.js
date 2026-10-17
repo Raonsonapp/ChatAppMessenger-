@@ -679,25 +679,34 @@ function normalizeAiCacheKey(value) {
 }
 
 function isExplicitWebSearchRequest(prompt) {
-  return /(?:\bsearch(?:\s+the\s+web|\s+online)?\b|\blook\s+up\b|\bfind\s+(?:sources|links|information|articles)\b|\bcurrent\s+(?:news|information|price|events?)\b|\blatest\b|\bsource(?:s)?\b|ҷустуҷӯ|ҷустучу|аз\s+интернет\s+(?:ёб|ҷустуҷӯ|ҷустучу)|пайванд(?:ҳо)?|манбаъ(?:ҳо)?|маълумоти\s+охирин|найди|найти|поищи|поиск\s+в\s+интернете|ссылк(?:и|у)|источник(?:и|ов)|последние\s+новости|актуальн(?:ая|ые)\s+информация)/i.test(prompt);
+  return /(?:\bsearch(?:\s+the\s+web|\s+online)?\b|\blook\s+up\b|\bfind\s+(?:sources|links|information|articles)\b|\bcurrent\s+(?:news|information|price|events?)\b|\blatest\b|\bsource(?:s)?\b|ҷустуҷӯ|ҷустучу|аз\s+интернет\s+(?:ёб|ҷустуҷӯ|ҷустучу)|пайванд(?:ҳо)?|манбаъ(?:ҳо)?|маълумоти\s+охирин|маълумот\s+(?:дар\s+бораи|оид\s+ба)|шеъри\s+\S+|достони\s+\S+|тарҷумаи\s+ҳол(?:и)?\s+\S+|найди|найти|поищи|поиск\s+в\s+интернете|ссылк(?:и|у)|источник(?:и|ов)|последние\s+новости|актуальн(?:ая|ые)\s+информация|информаци\w*\s+о\s+\S+|стихотворени\w*\s+\S+|биографи\w*\s+\S+)/i.test(prompt);
 }
 
 async function searchOnline(query, uid) {
-  if (!process.env.TAVILY_API_KEY) return null;
-  const quota = await reservePersistentQuota({
-    uid,
-    action: 'web_search',
-    userLimit: AI_SEARCH_DAILY_USER_LIMIT,
-    globalLimit: AI_SEARCH_MONTHLY_GLOBAL_LIMIT,
-    windowMs: 30 * 24 * 60 * 60 * 1000,
-  });
-  if (!quota.allowed) return { quotaExceeded: true };
-
+  if (!process.env.TAVILY_API_KEY) return { notConfigured: true };
   const cacheKey = normalizeAiCacheKey(query);
   const cached = aiResponseCache.get('search:' + cacheKey);
   if (cached && Date.now() - cached.at < AI_CACHE_TTL_MS) {
     return { ...cached.value, cached: true };
   }
+
+  // Per-user: daily. Global: monthly. They are separate persistent counters.
+  const dailyQuota = await reservePersistentQuota({
+    uid,
+    action: 'web_search_daily',
+    userLimit: AI_SEARCH_DAILY_USER_LIMIT,
+    globalLimit: 0,
+    windowMs: 24 * 60 * 60 * 1000,
+  });
+  if (!dailyQuota.allowed) return { quotaExceeded: true };
+  const monthlyQuota = await reservePersistentQuota({
+    uid: 'all-users',
+    action: 'web_search_monthly',
+    userLimit: AI_SEARCH_MONTHLY_GLOBAL_LIMIT,
+    globalLimit: 0,
+    windowMs: 30 * 24 * 60 * 60 * 1000,
+  });
+  if (!monthlyQuota.allowed) return { quotaExceeded: true };
 
   const response = await fetch('https://api.tavily.com/search', {
     method: 'POST',
@@ -778,16 +787,20 @@ app.post('/api/ai/chat', async (req, res) => {
       if (result?.quotaExceeded) {
         return res.status(429).json({ error: 'search-quota-reached', message: 'Лимити ҷустуҷӯи интернет ба охир расид. Баъдтар боз кӯшиш кунед.' });
       }
+      if (result?.notConfigured) {
+        return res.status(503).json({ error: 'web-search-not-configured', message: 'Ҷустуҷӯи интернет ҳоло танзим нашудааст. TAVILY_API_KEY-ро дар муҳити сервер илова кунед.' });
+      }
       if (result) {
         const reply = formatWebSearchReply(result);
         aiResponseCache.set('reply:' + cacheKey, { at: Date.now(), value: reply });
         return res.json({ reply, source: 'web', sources: result.sources || [] });
       }
+      return res.status(502).json({ error: 'web-search-unavailable', message: 'Ҷустуҷӯи интернет ҳоло ҷавоб надод. Баъдтар боз кӯшиш кунед.' });
     } catch (err) {
       console.warn('Online search error:', err?.message ?? err);
+      return res.status(502).json({ error: 'web-search-unavailable', message: 'Ҷустуҷӯи интернет ҳоло ҷавоб надод. Баъдтар боз кӯшиш кунед.' });
     }
-    // Агар search provider танзим нашуда бошад, ба модели AI мегузарем,
-    // вале ҳеҷ гоҳ натиҷаи интернетро вонамуд намекунем.
+    // Роҳи ҷустуҷӯ ҳеҷ гоҳ бе натиҷаи воқеии интернет ба модели генеративӣ намегузарад.
   }
 
   if (!process.env.GEMINI_API_KEY) {
