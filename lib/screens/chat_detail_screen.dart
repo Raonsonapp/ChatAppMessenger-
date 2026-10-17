@@ -208,7 +208,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _scrollToBottom();
     try {
       // Ҷустуҷӯи веб мустақим аз телефон иҷро мешавад: DuckDuckGo, баъд Wikipedia.
-      final searchReply = await ChatAiSearchService.answerIfSearch(latestPrompt);
+      final searchReply = await ChatAiSearchService().answerIfSearch(latestPrompt);
       if (searchReply != null) {
         await _messagesRef.add({
           'text': searchReply,
