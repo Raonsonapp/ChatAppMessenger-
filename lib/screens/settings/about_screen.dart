@@ -12,7 +12,7 @@ class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
   // Бо `version` дар pubspec.yaml мувофиқ нигоҳ дошта шавад.
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.0.2';
 
   @override
   Widget build(BuildContext context) {

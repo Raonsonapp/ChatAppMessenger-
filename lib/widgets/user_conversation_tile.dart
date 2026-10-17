@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../theme/app_theme.dart';
@@ -105,13 +106,24 @@ class UserConversationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     AppScope.watch(context);
-    final name = conversation.otherName(currentUid);
+    final profileName = conversation.otherName(currentUid);
     final otherUid = conversation.otherUid(currentUid);
     final unread = conversation.unreadFor(currentUid);
     final draft = draftStore.read(conversation.id);
     final muted = conversation.isMuted(currentUid);
 
-    return Material(
+    final localNameRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUid)
+        .collection('localNames')
+        .doc(otherUid);
+
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: localNameRef.snapshots(),
+      builder: (context, aliasSnapshot) {
+        final alias = (aliasSnapshot.data?.data()?['name'] as String?)?.trim() ?? '';
+        final name = alias.isNotEmpty ? alias : profileName;
+        return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
@@ -223,6 +235,8 @@ class UserConversationTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+      },
     );
   }
 }
