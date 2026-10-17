@@ -162,7 +162,7 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Ҳолати бот, то бидуни логҳои Railway ҳам фаҳмидан мумкин бошад, ки бот дар
+// Ҳолати бот, то бидуни логҳои хостинг ҳам фаҳмидан мумкин бошад, ки бот дар
 // кадом усул кор мекунад ва чаро.
 const botStatus = { mode: 'оғоз нашуда', detail: null };
 
@@ -632,6 +632,75 @@ const translateQuota = new Map();
  * матни аслӣ ҳамчун «тарҷума» баргардонида намешавад, зеро ин корбарро
  * фиреб медиҳад.
  */
+/** AI-и ChatApp. Калиди Gemini танҳо дар environment-и сервер нигоҳ дошта мешавад. */
+const AI_CHAT_QUOTA_PER_HOUR = 30;
+const aiChatQuota = new Map();
+
+app.post('/api/ai/chat', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(503).json({ error: 'ai-not-configured' });
+  }
+  if (overQuota(aiChatQuota, user.uid, AI_CHAT_QUOTA_PER_HOUR)) {
+    return res.status(429).json({ error: 'too-many-requests' });
+  }
+
+  const rawMessages = Array.isArray(req.body?.messages) ? req.body.messages : [];
+  const messages = rawMessages
+    .slice(-12)
+    .map((item) => ({
+      role: item?.role === 'assistant' ? 'model' : 'user',
+      text: String(item?.text ?? '').trim().slice(0, 2500),
+    }))
+    .filter((item) => item.text.length > 0);
+
+  if (!messages.length) return res.status(400).json({ error: 'messages-required' });
+  if (messages.reduce((sum, item) => sum + item.text.length, 0) > 10000) {
+    return res.status(413).json({ error: 'conversation-too-long' });
+  }
+
+  try {
+    const model = process.env.GEMINI_CHAT_MODEL || 'gemini-2.5-flash';
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/' +
+        encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(process.env.GEMINI_API_KEY),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{
+              text: 'You are ChatApp AI, a helpful multilingual assistant. Reply in the language used by the user unless they ask otherwise. Be accurate, concise, and transparent about uncertainty. Keep responses safe and age-appropriate; do not generate explicit sexual content. Never claim you performed actions outside this chat.',
+            }],
+          },
+          contents: messages.map((item) => ({
+            role: item.role,
+            parts: [{ text: item.text }],
+          })),
+          generationConfig: { temperature: 0.6, maxOutputTokens: 1200 },
+        }),
+        signal: AbortSignal.timeout(35000),
+      },
+    );
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.warn('Gemini AI chat failed:', response.status);
+      return res.status(response.status === 429 ? 429 : 502).json({ error: 'ai-request-failed' });
+    }
+    const reply = (data?.candidates?.[0]?.content?.parts ?? [])
+      .map((part) => typeof part.text === 'string' ? part.text : '')
+      .join('')
+      .trim();
+    if (!reply) return res.status(502).json({ error: 'ai-empty-response' });
+    return res.json({ reply });
+  } catch (err) {
+    console.warn('Gemini AI chat error:', err?.message ?? err);
+    return res.status(502).json({ error: 'ai-request-failed' });
+  }
+});
+
 app.post('/api/translate', async (req, res) => {
   const authHeader = req.headers.authorization || '';
   const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
