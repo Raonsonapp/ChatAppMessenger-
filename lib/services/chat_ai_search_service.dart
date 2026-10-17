@@ -52,15 +52,12 @@ class ChatAiSearchService {
 
   static String _extractQuery(String prompt) {
     var query = prompt.trim();
+    query = query.replaceFirst(RegExp(r'^(?:лутфан\s+)', caseSensitive: false), '');
     query = query.replaceFirst(
       RegExp(
-        r'^(?:лутфан\s+)?(?:аз интернет\s+(?:дар бораи\s+)?|дар интернет\s+|дар бораи\s+)?(?:ҷустуҷӯ(?:\s+кун)?|аз интернет ёб|аз гугл ёб|гуглда ёб|интернетда ёб|search (?:the )?web for|search online for|look up|find online|найди в интернете|поищи|поиск в интернете)\s*[:,-]?\s*',
+        r'^(?:аз интернет\s+(?:дар бораи\s+)?|дар интернет\s+|дар бораи\s+|гуглда ёб|интернетда ёб|аз гугл ёб|аз интернет ёб|search (?:the )?web for|search online for|look up|find online|найди в интернете|поиск в интернете|поищи|ҷустуҷӯ(?:\s+кун)?|google)\s*[:,-]?\s*',
         caseSensitive: false,
       ),
-      '',
-    );
-    query = query.replaceFirst(
-      RegExp(r'^(?:аз интернет|дар интернет|аз гугл|google)\s*[:,-]?\s*', caseSensitive: false),
       '',
     );
     query = query.replaceFirst(
