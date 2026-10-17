@@ -819,7 +819,6 @@ app.post('/api/ai/generate/:kind', async (req, res) => {
       body: JSON.stringify({
         prompt,
         ...(durationSeconds !== undefined ? { durationSeconds } : {}),
-        userId: user.uid,
       }),
       signal: AbortSignal.timeout(90000),
     });
