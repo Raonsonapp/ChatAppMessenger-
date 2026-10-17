@@ -9,6 +9,7 @@ import '../models/chat_message.dart';
 import '../models/chat_conversation.dart';
 import '../services/media_service.dart';
 import '../services/chat_ai_service.dart';
+import '../services/chat_ai_weather_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
@@ -204,6 +205,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     setState(() => _isAITyping = true);
     _scrollToBottom();
     try {
+      // Обу ҳаво мустақим аз API-и ройгон гирифта мешавад: сервери AI истифода намешавад.
+      final weatherReply = await ChatAiWeatherService.answerIfWeather(latestPrompt);
+      if (weatherReply != null) {
+        await _messagesRef.add({
+          'text': weatherReply,
+          'senderId': 'ai_bot',
+          'isAI': true,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        _scrollToBottom();
+        return;
+      }
       final snapshot = await _messagesRef
           .orderBy('createdAt', descending: false)
           .limitToLast(12)
