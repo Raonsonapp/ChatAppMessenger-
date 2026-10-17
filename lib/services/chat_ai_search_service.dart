@@ -5,8 +5,9 @@ import 'package:http/http.dart' as http;
 /// Ҷустуҷӯи мустақими веб аз телефони корбар.
 /// Аввал DuckDuckGo; агар натиҷа наояд, Wikipedia Search API.
 class ChatAiSearchService {
-  ChatAiSearchService({http.Client? client}) : _client = client ?? http.Client();
+  ChatAiSearchService({http.Client? client}) : _client = client ?? _sharedClient;
 
+  static final http.Client _sharedClient = http.Client();
   final http.Client _client;
 
   static final RegExp _intent = RegExp(
