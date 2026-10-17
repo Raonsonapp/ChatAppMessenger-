@@ -143,7 +143,7 @@ function shouldSearchWeb(value) {
   const text = String(value ?? '').toLocaleLowerCase().normalize('NFKC');
   if (!text.trim()) return false;
   return /\b(search (?:the )?(?:web|internet|online)|look up online|find online|google it|latest|current|recent|today|tonight|this week|news|weather|price|prices|exchange rate|version|release date|schedule|source|sources|link|links)\b/i.test(text)
-    || /(ҷустуҷӯ|ҷустучу|интернет|веб|дар интернет|манбаъ|сарчашма|пайванд|ҳаво|обу ҳаво|нарх|қурб|имрӯз|ҳоло|охирин|ахбор|хабар|версияи охир|ҷадвали ҳаракат|бо манбаъ)/i.test(text)
+    || /(ҷустуҷӯ|ҷустучу|интернет|веб|дар интернет|манбаъ|сарчашма|пайванд|ҳаво|обу ҳаво|нарх|қурб|имрӯз|ҳоло|охирин|ахбор|версияи охир|ҷадвали ҳаракат|бо манбаъ)/i.test(text)
     || /(поищи|найди в интернете|поиск в интернете|последни[йе]|сейчас|сегодня|новост[ьи]|погод[аы]|цена|курс валют|актуальн|источник|ссылк[аи]|расписани[ея]|версия|релиз)/i.test(text);
 }
 
