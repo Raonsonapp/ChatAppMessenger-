@@ -9,7 +9,7 @@
  * other from being tried. Returned snippets are untrusted web content and
  * must be treated as evidence, not instructions.
  */
-const SEARCH_TIMEOUT_MS = 8000;
+const SEARCH_TIMEOUT_MS = 5000;
 const SEARCH_MAX_RESULTS = 5;
 const MAX_QUERY_LENGTH = 400;
 
@@ -98,7 +98,7 @@ async function tavilySearch(query, apiKey) {
  * Search using primary and fallback providers. Provider order can be changed
  * using CHAT_AI_SEARCH_PRIMARY=brave|tavily. Returns {results, provider, errors}.
  */
-export async function searchWeb(queryValue, env = process.env) {
+async function searchWeb(queryValue, env = process.env) {
   const query = cleanQuery(queryValue);
   if (query.length < 2) {
     return { results: [], provider: null, errors: [{ provider: 'validation', reason: 'query-too-short' }] };
@@ -137,4 +137,16 @@ export async function searchWeb(queryValue, env = process.env) {
   return { results: [], provider: null, errors };
 }
 
-export const __testables = { cleanQuery, safeHttpUrl, normalizeResult };
+
+/** Detect explicit search/current-information intent without searching every chat turn. */
+function shouldSearchWeb(value) {
+  const text = String(value ?? '').toLocaleLowerCase().normalize('NFKC');
+  if (!text.trim()) return false;
+  return /\b(search (?:the )?(?:web|internet|online)|look up online|find online|google it|latest|current|recent|today|tonight|this week|news|weather|price|prices|exchange rate|version|release date|schedule|source|sources|link|links)\b/i.test(text)
+    || /(ҷустуҷӯ|ҷустучу|интернет|веб|дар интернет|манбаъ|сарчашма|пайванд|ҳаво|обу ҳаво|нарх|қурб|имрӯз|ҳоло|охирин|ахбор|хабар|версияи охир|ҷадвали ҳаракат|бо манбаъ)/i.test(text)
+    || /(поищи|найди в интернете|поиск в интернете|последни[йе]|сейчас|сегодня|новост[ьи]|погод[аы]|цена|курс валют|актуальн|источник|ссылк[аи]|расписани[ея]|версия|релиз)/i.test(text);
+}
+
+const __testables = { cleanQuery, safeHttpUrl, normalizeResult };
+
+module.exports = { searchWeb, shouldSearchWeb, __testables };
