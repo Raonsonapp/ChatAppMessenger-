@@ -15,7 +15,11 @@
 5. Дар **Environment** тағйирёбандаҳои зеринро илова кунед:
    - `TELEGRAM_BOT_TOKEN` — токени аз BotFather гирифташуда
    - `FIREBASE_SERVICE_ACCOUNT_JSON` — тамоми матни JSON-и private key
-   - `GEMINI_API_KEY` — барои `/api/transcribe` ва тарҷумаи серверӣ, агар Gemini-ро истифода мебаред
+   - `GEMINI_API_KEY` — барои `/api/ai/chat`, `/api/transcribe` ва тарҷумаи серверӣ
+   - `GEMINI_CHAT_MODEL` — ихтиёрӣ; пешфарз `gemini-2.5-flash`
+   - `IMAGE_GENERATION_ENDPOINT` ва `IMAGE_GENERATION_API_KEY` — агар провайдери расм танзим карда шавад
+   - `VIDEO_GENERATION_ENDPOINT` ва `VIDEO_GENERATION_API_KEY` — агар провайдери видео танзим карда шавад
+   - `MUSIC_GENERATION_ENDPOINT` ва `MUSIC_GENERATION_API_KEY` — агар провайдери мусиқӣ танзим карда шавад
    - `GEMINI_TRANSCRIBE_MODEL` — ихтиёрӣ; пешфарз `gemini-2.5-flash`
    - `GEMINI_TRANSLATE_MODEL` — ихтиёрӣ; барои тарҷума низ пешфарз `gemini-2.5-flash`
    - `TRANSLATE_ENDPOINT` ва `TRANSLATE_API_KEY` — танҳо агар тарҷумони алтернативии сервериро истифода баред
@@ -24,6 +28,12 @@
    - тағйирёбандаҳои `R2_*` — агар боркунии media тавассути Cloudflare R2 истифода шавад
 6. `Save, rebuild, and deploy`-ро интихоб кунед. Дар Render бояд public URL-и service пайдо шавад. Сервер бояд ба `process.env.PORT` ва host-и `0.0.0.0` гӯш кунад.
 7. Дар `lib/config/otp_server_config.dart` қимати `baseUrl`-ро ба URL-и воқеии Render service гузоред ва `telegramBotUsername`-ро ба username-и воқеии бот иваз кунед.
+
+## ChatAI
+
+- `/api/ai/chat` ба Gemini тавассути `GEMINI_API_KEY` пайваст мешавад; ин endpoint бояд дар Render deploy шуда бошад.
+- `/api/ai/generate/image`, `/video` ва `/music` ҳоло адаптери провайдер мебошанд. Барои воқеан тавлид кардани медиа, ҳар яке бояд ба провайдери мувофиқ пайваст шавад ва JSON-и `url`-и HTTPS баргардонад. Танҳо илова кардани тағйирёбандаҳо бе провайдери мувофиқ кофӣ нест.
+- Видео дар UI то 30 сония интихоб мешавад, вале провайдери воқеӣ бояд ҳамин давомнокиро дастгирӣ кунад; вақти тавлид ва нарх аз провайдер вобастаанд.
 
 ## Амният
 
