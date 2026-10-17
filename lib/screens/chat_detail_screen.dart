@@ -11,6 +11,7 @@ import '../services/media_service.dart';
 import '../services/chat_ai_service.dart';
 import '../services/chat_ai_weather_service.dart';
 import '../services/chat_ai_search_service.dart';
+import '../services/chat_ai_search_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
@@ -219,6 +220,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         return;
       }
 
+      // Ҷустуҷӯи веб аввал DuckDuckGo, баъд Wikipedia-ро месанҷад — Gemini/Render истифода намешавад.
+      final searchReply = await ChatAiSearchService.answerIfSearch(latestPrompt);
+      if (searchReply != null) {
+        await _messagesRef.add({
+          'text': searchReply,
+          'senderId': 'ai_bot',
+          'isAI': true,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        _scrollToBottom();
+        return;
+      }
       // Обу ҳаво мустақим аз API-и ройгон гирифта мешавад: сервери AI истифода намешавад.
       final weatherReply = await ChatAiWeatherService.answerIfWeather(latestPrompt);
       if (weatherReply != null) {
