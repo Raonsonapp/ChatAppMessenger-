@@ -37,10 +37,25 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   bool _isUploading = false;
   ChatMessage? _replyingTo;
 
-  CollectionReference<Map<String, dynamic>> get _messagesRef => FirebaseFirestore.instance
-      .collection('chats')
-      .doc(widget.conversation.id)
-      .collection('messages');
+  CollectionReference<Map<String, dynamic>> get _messagesRef {
+    final firestore = FirebaseFirestore.instance;
+    if (widget.conversation.isAIChat) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        // Таърихи AI барои ҳар корбар ҷудо ва махфӣ нигоҳ дошта мешавад.
+        return firestore
+            .collection('users')
+            .doc(uid)
+            .collection('aiChat')
+            .doc('main')
+            .collection('messages');
+      }
+    }
+    return firestore
+        .collection('chats')
+        .doc(widget.conversation.id)
+        .collection('messages');
+  }
 
   @override
   void initState() {
