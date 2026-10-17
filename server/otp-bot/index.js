@@ -177,7 +177,13 @@ app.get('/', (_req, res) => {
     calls: agora.status(),
     // Тарҷума ихтиёрист: бе он банди «Тарҷума» худро ғайрифаъол нишон
     // медиҳад, на ин ки матни аслиро ҳамчун тарҷума диҳад.
-    translate: { configured: Boolean(process.env.TRANSLATE_ENDPOINT) },
+    translate: { configured: Boolean(process.env.GEMINI_API_KEY || process.env.TRANSLATE_ENDPOINT) },
+    ai: { configured: Boolean(process.env.GEMINI_API_KEY) },
+    mediaGeneration: {
+      image: Boolean(process.env.IMAGE_GENERATION_ENDPOINT && process.env.IMAGE_GENERATION_API_KEY),
+      video: Boolean(process.env.VIDEO_GENERATION_ENDPOINT && process.env.VIDEO_GENERATION_API_KEY),
+      music: Boolean(process.env.MUSIC_GENERATION_ENDPOINT && process.env.MUSIC_GENERATION_API_KEY),
+    },
     publicDomain: process.env.PUBLIC_URL || process.env.RAILWAY_PUBLIC_DOMAIN || null,
     // Кадом нусхаи код кор мекунад — барои санҷиши он ки деплой расидааст ё не.
     build: {
@@ -698,6 +704,138 @@ app.post('/api/ai/chat', async (req, res) => {
   } catch (err) {
     console.warn('Gemini AI chat error:', err?.message ?? err);
     return res.status(502).json({ error: 'ai-request-failed' });
+  }
+});
+
+
+/** Transcription of a short voice message through Gemini. */
+const transcriptionQuota = new Map();
+const TRANSCRIPTION_QUOTA_PER_HOUR = 12;
+app.post('/api/transcribe', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(503).json({ error: 'transcription-not-configured' });
+  }
+  if (overQuota(transcriptionQuota, user.uid, TRANSCRIPTION_QUOTA_PER_HOUR)) {
+    return res.status(429).json({ error: 'too-many-requests' });
+  }
+
+  const audioBase64 = String(req.body?.audioBase64 ?? '');
+  const mimeType = String(req.body?.mimeType ?? 'audio/mp4').toLowerCase().split(';')[0];
+  if (!audioBase64 || audioBase64.length > 7 * 1024 * 1024) {
+    return res.status(413).json({ error: 'audio-too-large-or-empty' });
+  }
+  if (!/^audio\/(mpeg|mp4|wav|webm|ogg|aac|flac|3gpp|amr)$/.test(mimeType)) {
+    return res.status(400).json({ error: 'unsupported-audio-type' });
+  }
+
+  try {
+    const model = process.env.GEMINI_TRANSCRIBE_MODEL || process.env.GEMINI_CHAT_MODEL || 'gemini-2.5-flash';
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/' +
+        encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(process.env.GEMINI_API_KEY),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            role: 'user',
+            parts: [
+              { inlineData: { mimeType, data: audioBase64 } },
+              { text: 'Transcribe the spoken words in this audio faithfully. Return only the transcription, preserving the language spoken. If there is no speech, return an empty response.' },
+            ],
+          }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 1400 },
+        }),
+        signal: AbortSignal.timeout(50000),
+      },
+    );
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.warn('Gemini transcription failed:', response.status);
+      return res.status(response.status === 429 ? 429 : 502).json({ error: 'transcription-failed' });
+    }
+    const text = (data?.candidates?.[0]?.content?.parts ?? [])
+      .map((part) => typeof part.text === 'string' ? part.text : '')
+      .join('')
+      .trim();
+    return res.json({ text });
+  } catch (err) {
+    console.warn('Gemini transcription error:', err?.message ?? err);
+    return res.status(502).json({ error: 'transcription-failed' });
+  }
+});
+
+/**
+ * ChatAI media generation adapter.
+ * Each provider returns JSON with a publicly accessible media URL in
+ * url, mediaUrl, or output.url. Provider credentials never reach Flutter.
+ */
+const mediaGenerationQuota = new Map();
+const MEDIA_GENERATION_QUOTA_PER_HOUR = 5;
+const MEDIA_GENERATION_PROVIDERS = {
+  image: {
+    endpoint: process.env.IMAGE_GENERATION_ENDPOINT,
+    key: process.env.IMAGE_GENERATION_API_KEY,
+  },
+  video: {
+    endpoint: process.env.VIDEO_GENERATION_ENDPOINT,
+    key: process.env.VIDEO_GENERATION_API_KEY,
+  },
+  music: {
+    endpoint: process.env.MUSIC_GENERATION_ENDPOINT,
+    key: process.env.MUSIC_GENERATION_API_KEY,
+  },
+};
+app.post('/api/ai/generate/:kind', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+
+  const kind = String(req.params.kind ?? '').toLowerCase();
+  const provider = MEDIA_GENERATION_PROVIDERS[kind];
+  if (!provider) return res.status(400).json({ error: 'unsupported-generation-kind' });
+  if (!provider.endpoint || !provider.key) {
+    return res.status(503).json({ error: 'media-generation-not-configured', kind });
+  }
+  if (overQuota(mediaGenerationQuota, user.uid, MEDIA_GENERATION_QUOTA_PER_HOUR)) {
+    return res.status(429).json({ error: 'generation-quota-reached' });
+  }
+
+  const prompt = String(req.body?.prompt ?? '').trim().slice(0, 2000);
+  if (prompt.length < 3) return res.status(400).json({ error: 'prompt-required' });
+  const durationSeconds = kind === 'video'
+    ? Math.min(30, Math.max(1, Number(req.body?.durationSeconds) || 8))
+    : undefined;
+
+  try {
+    const upstream = await fetch(provider.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + provider.key,
+      },
+      body: JSON.stringify({
+        prompt,
+        ...(durationSeconds !== undefined ? { durationSeconds } : {}),
+        userId: user.uid,
+      }),
+      signal: AbortSignal.timeout(90000),
+    });
+    const data = await upstream.json().catch(() => ({}));
+    if (!upstream.ok) {
+      console.warn('ChatAI media provider failed:', kind, upstream.status);
+      return res.status(upstream.status === 429 ? 429 : 502).json({ error: 'media-generation-failed' });
+    }
+    const mediaUrl = data?.url ?? data?.mediaUrl ?? data?.output?.url;
+    if (typeof mediaUrl !== 'string' || !mediaUrl.startsWith('https://')) {
+      return res.status(502).json({ error: 'media-provider-invalid-response' });
+    }
+    return res.json({ kind, url: mediaUrl, durationSeconds: durationSeconds ?? null });
+  } catch (err) {
+    console.warn('ChatAI media provider error:', kind, err?.message ?? err);
+    return res.status(502).json({ error: 'media-generation-failed' });
   }
 });
 
