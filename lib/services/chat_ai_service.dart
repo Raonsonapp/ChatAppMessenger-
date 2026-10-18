@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,7 +10,7 @@ import '../config/otp_server_config.dart';
 class ChatAiService {
   static Future<String> reply(List<Map<String, String>> messages) async {
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
-    if (token == null) throw const ChatAiFailure();
+    if (token == null) throw const ChatAiFailure('Аввал ба аккаунти ChatApp ворид шавед.');
 
     final response = await http
         .post(
@@ -22,7 +23,9 @@ class ChatAiService {
         )
         .timeout(const Duration(seconds: 40));
 
-    if (response.statusCode != 200) throw const ChatAiFailure();
+    if (response.statusCode != 200) {
+      throw ChatAiFailure(_responseMessage(response));
+    }
     final data = jsonDecode(response.body);
     if (data is! Map<String, dynamic> ||
         data['reply'] is! String ||
@@ -58,7 +61,9 @@ class ChatAiService {
         )
         .timeout(const Duration(seconds: 100));
 
-    if (response.statusCode != 200) throw const ChatAiFailure();
+    if (response.statusCode != 200) {
+      throw ChatAiFailure(_responseMessage(response));
+    }
     final data = jsonDecode(response.body);
     if (data is! Map<String, dynamic> ||
         data['url'] is! String ||
@@ -87,6 +92,23 @@ class GeneratedChatMedia {
   });
 }
 
+String _responseMessage(http.Response response) {
+  String code = '';
+  try {
+    final body = jsonDecode(response.body);
+    if (body is Map<String, dynamic>) code = body['error']?.toString() ?? '';
+  } catch (_) {}
+  if (response.statusCode == 401) return 'Аз нав ба аккаунти ChatApp ворид шавед.';
+  if (response.statusCode == 429 || code == 'too-many-requests') return 'Дархостҳои AI маҳдуд шуданд. Каме баъдтар такрор кунед.';
+  if (response.statusCode == 503 || code == 'ai-not-configured') return 'ChatAI дар сервер фаъол нест. GEMINI_API_KEY-ро дар Render санҷед.';
+  if (response.statusCode == 502 || code == 'ai-request-failed') return 'Gemini ҷавоб надод. API key, квота ва номи моделро дар Render санҷед.';
+  if (response.statusCode == 413 || code == 'conversation-too-long') return 'Гуфтугӯ хеле дароз аст; паёми кӯтоҳтар фиристед.';
+  return 'ChatAI хатои HTTP ${response.statusCode} дод. Интернет ва серверро санҷед.';
+}
+
 class ChatAiFailure implements Exception {
-  const ChatAiFailure();
+  final String message;
+  const ChatAiFailure([this.message = 'ChatAI ҷавоб надод.']);
+  @override
+  String toString() => message;
 }
