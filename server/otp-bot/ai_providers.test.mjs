@@ -6,19 +6,36 @@ const {
   extractResponseText,
   generateChatReply,
   listConfiguredProviders,
+  modelFor,
 } = require('./ai_providers');
 
 function fakeResponse(body, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: async () => body };
 }
 
-test('lists only configured providers and never returns API keys', () => {
+test('free-only mode exposes Gemini only even if paid-provider keys exist', () => {
   const providers = listConfiguredProviders({
     GEMINI_API_KEY: 'gemini-secret',
+    OPENAI_API_KEY: 'openai-secret',
     XAI_API_KEY: 'xai-secret',
   });
-  assert.deepEqual(providers.map((provider) => provider.id), ['gemini', 'grok']);
+  assert.deepEqual(providers.map((provider) => provider.id), ['gemini']);
   assert.equal(JSON.stringify(providers).includes('secret'), false);
+});
+
+test('paid providers appear only after an explicit server-side opt-in', () => {
+  const providers = listConfiguredProviders({
+    GEMINI_API_KEY: 'gemini-secret',
+    OPENAI_API_KEY: 'openai-secret',
+    XAI_API_KEY: 'xai-secret',
+    ALLOW_PAID_AI_PROVIDERS: 'true',
+  });
+  assert.deepEqual(providers.map((provider) => provider.id), ['gemini', 'openai', 'grok']);
+  assert.equal(JSON.stringify(providers).includes('secret'), false);
+});
+
+test('OpenAI default model is a real supported model id, not a fabricated name', () => {
+  assert.equal(modelFor('openai', {}), 'gpt-5-mini');
 });
 
 test('Gemini provider returns text and uses configured key/model', async () => {
