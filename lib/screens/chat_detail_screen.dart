@@ -227,14 +227,24 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Future<void> _sendSticker(String sticker) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
-    await _messagesRef.add({
-      'text': sticker,
-      'senderId': uid,
-      'isAI': false,
-      'createdAt': FieldValue.serverTimestamp(),
-      'mediaType': 'sticker',
-    });
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    if (widget.conversation.isAIChat) {
+      await _addLocalAiMessage(
+        text: sticker,
+        senderId: uid,
+        isAI: false,
+        mediaType: 'sticker',
+      );
+    } else {
+      await _messagesRef.add({
+        'text': sticker,
+        'senderId': uid,
+        'isAI': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'mediaType': 'sticker',
+      });
+    }
     _scrollToBottom();
   }
 
