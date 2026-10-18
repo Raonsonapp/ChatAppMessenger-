@@ -60,11 +60,13 @@ service cloud.firestore {
       // Номи маҳаллии контакт танҳо барои соҳиби ҳисоб аст.
       // Ин ном ба профили умумии корбари дигар тағйир намедиҳад.
       match /localNames/{contactUid} {
-        allow read, write: if signedIn()
+        allow read: if signedIn() && uid() == userId && contactUid != uid();
+        allow create, update: if signedIn()
           && uid() == userId
           && contactUid != uid()
           && request.resource.data.get('name', '') is string
           && request.resource.data.get('name', '').size() <= 60;
+        allow delete: if signedIn() && uid() == userId && contactUid != uid();
       }
 
       // Таърихи ChatApp AI танҳо барои соҳиби ҳисоби воридшуда дастрас аст.
