@@ -30,6 +30,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 const String _messagesChannelId = 'messages_channel';
 const String _callsChannelId = 'calls_channel';
+const String _updatesChannelId = 'chatapp_updates_channel';
 
 /// Ранги неони ChatApp дар огоҳиномаҳо.
 const Color _brandColor = Color(0xFF00E5A0);
@@ -73,6 +74,10 @@ Future<void> _showMessageNotification(Map<String, dynamic> data) async {
   // намешуд — бинобар ин ҳар огоҳинома «Паёми нав» менавишт.
   final text = _previewText(data);
   final payload = jsonEncode(data);
+  final selectedTone = await NotificationPrefs.messageTone();
+  final toneSound = selectedTone == 'default'
+      ? null
+      : RawResourceAndroidNotificationSound(selectedTone);
 
   final androidDetails = AndroidNotificationDetails(
     _messagesChannelId,
@@ -84,6 +89,7 @@ Future<void> _showMessageNotification(Map<String, dynamic> data) async {
     icon: '@drawable/ic_notification',
     color: _brandColor,
     playSound: withSound,
+    sound: withSound ? toneSound : null,
     enableVibration: withVibration,
     actions: [
       AndroidNotificationAction(
@@ -113,6 +119,10 @@ Future<void> _showIncomingCallNotification(Map<String, dynamic> data) async {
   final callerName = data['callerName'] as String? ?? tr('k223');
   final isVideo = data['callType'] == 'video';
   final payload = jsonEncode(data);
+  final selectedCallTone = await NotificationPrefs.callTone();
+  final callToneSound = selectedCallTone == 'default'
+      ? null
+      : RawResourceAndroidNotificationSound(selectedCallTone);
 
   final androidDetails = AndroidNotificationDetails(
     _callsChannelId,
@@ -124,6 +134,8 @@ Future<void> _showIncomingCallNotification(Map<String, dynamic> data) async {
     icon: '@drawable/ic_notification',
     color: _brandColor,
     fullScreenIntent: true,
+    playSound: true,
+    sound: callToneSound,
     ongoing: true,
     timeoutAfter: 45000,
     actions: [
@@ -386,6 +398,12 @@ class NotificationService {
       tr('k047'),
       description: tr('k224'),
       importance: Importance.max,
+    ));
+    await androidPlugin?.createNotificationChannel(AndroidNotificationChannel(
+      _updatesChannelId,
+      'ChatApp',
+      description: 'Навсозиҳо ва дигар огоҳиномаҳои ChatApp',
+      importance: Importance.defaultImportance,
     ));
 
     FirebaseMessaging.onMessage.listen((message) async {

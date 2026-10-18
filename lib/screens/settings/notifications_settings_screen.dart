@@ -22,6 +22,8 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   bool _sound = true;
   bool _vibration = true;
   bool _showPreview = true;
+  String _messageTone = 'default';
+  String _callTone = 'default';
   bool _isLoading = true;
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
@@ -46,6 +48,8 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
       _vibration = (settings['notificationVibration'] ?? true) as bool;
       _showPreview = (settings['notificationPreview'] ?? true) as bool;
     }
+    _messageTone = await NotificationPrefs.messageTone();
+    _callTone = await NotificationPrefs.callTone();
     if (!mounted) return;
     setState(() => _isLoading = false);
   }
@@ -116,6 +120,26 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                   setState(() => _showPreview = v);
                                   _update('notificationPreview', v);
                                 }, showDivider: false),
+                                Divider(color: AppColors.glassBorder, height: 1),
+                                _toneRow(
+                                  title: 'Оҳанги паём',
+                                  value: _messageTone,
+                                  onChanged: (value) async {
+                                    await NotificationPrefs.setMessageTone(value);
+                                    if (!mounted) return;
+                                    setState(() => _messageTone = value);
+                                  },
+                                ),
+                                Divider(color: AppColors.glassBorder, height: 1),
+                                _toneRow(
+                                  title: 'Оҳанги занг',
+                                  value: _callTone,
+                                  onChanged: (value) async {
+                                    await NotificationPrefs.setCallTone(value);
+                                    if (!mounted) return;
+                                    setState(() => _callTone = value);
+                                  },
+                                ),
                               ],
                             ),
                           ),
@@ -125,6 +149,44 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _toneRow({
+    required String title,
+    required String value,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          DropdownButton<String>(
+            value: NotificationPrefs.availableTones.containsKey(value) ? value : 'default',
+            dropdownColor: AppColors.surface,
+            style: TextStyle(color: AppColors.textPrimary),
+            items: NotificationPrefs.availableTones.entries
+                .map((entry) => DropdownMenuItem<String>(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ))
+                .toList(),
+            onChanged: (next) {
+              if (next != null) onChanged(next);
+            },
+          ),
+        ],
       ),
     );
   }
