@@ -703,7 +703,7 @@ app.post('/api/ai/chat', async (req, res) => {
     if (!answer) {
       return res.status(502).json({ error: 'ai-empty-response' });
     }
-    return res.json({ answer, text: answer, results: webResults });
+    return res.json({ reply: answer, answer, text: answer, results: webResults });
   } catch (error) {
     console.error('ChatAI route failed', error?.message || error);
     return res.status(502).json({ error: 'ai-request-failed' });
