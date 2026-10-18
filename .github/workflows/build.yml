@@ -54,6 +54,11 @@ jobs:
       - name: Test server quota
         run: node --test server/otp-bot/quota.test.mjs
 
+      - name: Test ChatAI web search fallback
+        run: |
+          cd server/otp-bot
+          node --test web_search.test.mjs
+
       - name: Test server link preview
         run: node --test server/otp-bot/link_preview.test.mjs
 
