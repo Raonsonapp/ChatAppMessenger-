@@ -141,17 +141,16 @@ test('web context is appended to latest user message only', async () => {
       { role: 'assistant', text: 'older answer' },
       { role: 'user', text: 'latest question' },
     ],
-    webContext: '\nWeb evidence: https://example.com',
+    webContext: '\\nWeb evidence: https://example.com',
     env: { OPENAI_API_KEY: 'not-real-test-key' },
     fetchImpl: async (_url, options) => {
       body = JSON.parse(options.body);
       return fakeResponse({ output_text: 'answer' });
     },
   });
-  assert.equal(body.input[2].content, 'latest question\nWeb evidence: https://example.com');
-  assert.equal(body.input[1].content, 'older answer');
+  assert.equal(body.input[3].content, 'latest question\\nWeb evidence: https://example.com');
+  assert.equal(body.input[2].content, 'older answer');
 });
-
 test('extractResponseText handles Responses API and compatible chat completions', () => {
   assert.equal(extractResponseText({ output_text: 'direct' }), 'direct');
   assert.equal(
