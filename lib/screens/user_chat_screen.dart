@@ -1423,17 +1423,38 @@ class _UserChatScreenState extends State<UserChatScreen> {
                                   builder: (context, nameSnapshot) {
                                     final savedName =
                                         (nameSnapshot.data?.data()?['name'] as String?)?.trim();
-                                    final displayName = savedName != null && savedName.isNotEmpty
-                                        ? savedName
-                                        : widget.otherUserName;
-                                    return Text(
-                                      displayName,
+                                    final currentUid =
+                                        FirebaseAuth.instance.currentUser?.uid;
+                                    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                                      stream: currentUid == null
+                                          ? const Stream.empty()
+                                          : FirebaseFirestore.instance
+                                              .collection('users')
+                                              .doc(currentUid)
+                                              .collection('localNames')
+                                              .doc(widget.otherUserId)
+                                              .snapshots(),
+                                      builder: (context, aliasSnapshot) {
+                                        final alias =
+                                            (aliasSnapshot.data?.data()?['name'] as String?)
+                                                    ?.trim() ??
+                                                '';
+                                        final profileName =
+                                            savedName != null && savedName.isNotEmpty
+                                                ? savedName
+                                                : widget.otherUserName;
+                                        final displayName =
+                                            alias.isNotEmpty ? alias : profileName;
+                                        return Text(
+                                          displayName,
                                       overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 15,
-                                      ),
+                                          style: TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 15,
+                                          ),
+                                        );
+                                      },
                                     );
                                   },
                                 ),

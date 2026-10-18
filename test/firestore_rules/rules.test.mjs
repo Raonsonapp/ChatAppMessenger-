@@ -374,6 +374,23 @@ await check('B дастгоҳҳои A-ро хонда НАМЕТАВОНАД', (
 await check('B ба рӯйхати дастгоҳҳои A навишта НАМЕТАВОНАД', () =>
   assertFails(setDoc(doc(b, 'users', A, 'devices', 'dev2'), { platform: 'iOS' })));
 
+
+// ── Номҳои маҳаллии контактҳо ────────────────────────────────────────────────
+await check('A номи маҳаллии B-ро сабт карда метавонад', () =>
+  assertSucceeds(setDoc(doc(a, 'users', A, 'localNames', B), { name: 'Дӯсти ман' })));
+await check('A номи маҳаллии B-ро хонда метавонад', () =>
+  assertSucceeds(getDoc(doc(a, 'users', A, 'localNames', B))));
+await check('B номи маҳаллии сабткардаи A-ро хонда НАМЕТАВОНАД', () =>
+  assertFails(getDoc(doc(b, 'users', A, 'localNames', B))));
+await check('B ба номи маҳаллии A навишта НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(b, 'users', A, 'localNames', C), { name: 'Сӯиистифода' })));
+await check('A номи маҳаллиро пок карда метавонад', () =>
+  assertSucceeds(deleteDoc(doc(a, 'users', A, 'localNames', B))));
+await check('A номи маҳаллии худашро ҳамчун контакт сабт карда НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(a, 'users', A, 'localNames', A), { name: 'Худам' })));
+await check('Номи маҳаллӣ аз 60 аломат зиёд намешавад', () =>
+  assertFails(setDoc(doc(a, 'users', A, 'localNames', B), { name: 'x'.repeat(61) })));
+
 // ── Эълонҳои Бозор ───────────────────────────────────────────────────────────
 //
 // Бозор ба сӯҳбат мебарад, бинобар ин эълон бояд ҷамъиятӣ бошад. Вале рабудани
