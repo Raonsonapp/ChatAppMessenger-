@@ -21,26 +21,7 @@ class _VoiceTranscriptPanelState extends State<VoiceTranscriptPanel> {
   String? _error;
 
   Future<void> _transcribe() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(tr('k700'), style: TextStyle(color: AppColors.textPrimary)),
-        content: Text(tr('k709'), style: TextStyle(color: AppColors.textSecondary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(tr('k715')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(tr('k714')),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-
+    if (_loading || widget.audioUrl.trim().isEmpty) return;
     setState(() {
       _loading = true;
       _error = null;

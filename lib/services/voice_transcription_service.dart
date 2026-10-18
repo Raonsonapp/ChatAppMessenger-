@@ -6,6 +6,28 @@ import 'package:http/http.dart' as http;
 import '../config/otp_server_config.dart';
 import '../l10n/l10n.dart';
 
+String _audioMimeType(String audioUrl, String? contentType) {
+  const supported = <String>{
+    'audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/webm',
+    'audio/ogg', 'audio/aac', 'audio/flac', 'audio/3gpp', 'audio/amr',
+  };
+  final headerType = (contentType ?? '').split(';').first.trim().toLowerCase();
+  if (supported.contains(headerType)) return headerType;
+  String path = '';
+  try {
+    path = Uri.decodeComponent(Uri.parse(audioUrl).path).toLowerCase();
+  } catch (_) {}
+  if (path.endsWith('.wav')) return 'audio/wav';
+  if (path.endsWith('.mp3')) return 'audio/mpeg';
+  if (path.endsWith('.ogg') || path.endsWith('.opus')) return 'audio/ogg';
+  if (path.endsWith('.webm')) return 'audio/webm';
+  if (path.endsWith('.aac')) return 'audio/aac';
+  if (path.endsWith('.flac')) return 'audio/flac';
+  if (path.endsWith('.3gp') || path.endsWith('.3gpp')) return 'audio/3gpp';
+  if (path.endsWith('.amr')) return 'audio/amr';
+  return 'audio/mp4';
+}
+
 /// Транскрипсияи паёми овозӣ тавассути Gemini API дар сервер.
 /// Калиди Gemini дар APK ҷойгир намешавад.
 class VoiceTranscriptionService {
@@ -30,21 +52,7 @@ class VoiceTranscriptionService {
       throw VoiceTranscriptionFailure(tr('k712'));
     }
 
-    var mimeType = (download.headers['content-type'] ?? '').split(';').first.trim().toLowerCase();
-    if (!mimeType.startsWith('audio/')) {
-      final path = Uri.tryParse(audioUrl)?.path.toLowerCase() ?? '';
-      mimeType = path.endsWith('.wav')
-          ? 'audio/wav'
-          : path.endsWith('.mp3')
-              ? 'audio/mpeg'
-              : path.endsWith('.ogg')
-                  ? 'audio/ogg'
-                  : path.endsWith('.aac')
-                      ? 'audio/aac'
-                      : path.endsWith('.m4a')
-                          ? 'audio/mp4'
-                          : 'audio/mp4';
-    }
+    final mimeType = _audioMimeType(audioUrl, download.headers['content-type']);
 
     http.Response response;
     try {
@@ -65,17 +73,28 @@ class VoiceTranscriptionService {
       throw VoiceTranscriptionFailure(tr('k367'));
     }
 
+    Map<String, dynamic> data;
+    try {
+      final decoded = jsonDecode(response.body);
+      data = decoded is Map<String, dynamic> ? decoded : <String, dynamic>{};
+    } catch (_) {
+      data = <String, dynamic>{};
+    }
     if (response.statusCode == 503) {
-      throw VoiceTranscriptionFailure(tr('k710'));
+      throw const VoiceTranscriptionFailure('Транскрипсияи овоз дар сервер фаъол нест. GEMINI_API_KEY-ро дар Render санҷед.');
+    }
+    if (response.statusCode == 401) {
+      throw const VoiceTranscriptionFailure('Сессияи воридшавӣ гузаштааст. Аз нав ворид шавед.');
+    }
+    if (response.statusCode == 413) {
+      throw const VoiceTranscriptionFailure('Овоз хеле калон аст. Овози кӯтоҳтарро санҷед.');
     }
     if (response.statusCode == 429) {
       throw VoiceTranscriptionFailure(tr('k713'));
     }
     if (response.statusCode != 200) {
-      throw VoiceTranscriptionFailure(tr('k487'));
+      throw const VoiceTranscriptionFailure('Сервер овозро коркард накард. Танзимоти Gemini ва формати файлро санҷед.');
     }
-
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
     final text = (data['text'] as String? ?? '').trim();
     if (text.isEmpty) throw VoiceTranscriptionFailure(tr('k705'));
     return text;
