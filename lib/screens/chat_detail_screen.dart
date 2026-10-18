@@ -9,6 +9,7 @@ import '../models/chat_message.dart';
 import '../models/chat_conversation.dart';
 import '../services/media_service.dart';
 import '../services/chat_ai_service.dart';
+import '../services/local_ai_chat_store.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
@@ -39,6 +40,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   ChatMessage? _replyingTo;
   List<Map<String, String>> _aiProviders = const [{'id': 'gemini', 'label': 'Gemini'}];
   String _selectedAiProvider = 'gemini';
+  List<ChatMessage> _localAiMessages = <ChatMessage>[];
+  bool _localAiLoaded = false;
+  bool _localAiLoading = false;
+  String? get _currentUid => FirebaseAuth.instance.currentUser?.uid;
 
   CollectionReference<Map<String, dynamic>> get _messagesRef {
     final firestore = FirebaseFirestore.instance;
@@ -63,7 +68,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.conversation.isAIChat) _loadAiProviders();
+    if (widget.conversation.isAIChat) {
+      _loadAiProviders();
+      _loadLocalAiHistory();
+    }
     if (widget.initialText != null && widget.initialText!.isNotEmpty) {
       _controller.text = widget.initialText!;
       _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
@@ -79,6 +87,76 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         _selectedAiProvider = providers.first['id'] ?? 'gemini';
       }
     });
+  }
+
+  Future<void> _loadLocalAiHistory() async {
+    final uid = _currentUid;
+    if (uid == null) return;
+    setState(() => _localAiLoading = true);
+    try {
+      final store = LocalAiChatStore.instance;
+      var messages = await store.load(uid);
+      if (!await store.isLegacyMigrationComplete(uid)) {
+        try {
+          final legacy = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('aiChat')
+              .doc('main')
+              .collection('messages')
+              .orderBy('createdAt')
+              .limitToLast(LocalAiChatStore.maxMessages)
+              .get();
+          final migrated = legacy.docs.map((doc) {
+            final data = doc.data();
+            return ChatMessage(
+              id: doc.id,
+              text: (data['text'] ?? '').toString(),
+              senderId: (data['senderId'] ?? '').toString(),
+              isAI: data['isAI'] == true,
+              timestamp: (data['createdAt'] as Timestamp?)?.toDate(),
+              mediaUrl: data['mediaUrl']?.toString(),
+              mediaType: data['mediaType']?.toString(),
+            );
+          }).toList();
+          await store.migrateLegacyMessages(uid, migrated);
+          messages = await store.load(uid);
+        } catch (_) {
+          // Local history remains usable if the one-time migration is offline.
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _localAiMessages = messages;
+        _localAiLoaded = true;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _localAiLoaded = true);
+    } finally {
+      if (mounted) setState(() => _localAiLoading = false);
+    }
+  }
+
+  Future<void> _addLocalAiMessage({
+    required String text,
+    required String senderId,
+    required bool isAI,
+    String? mediaUrl,
+    String? mediaType,
+  }) async {
+    final uid = _currentUid;
+    if (uid == null) throw const ChatAiFailure('Аввал ба аккаунти ChatApp ворид шавед.');
+    final message = await LocalAiChatStore.instance.add(
+      uid: uid,
+      text: text,
+      senderId: senderId,
+      isAI: isAI,
+      mediaUrl: mediaUrl,
+      mediaType: mediaType,
+    );
+    if (!mounted) return;
+    setState(() => _localAiMessages = [..._localAiMessages, message]);
   }
 
   @override
@@ -193,14 +271,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _controller.clear();
     setState(() => _replyingTo = null);
 
-    await _messagesRef.add({
-      'text': text,
-      'senderId': uid,
-      'isAI': false,
-      'createdAt': FieldValue.serverTimestamp(),
-      if (replying != null) 'replyToText': replying.text,
-      if (replying != null) 'replyToSenderId': replying.senderId,
-    });
+    if (widget.conversation.isAIChat) {
+      await _addLocalAiMessage(text: text, senderId: uid, isAI: false);
+    } else {
+      await _messagesRef.add({
+        'text': text,
+        'senderId': uid,
+        'isAI': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        if (replying != null) 'replyToText': replying.text,
+        if (replying != null) 'replyToSenderId': replying.senderId,
+      });
+    }
     _scrollToBottom();
 
     if (widget.conversation.isAIChat) {
@@ -209,6 +291,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Future<void> _deleteMessage(ChatMessage message) async {
+    if (widget.conversation.isAIChat) {
+      final uid = _currentUid;
+      if (uid == null) return;
+      await LocalAiChatStore.instance.delete(uid, message.id);
+      if (mounted) {
+        setState(() => _localAiMessages.removeWhere((item) => item.id == message.id));
+      }
+      return;
+    }
     await _messagesRef.doc(message.id).update({'deleted': true});
   }
 
@@ -218,17 +309,21 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     setState(() => _isAITyping = true);
     _scrollToBottom();
     try {
-      final snapshot = await _messagesRef
-          .orderBy('createdAt', descending: false)
-          .limitToLast(12)
-          .get();
       final history = <Map<String, String>>[];
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        final text = (data['text'] ?? '').toString().trim();
-        if (text.isEmpty || data['deleted'] == true) continue;
+      final messages = widget.conversation.isAIChat
+          ? _localAiMessages
+          : (await _messagesRef
+                  .orderBy('createdAt', descending: false)
+                  .limitToLast(12)
+                  .get())
+              .docs
+              .map((doc) => ChatMessage.fromDoc(doc))
+              .toList();
+      for (final message in messages) {
+        final text = message.text.trim();
+        if (text.isEmpty || message.deleted) continue;
         history.add({
-          'role': data['isAI'] == true ? 'assistant' : 'user',
+          'role': message.isAI ? 'assistant' : 'user',
           'text': text,
         });
       }
@@ -238,12 +333,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         history.add({'role': 'user', 'text': latestPrompt});
       }
       final reply = await ChatAiService.reply(history, provider: _selectedAiProvider);
-      await _messagesRef.add({
-        'text': reply,
-        'senderId': 'ai_bot',
-        'isAI': true,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      if (widget.conversation.isAIChat) {
+        await _addLocalAiMessage(text: reply, senderId: 'ai_bot', isAI: true);
+      } else {
+        await _messagesRef.add({
+          'text': reply,
+          'senderId': 'ai_bot',
+          'isAI': true,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
       _scrollToBottom();
     } catch (error) {
       if (mounted) {
@@ -275,7 +374,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               _buildHeader(convo),
               Expanded(
                 child: ChatWallpaper(
-                    child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    child: widget.conversation.isAIChat
+                        ? _buildLocalAiMessageList(currentUid)
+                        : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: _messagesRef.orderBy('createdAt', descending: false).snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
@@ -328,6 +429,32 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLocalAiMessageList(String currentUid) {
+    if (!_localAiLoaded || _localAiLoading) {
+      return Center(child: CircularProgressIndicator(color: AppColors.neonEmerald));
+    }
+    if (_localAiMessages.isEmpty) return _buildEmptyAiState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      itemCount: _localAiMessages.length + ((_isAITyping || _isGeneratingMedia) ? 1 : 0),
+      itemBuilder: (context, index) {
+        if ((_isAITyping || _isGeneratingMedia) && index == _localAiMessages.length) {
+          return const TypingBubble();
+        }
+        final message = _localAiMessages[index];
+        return MessageBubble(
+          message: message,
+          isMe: message.senderId == currentUid,
+          currentUid: currentUid,
+          onReply: (m) => setState(() => _replyingTo = m),
+          onDelete: _deleteMessage,
+        );
+      },
     );
   }
 
@@ -462,15 +589,25 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         prompt: prompt,
         durationSeconds: durationSeconds,
       );
-      await _messagesRef.add({
-        'text': prompt,
-        'senderId': 'ai_bot',
-        'isAI': true,
-        'createdAt': FieldValue.serverTimestamp(),
-        'mediaUrl': result.url,
-        'mediaType': kind == 'music' ? 'audio' : kind,
-        if (result.durationSeconds != null) 'mediaDuration': result.durationSeconds,
-      });
+      if (widget.conversation.isAIChat) {
+        await _addLocalAiMessage(
+          text: prompt,
+          senderId: 'ai_bot',
+          isAI: true,
+          mediaUrl: result.url,
+          mediaType: kind == 'music' ? 'audio' : kind,
+        );
+      } else {
+        await _messagesRef.add({
+          'text': prompt,
+          'senderId': 'ai_bot',
+          'isAI': true,
+          'createdAt': FieldValue.serverTimestamp(),
+          'mediaUrl': result.url,
+          'mediaType': kind == 'music' ? 'audio' : kind,
+          if (result.durationSeconds != null) 'mediaDuration': result.durationSeconds,
+        });
+      }
       _scrollToBottom();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k726'))));
