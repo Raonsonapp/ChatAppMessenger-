@@ -253,14 +253,24 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     setState(() => _isUploading = true);
     try {
       final url = await MediaService.uploadImage(file, 'chats/${widget.conversation.id}');
-      await _messagesRef.add({
-        'text': '',
-        'senderId': uid,
-        'isAI': false,
-        'createdAt': FieldValue.serverTimestamp(),
-        'mediaUrl': url,
-        'mediaType': mediaType,
-      });
+      if (widget.conversation.isAIChat) {
+        await _addLocalAiMessage(
+          text: '',
+          senderId: uid,
+          isAI: false,
+          mediaUrl: url,
+          mediaType: mediaType,
+        );
+      } else {
+        await _messagesRef.add({
+          'text': '',
+          'senderId': uid,
+          'isAI': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'mediaUrl': url,
+          'mediaType': mediaType,
+        });
+      }
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
