@@ -37,6 +37,10 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
   bool _drawingEnabled = false;
   final List<List<Offset>> _drawingStrokes = [];
   List<Offset>? _activeStroke;
+  int _selectedFilter = 0;
+  Color _drawingColor = Colors.white;
+  double _drawingWidth = 4;
+  bool _animatedText = false;
   bool _isPosting = false;
 
   /// Шакли статуси матнӣ. Ҳангоми интихоби акс истифода намешавад.
@@ -363,8 +367,22 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                                   ),
                                   child: Image.file(File(_pickedImage!.path), fit: BoxFit.cover),
                                 ),
+                                if (_selectedFilter != 0)
+                                  Positioned.fill(
+                                    child: IgnorePointer(
+                                      child: ColoredBox(
+                                        color: const [
+                                          Colors.transparent,
+                                          Color(0x28FF4F9A),
+                                          Color(0x2BFFB454),
+                                          Color(0x2A8C55FF),
+                                          Color(0x2784E5FF),
+                                        ][_selectedFilter],
+                                      ),
+                                    ),
+                                  ),
                                 if (_drawingStrokes.isNotEmpty)
-                                  Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _StoryDrawingPainter(_drawingStrokes)))),
+                                  Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _StoryDrawingPainter(_drawingStrokes, color: _drawingColor, strokeWidth: _drawingWidth)))),
                                 if (_drawingEnabled)
                                   Positioned.fill(
                                     child: LayoutBuilder(
@@ -376,7 +394,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                                           onPanUpdate: (d) => _extendStroke(d.localPosition, size),
                                           onPanEnd: (_) => _finishStroke(),
                                           child: CustomPaint(
-                                            painter: _StoryDrawingPainter(_drawingStrokes),
+                                            painter: _StoryDrawingPainter(_drawingStrokes, color: _drawingColor, strokeWidth: _drawingWidth),
                                             child: const SizedBox.expand(),
                                           ),
                                         );
@@ -399,10 +417,15 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                           ),
                           padding: const EdgeInsets.all(20),
                           alignment: Alignment.center,
-                          child: Text(
-                            _textController.text.isEmpty ? tr('k107') : _textController.text,
-                            textAlign: _style.textAlign,
-                            style: _style.textStyleFor(_textController.text, base: 22),
+                          child: AnimatedScale(
+                            scale: _animatedText ? 1.06 : 1,
+                            duration: const Duration(milliseconds: 650),
+                            curve: Curves.easeInOut,
+                            child: Text(
+                              _textController.text.isEmpty ? tr('k107') : _textController.text,
+                              textAlign: _style.textAlign,
+                              style: _style.textStyleFor(_textController.text, base: 22),
+                            ),
                           ),
                         ),
                       if (_pickedImage == null) ...[
@@ -414,6 +437,17 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                       ],
                       const SizedBox(height: 12),
                       if (_pickedImage != null) ...[
+                        Wrap(
+                          spacing: 6,
+                          children: [
+                            for (var filter = 0; filter < 5; filter++)
+                              ChoiceChip(
+                                label: Text(['Original', 'Pink', 'Warm', 'Violet', 'Ice'][filter]),
+                                selected: _selectedFilter == filter,
+                                onSelected: (_) => setState(() => _selectedFilter = filter),
+                              ),
+                          ],
+                        ),
                         Row(
                           children: [
                             Expanded(
@@ -425,6 +459,24 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                             ),
                             IconButton(tooltip: 'Як қадам бекор кардан', onPressed: _drawingStrokes.isEmpty ? null : _undoStroke, icon: const Icon(Icons.undo)),
                             IconButton(tooltip: 'Тоза кардан', onPressed: _drawingStrokes.isEmpty ? null : _clearStrokes, icon: const Icon(Icons.delete_outline)),
+                            IconButton(
+                              tooltip: 'Ранги қалам',
+                              onPressed: () => setState(() {
+                                _drawingColor = _drawingColor == Colors.white
+                                    ? Colors.pinkAccent
+                                    : _drawingColor == Colors.pinkAccent
+                                        ? Colors.cyanAccent
+                                        : _drawingColor == Colors.cyanAccent
+                                            ? Colors.yellowAccent
+                                            : Colors.white;
+                              }),
+                              icon: Icon(Icons.color_lens, color: _drawingColor),
+                            ),
+                            IconButton(
+                              tooltip: 'Ғафсии қалам',
+                              onPressed: () => setState(() => _drawingWidth = _drawingWidth >= 8 ? 3 : _drawingWidth + 2),
+                              icon: const Icon(Icons.line_weight),
+                            ),
                           ],
                         ),
                         Align(alignment: Alignment.centerLeft, child: _editorLabel('Стикер / эмодзи')),
@@ -442,6 +494,11 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                         ),
                         const SizedBox(height: 8),
                       ],
+                      OutlinedButton.icon(
+                        onPressed: () => setState(() => _animatedText = !_animatedText),
+                        icon: Icon(_animatedText ? Icons.motion_photos_on : Icons.motion_photos_off),
+                        label: Text(_animatedText ? 'Аниматсияи матн фаъол' : 'Аниматсияи матн'),
+                      ),
                       OutlinedButton.icon(
                         onPressed: _isPosting ? null : _pickMusic,
                         icon: const Icon(Icons.music_note),
@@ -542,8 +599,10 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
 
 
 class _StoryDrawingPainter extends CustomPainter {
-  const _StoryDrawingPainter(this.strokes);
+  const _StoryDrawingPainter(this.strokes, {this.color = Colors.white, this.strokeWidth = 4});
   final List<List<Offset>> strokes;
+  final Color color;
+  final double strokeWidth;
 
   @override
   void paint(Canvas canvas, Size size) {
