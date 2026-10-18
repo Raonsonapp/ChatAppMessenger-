@@ -14,6 +14,9 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -144,9 +147,11 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
-            echo "::warning::Stable release signing secrets are missing. Building with the Gradle debug-key fallback so an APK can still be downloaded. Installing over an existing differently-signed app may require uninstalling the old app first."
+            echo "ANDROID_SIGNING_READY=false" >> "$GITHUB_ENV"
+            echo "::warning::Stable release signing secrets are missing. APK will be uploaded as a workflow artifact only; no update release will be published because it could break install-over-existing."
             exit 0
           fi
+          echo "ANDROID_SIGNING_READY=true" >> "$GITHUB_ENV"
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
           cat > android/key.properties <<EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
@@ -163,6 +168,8 @@ jobs:
             BUILD_NUMBER="$((PUBSPEC_BUILD_NUMBER + GITHUB_RUN_NUMBER + 1))"
           fi
           echo "Building ChatApp with Android versionCode=$BUILD_NUMBER"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=$(awk -F'[+]' '/^version:/ { split($1, a, " "); print a[2] }' pubspec.yaml)" >> "$GITHUB_ENV"
           flutter build apk --release --build-number "$BUILD_NUMBER"
 
       - name: Upload release APK
@@ -171,3 +178,18 @@ jobs:
           name: chatapp-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+      # Public release is created only when stable signing secrets exist.
+      # Without a stable keystore, APK updates over an installed app are not safe.
+      - name: Publish signed APK release
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && env.ANDROID_SIGNING_READY == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: chatapp-v${{ env.VERSION_NAME }}-build${{ env.BUILD_NUMBER }}
+          name: ChatApp ${{ env.VERSION_NAME }} (build ${{ env.BUILD_NUMBER }})
+          body: |
+            Automatic Android update for ChatApp.
+
+            versionCode: ${{ env.BUILD_NUMBER }}
+          files: build/app/outputs/flutter-apk/app-release.apk
+          fail_on_unmatched_files: true
+
