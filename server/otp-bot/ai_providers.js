@@ -87,7 +87,9 @@ async function requestResponsesApi({ endpoint, key, model, messages, webContext,
   const input = [{ role: 'system', content: SYSTEM_INSTRUCTION }];
   const cleanMessages = messages.map((message, index) => ({
     role: message.role === 'model' || message.role === 'assistant' ? 'assistant' : 'user',
-    content: message.text + (index === messages.length - 1 ? webContext : ''),
+    content: message.text + (
+      index === messages.length - 1 && message.role !== 'assistant' ? webContext : ''
+    ),
   }));
   input.push(...cleanMessages);
 
