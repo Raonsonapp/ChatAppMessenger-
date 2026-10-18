@@ -75,7 +75,6 @@ class AppUpdateService {
   static final AppUpdateService instance = AppUpdateService._();
   final http.Client _client = http.Client();
   File? _downloadedApk;
-  AppUpdateInfo? _downloadedUpdate;
 
   Future<String> currentVersionLabel() async {
     final info = await PackageInfo.fromPlatform();
@@ -165,7 +164,6 @@ class AppUpdateService {
     if (await apkFile.exists()) await apkFile.delete();
     final savedFile = await partialFile.rename(apkFile.path);
     _downloadedApk = savedFile;
-    _downloadedUpdate = update;
     await _launchInstaller(savedFile);
   }
 
