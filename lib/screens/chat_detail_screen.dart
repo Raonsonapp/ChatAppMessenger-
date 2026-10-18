@@ -37,6 +37,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   bool _isGeneratingMedia = false;
   bool _isUploading = false;
   ChatMessage? _replyingTo;
+  List<Map<String, String>> _aiProviders = const [{'id': 'gemini', 'label': 'Gemini'}];
+  String _selectedAiProvider = 'gemini';
 
   CollectionReference<Map<String, dynamic>> get _messagesRef {
     final firestore = FirebaseFirestore.instance;
@@ -61,10 +63,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.conversation.isAIChat) _loadAiProviders();
     if (widget.initialText != null && widget.initialText!.isNotEmpty) {
       _controller.text = widget.initialText!;
       _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
     }
+  }
+
+  Future<void> _loadAiProviders() async {
+    final providers = await ChatAiService.availableProviders();
+    if (!mounted) return;
+    setState(() {
+      _aiProviders = providers;
+      if (!providers.any((item) => item['id'] == _selectedAiProvider)) {
+        _selectedAiProvider = providers.first['id'] ?? 'gemini';
+      }
+    });
   }
 
   @override
@@ -223,7 +237,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           history.last['text'] != latestPrompt) {
         history.add({'role': 'user', 'text': latestPrompt});
       }
-      final reply = await ChatAiService.reply(history);
+      final reply = await ChatAiService.reply(history, provider: _selectedAiProvider);
       await _messagesRef.add({
         'text': reply,
         'senderId': 'ai_bot',
@@ -584,6 +598,27 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     convo.isAIChat ? tr('k038') : tr('k039'),
                     style: TextStyle(color: AppColors.neonEmerald, fontSize: 11),
                   ),
+                  if (convo.isAIChat && _aiProviders.length > 1)
+                    SizedBox(
+                      height: 30,
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _aiProviders.any((item) => item['id'] == _selectedAiProvider)
+                              ? _selectedAiProvider
+                              : _aiProviders.first['id'],
+                          isDense: true,
+                          dropdownColor: AppColors.surface,
+                          style: TextStyle(color: AppColors.neonCyan, fontSize: 12),
+                          items: _aiProviders.map((item) => DropdownMenuItem<String>(
+                            value: item['id'],
+                            child: Text(item['label'] ?? item['id'] ?? 'AI'),
+                          )).toList(),
+                          onChanged: _isAITyping ? null : (value) {
+                            if (value != null) setState(() => _selectedAiProvider = value);
+                          },
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
