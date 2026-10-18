@@ -83,7 +83,7 @@ class _AboutScreenState extends State<AboutScreen> {
       await _openInstallSettings();
     } on AppUpdateException catch (error) {
       _showMessage(error.message);
-    } catch (error) {
+    } catch (_) {
       _showMessage('Навсозӣ санҷида нашуд. Интернетро санҷ ва боз кӯшиш кун.');
     } finally {
       if (mounted) setState(() => _checking = false);
