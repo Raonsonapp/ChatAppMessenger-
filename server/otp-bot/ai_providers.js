@@ -85,12 +85,16 @@ async function responseJson(response) {
 
 async function requestResponsesApi({ endpoint, key, model, messages, webContext, fetchImpl }) {
   const input = [{ role: 'system', content: SYSTEM_INSTRUCTION }];
-  const cleanMessages = messages.map((message, index) => ({
-    role: message.role === 'model' || message.role === 'assistant' ? 'assistant' : 'user',
-    content: message.text + (
-      index === messages.length - 1 && message.role !== 'assistant' ? webContext : ''
-    ),
-  }));
+  const cleanMessages = messages.map((message, index) => {
+    const isLatestUserMessage =
+      message.role !== 'assistant' &&
+      !messages.slice(index + 1).some((next) => next.role !== 'assistant');
+
+    return {
+      role: message.role === 'model' || message.role === 'assistant' ? 'assistant' : 'user',
+      content: message.text + (isLatestUserMessage ? webContext : ''),
+    };
+  });
   input.push(...cleanMessages);
 
   const response = await fetchImpl(endpoint, {
