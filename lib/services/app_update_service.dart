@@ -147,7 +147,7 @@ class AppUpdateService {
         sink.add(chunk);
         receivedBytes += chunk.length;
         if (totalBytes > 0) {
-          onProgress?.call((receivedBytes / totalBytes).clamp(0.0, 1.0));
+          onProgress?.call((receivedBytes / totalBytes).clamp(0.0, 1.0).toDouble());
         }
       }
     } catch (_) {
