@@ -57,6 +57,16 @@ service cloud.firestore {
         allow read, write: if signedIn() && uid() == userId;
       }
 
+      // Номи маҳаллии контакт танҳо барои соҳиби ҳисоб аст.
+      // Ин ном ба профили умумии корбари дигар тағйир намедиҳад.
+      match /localNames/{contactUid} {
+        allow read, write: if signedIn()
+          && uid() == userId
+          && contactUid != uid()
+          && request.resource.data.get('name', '') is string
+          && request.resource.data.get('name', '').size() <= 60;
+      }
+
       // Таърихи ChatApp AI танҳо барои соҳиби ҳисоби воридшуда дастрас аст.
       // Роҳи база: users/{uid}/aiChat/main/messages/{messageId}.
       match /aiChat/{chatId}/messages/{messageId} {
