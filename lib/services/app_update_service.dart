@@ -178,6 +178,10 @@ class AppUpdateService {
     await _launchInstaller(file);
   }
 
+  Future<void> openInstallPermissionSettings() async {
+    await _installerChannel.invokeMethod<void>('openInstallPermissionSettings');
+  }
+
   Future<void> _launchInstaller(File file) async {
     final result = await _installerChannel.invokeMethod<String>(
       'installApk',
