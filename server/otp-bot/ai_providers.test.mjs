@@ -1,13 +1,14 @@
-'use strict';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 
-const test = require('node:test');
-const assert = require('node:assert/strict');
+const require = createRequire(import.meta.url);
 const {
   extractResponseText,
   generateChatReply,
   listConfiguredProviders,
   modelFor,
-} = require('./ai_providers');
+} = require('./ai_providers.js');
 
 function fakeResponse(body, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: async () => body };
