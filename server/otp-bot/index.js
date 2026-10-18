@@ -640,7 +640,11 @@ const translateQuota = new Map();
  * фиреб медиҳад.
  */
 /** AI-и ChatApp. Калиди Gemini танҳо дар environment-и сервер нигоҳ дошта мешавад. */
-const AI_CHAT_QUOTA_PER_HOUR = 30;
+// Free-tier ChatAI allowance: 30 requests per rolling hour per Firebase user.
+const AI_CHAT_QUOTA_PER_HOUR = Math.max(
+  1,
+  Math.min(30, Number.parseInt(process.env.AI_CHAT_QUOTA_PER_HOUR || '30', 10) || 30),
+);
 const aiChatQuota = new Map();
 
 app.get('/api/ai/providers', async (req, res) => {
