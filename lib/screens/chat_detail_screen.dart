@@ -231,10 +231,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         'createdAt': FieldValue.serverTimestamp(),
       });
       _scrollToBottom();
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
+        final message = error is ChatAiFailure
+            ? error.message
+            : 'Ба ChatAI пайваст нашуд. Интернет ва серверро санҷед.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(tr('k714'))),
+          SnackBar(content: Text(message), duration: const Duration(seconds: 5)),
         );
       }
     } finally {
