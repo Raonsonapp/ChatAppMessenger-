@@ -388,6 +388,12 @@ class NotificationService {
       description: tr('k224'),
       importance: Importance.max,
     ));
+    await androidPlugin?.createNotificationChannel(AndroidNotificationChannel(
+      _updatesChannelId,
+      'ChatApp',
+      description: 'Навсозиҳо ва дигар огоҳиномаҳои ChatApp',
+      importance: Importance.defaultImportance,
+    ));
 
     FirebaseMessaging.onMessage.listen((message) async {
       final data = message.data;
