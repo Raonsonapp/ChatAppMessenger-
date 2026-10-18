@@ -30,6 +30,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 const String _messagesChannelId = 'messages_channel';
 const String _callsChannelId = 'calls_channel';
+const String _updatesChannelId = 'chatapp_updates_channel';
 
 /// Ранги неони ChatApp дар огоҳиномаҳо.
 const Color _brandColor = Color(0xFF00E5A0);
