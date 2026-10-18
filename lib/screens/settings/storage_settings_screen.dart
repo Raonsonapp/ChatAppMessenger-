@@ -10,6 +10,7 @@ import '../../widgets/glass_container.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
 import '../../services/media_cache.dart';
+import '../../services/local_ai_chat_store.dart';
 import '../../services/media_settings_controller.dart';
 import '../../theme/app_scope.dart';
 
@@ -27,6 +28,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
   bool _loading = true;
   int _diskCache = 0;
   bool _clearing = false;
+  bool _clearingAiHistory = false;
 
   @override
   void initState() {
@@ -80,6 +82,50 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(trf('k184', [_formatBytes(freed)]))),
     );
+  }
+
+  Future<void> _clearLocalAiHistory() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || _clearingAiHistory) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Таърихи ChatAI тоза шавад?'),
+        content: const Text(
+          'Ин амал танҳо таърихи маҳаллии ChatAI-ро аз ҳамин телефон нест мекунад. '
+          'Барқарор кардани он аз нусхаи эҳтиётӣ имконнопазир аст, агар нусха насохта бошӣ.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Бекор кардан'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text('Тоза кардан'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _clearingAiHistory = true);
+    try {
+      await LocalAiChatStore.instance.clear(uid);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Таърихи маҳаллии ChatAI тоза шуд.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Тоза кардан ноком шуд. Боз кӯшиш кун.')),
+      );
+    } finally {
+      if (mounted) setState(() => _clearingAiHistory = false);
+    }
   }
 
   static String _formatBytes(int bytes) {
@@ -295,6 +341,30 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    GlassContainer(
+                      borderRadius: 18,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: _clearingAiHistory
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(LucideIcons.bot, color: Colors.redAccent),
+                        title: const Text(
+                          'Тоза кардани таърихи ChatAI',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        ),
+                        subtitle: const Text(
+                          'Танҳо маълумоти маҳаллии ҳамин телефон нест мешавад',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        onTap: _clearingAiHistory ? null : _clearLocalAiHistory,
                       ),
                     ),
                     const SizedBox(height: 14),
