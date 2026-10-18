@@ -17,14 +17,24 @@ const SYSTEM_INSTRUCTION = [
 
 function modelFor(provider, env) {
   if (provider === 'gemini') return env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || 'gemini-3.8-flash';
-  if (provider === 'openai') return env.OPENAI_MODEL || 'gpt-6-luna';
+  if (provider === 'openai') return env.OPENAI_MODEL || 'gpt-5-mini';
   if (provider === 'grok') return env.XAI_MODEL || 'grok-4.7';
   return null;
 }
 
 function listConfiguredProviders(env = process.env) {
+  const paidProvidersExplicitlyAllowed =
+    String(env.ALLOW_PAID_AI_PROVIDERS || '').toLowerCase() === 'true';
+
   return Object.values(PROVIDERS)
-    .filter((provider) => Boolean(String(env[provider.keyName] || '').trim()))
+    .filter((provider) => {
+      const hasKey = Boolean(String(env[provider.keyName] || '').trim());
+      if (!hasKey) return false;
+      // ChatGPT/OpenAI API billing is separate from ChatGPT subscriptions;
+      // xAI API calls are billed by token/tool use. Keep both off by default.
+      if (provider.id !== 'gemini' && !paidProvidersExplicitlyAllowed) return false;
+      return true;
+    })
     .map((provider) => ({
       id: provider.id,
       label: provider.label,
