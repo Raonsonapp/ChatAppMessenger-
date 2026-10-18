@@ -8,7 +8,39 @@ import '../config/otp_server_config.dart';
 
 /// Чат бо Gemini тавассути сервер; API key ҳеҷ гоҳ ба Flutter намерасад.
 class ChatAiService {
-  static Future<String> reply(List<Map<String, String>> messages) async {
+  static Future<List<Map<String, String>>> availableProviders() async {
+    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (token == null) return const [{'id': 'gemini', 'label': 'Gemini'}];
+
+    try {
+      final response = await http.get(
+        Uri.parse('${OtpServerConfig.baseUrl}/api/ai/providers'),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode != 200) {
+        return const [{'id': 'gemini', 'label': 'Gemini'}];
+      }
+      final data = jsonDecode(response.body);
+      final raw = data is Map<String, dynamic> ? data['providers'] : null;
+      if (raw is! List) return const [{'id': 'gemini', 'label': 'Gemini'}];
+      final providers = raw
+          .whereType<Map<String, dynamic>>()
+          .where((item) => item['id'] is String && item['label'] is String)
+          .map((item) => {
+                'id': item['id']! as String,
+                'label': item['label']! as String,
+              })
+          .toList();
+      return providers.isEmpty ? const [{'id': 'gemini', 'label': 'Gemini'}] : providers;
+    } catch (_) {
+      return const [{'id': 'gemini', 'label': 'Gemini'}];
+    }
+  }
+
+  static Future<String> reply(
+    List<Map<String, String>> messages, {
+    String provider = 'gemini',
+  }) async {
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
     if (token == null) throw const ChatAiFailure('Аввал ба аккаунти ChatApp ворид шавед.');
 
@@ -19,7 +51,7 @@ class ChatAiService {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
           },
-          body: jsonEncode({'messages': messages}),
+          body: jsonEncode({'messages': messages, 'provider': provider}),
         )
         .timeout(const Duration(seconds: 40));
 
