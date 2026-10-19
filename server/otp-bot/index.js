@@ -181,9 +181,12 @@ app.get('/', (_req, res) => {
     translate: { configured: Boolean(process.env.GEMINI_API_KEY || process.env.TRANSLATE_ENDPOINT) },
     ai: { configured: Boolean(process.env.GEMINI_API_KEY) },
     mediaGeneration: {
-      image: Boolean(process.env.IMAGE_GENERATION_ENDPOINT && process.env.IMAGE_GENERATION_API_KEY),
-      video: Boolean(process.env.VIDEO_GENERATION_ENDPOINT && process.env.VIDEO_GENERATION_API_KEY),
-      music: Boolean(process.env.MUSIC_GENERATION_ENDPOINT && process.env.MUSIC_GENERATION_API_KEY),
+      // API calls that may cost money are opt-in. Gemini image is only enabled
+      // when the deploy owner explicitly confirms this project/model has a free tier.
+      image: (String(process.env.GEMINI_IMAGE_API_FREE_TIER_CONFIRMED || '').toLowerCase() === 'true' && Boolean(process.env.GEMINI_API_KEY)) ||
+        (String(process.env.ALLOW_PAID_MEDIA_API || '').toLowerCase() === 'true' && Boolean(process.env.XAI_API_KEY)),
+      video: String(process.env.ALLOW_PAID_MEDIA_API || '').toLowerCase() === 'true' && Boolean(process.env.XAI_API_KEY),
+      music: String(process.env.ALLOW_PAID_MEDIA_API || '').toLowerCase() === 'true' && Boolean(process.env.MUSIC_GENERATION_ENDPOINT && process.env.MUSIC_GENERATION_API_KEY),
     },
     publicDomain: process.env.PUBLIC_URL || process.env.RAILWAY_PUBLIC_DOMAIN || null,
     // Кадом нусхаи код кор мекунад — барои санҷиши он ки деплой расидааст ё не.
@@ -992,7 +995,9 @@ app.post('/api/ai/generate/:kind', async (req, res) => {
       return res.status(503).json({ error: 'free-music-provider-not-configured', kind });
     }
   } else if (kind === 'image') {
-    const geminiFreeCandidate = providerName === 'gemini' && Boolean(process.env.GEMINI_API_KEY);
+    const geminiFreeCandidate = providerName === 'gemini' &&
+      String(process.env.GEMINI_IMAGE_API_FREE_TIER_CONFIRMED || '').toLowerCase() === 'true' &&
+      Boolean(process.env.GEMINI_API_KEY);
     const grokPaid = providerName === 'grok' && Boolean(process.env.XAI_API_KEY) && paidEnabled;
     if (!geminiFreeCandidate && !grokPaid) {
       return res.status(503).json({
