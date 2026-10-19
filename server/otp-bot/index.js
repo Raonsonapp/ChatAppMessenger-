@@ -805,9 +805,9 @@ function mediaConfig() {
   const paidEnabled = String(process.env.ALLOW_PAID_MEDIA_API || '').toLowerCase() === 'true';
   return {
     paidEnabled,
-    geminiImage: Boolean(process.env.GEMINI_API_KEY),
-    grokImage: Boolean(process.env.XAI_API_KEY),
-    grokVideo: Boolean(process.env.XAI_API_KEY),
+    geminiImage: String(process.env.GEMINI_IMAGE_API_FREE_TIER_CONFIRMED || '').toLowerCase() === 'true' && Boolean(process.env.GEMINI_API_KEY),
+    grokImage: paidEnabled && Boolean(process.env.XAI_API_KEY),
+    grokVideo: paidEnabled && Boolean(process.env.XAI_API_KEY),
     externalImage: paidEnabled && Boolean(process.env.IMAGE_GENERATION_ENDPOINT && process.env.IMAGE_GENERATION_API_KEY),
     externalVideo: paidEnabled && Boolean(process.env.VIDEO_GENERATION_ENDPOINT && process.env.VIDEO_GENERATION_API_KEY),
     externalMusic: paidEnabled && Boolean(process.env.MUSIC_GENERATION_ENDPOINT && process.env.MUSIC_GENERATION_API_KEY),
