@@ -687,7 +687,18 @@ app.post('/api/ai/chat', async (req, res) => {
     const providers = require('./ai_providers');
     const configured = providers.listConfiguredProviders(process.env);
     const requestedProvider = String(req.body?.provider ?? process.env.CHAT_AI_DEFAULT_PROVIDER ?? 'gemini');
-    const provider = configured.some((item) => item.id === requestedProvider)
+    const explicitlyRequestedProvider = typeof req.body?.provider === 'string' && req.body.provider.trim().length > 0;
+    const providerIsConfigured = configured.some((item) => item.id === requestedProvider);
+    // If the user explicitly selects Grok/OpenAI, never silently answer with a
+    // different provider. This makes configuration errors visible and avoids
+    // mislabeling which model produced the reply.
+    if (explicitlyRequestedProvider && !providerIsConfigured) {
+      return res.status(503).json({
+        error: 'provider-not-configured',
+        provider: requestedProvider,
+      });
+    }
+    const provider = providerIsConfigured
       ? requestedProvider
       : configured.some((item) => item.id === 'gemini')
         ? 'gemini'
