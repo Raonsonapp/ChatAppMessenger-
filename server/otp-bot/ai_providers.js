@@ -16,9 +16,9 @@ const SYSTEM_INSTRUCTION = [
 ].join(' ');
 
 function modelFor(provider, env) {
-  if (provider === 'gemini') return env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || 'gemini-3.8-flash';
+  if (provider === 'gemini') return env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || 'gemini-2.5-flash';
   if (provider === 'openai') return env.OPENAI_MODEL || 'gpt-5-mini';
-  if (provider === 'grok') return env.XAI_MODEL || 'grok-4.7';
+  if (provider === 'grok') return env.XAI_MODEL || 'grok-4.1';
   return null;
 }
 
