@@ -392,6 +392,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Future<void> _openMediaGeneration(String kind) async {
     final promptController = TextEditingController();
     var durationSeconds = 8;
+    var provider = kind == 'image' ? 'gemini' : 'grok';
     final prompt = await showDialog<String>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -416,6 +417,28 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     hintStyle: TextStyle(color: AppColors.textSecondary),
                   ),
                 ),
+                if (kind == 'image' || kind == 'video') ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: provider,
+                    decoration: InputDecoration(
+                      labelText: 'Провайдер',
+                      labelStyle: TextStyle(color: AppColors.textSecondary),
+                    ),
+                    dropdownColor: AppColors.surface,
+                    items: (kind == 'image'
+                        ? const [
+                            DropdownMenuItem(value: 'gemini', child: Text('Gemini')),
+                            DropdownMenuItem(value: 'grok', child: Text('Grok — метавонад пулакӣ бошад')),
+                          ]
+                        : const [
+                            DropdownMenuItem(value: 'grok', child: Text('Grok — API метавонад пулакӣ бошад')),
+                          ]),
+                    onChanged: (value) {
+                      if (value != null) setDialogState(() => provider = value);
+                    },
+                  ),
+                ],
                 if (kind == 'video') ...[
                   const SizedBox(height: 14),
                   Align(
@@ -425,8 +448,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   Slider(
                     value: durationSeconds.toDouble(),
                     min: 1,
-                    max: 30,
-                    divisions: 29,
+                    max: 15,
+                    divisions: 14,
                     label: '$durationSeconds',
                     onChanged: (value) => setDialogState(() => durationSeconds = value.round()),
                   ),
@@ -461,6 +484,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         kind: kind,
         prompt: prompt,
         durationSeconds: durationSeconds,
+        provider: provider,
       );
       await _messagesRef.add({
         'text': prompt,
@@ -473,11 +497,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       });
       _scrollToBottom();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k726'))));
+        final quotaText = result.remaining == null ? '' : ' (боқимонда: ${result.remaining})';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${tr('k726')}$quotaText')));
       }
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k730'))));
+        final message = error is ChatAiFailure ? error.message : tr('k730');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
       if (mounted) setState(() => _isGeneratingMedia = false);
