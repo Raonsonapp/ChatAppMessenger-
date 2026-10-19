@@ -789,68 +789,285 @@ app.post('/api/transcribe', async (req, res) => {
  * Each provider returns JSON with a publicly accessible media URL in
  * url, mediaUrl, or output.url. Provider credentials never reach Flutter.
  */
-const mediaGenerationQuota = new Map();
-const MEDIA_GENERATION_QUOTA_PER_HOUR = 5;
-const MEDIA_GENERATION_PROVIDERS = {
-  image: {
-    endpoint: process.env.IMAGE_GENERATION_ENDPOINT,
-    key: process.env.IMAGE_GENERATION_API_KEY,
-  },
-  video: {
-    endpoint: process.env.VIDEO_GENERATION_ENDPOINT,
-    key: process.env.VIDEO_GENERATION_API_KEY,
-  },
-  music: {
-    endpoint: process.env.MUSIC_GENERATION_ENDPOINT,
-    key: process.env.MUSIC_GENERATION_API_KEY,
-  },
-};
+// Persistent app-side media quotas: cap attempts BEFORE making provider calls.
+// Counts survive server restarts by using Firestore, keyed by uid + capability.
+// Paid image/video/music APIs remain disabled unless explicitly configured.
+const MEDIA_QUOTA_POLICY = Object.freeze({
+  image: Object.freeze({ limit: 2, windowMs: 5 * 60 * 60 * 1000 }),
+  video: Object.freeze({ limit: 1, windowMs: 12 * 60 * 60 * 1000 }),
+  music: Object.freeze({ limit: 1, windowMs: 12 * 60 * 60 * 1000 }),
+});
+
+function mediaConfig() {
+  const paidEnabled = String(process.env.ALLOW_PAID_MEDIA_API || '').toLowerCase() === 'true';
+  return {
+    paidEnabled,
+    geminiImage: Boolean(process.env.GEMINI_API_KEY),
+    grokImage: Boolean(process.env.XAI_API_KEY),
+    grokVideo: Boolean(process.env.XAI_API_KEY),
+    externalImage: paidEnabled && Boolean(process.env.IMAGE_GENERATION_ENDPOINT && process.env.IMAGE_GENERATION_API_KEY),
+    externalVideo: paidEnabled && Boolean(process.env.VIDEO_GENERATION_ENDPOINT && process.env.VIDEO_GENERATION_API_KEY),
+    externalMusic: paidEnabled && Boolean(process.env.MUSIC_GENERATION_ENDPOINT && process.env.MUSIC_GENERATION_API_KEY),
+  };
+}
+
+async function readMediaQuota(uid, kind, now = Date.now()) {
+  const policy = MEDIA_QUOTA_POLICY[kind];
+  if (!policy) throw new Error('Unsupported media quota capability');
+  const ref = getFirestore().collection('users').doc(uid).collection('aiQuota').doc(kind);
+  const snap = await ref.get();
+  const entry = snap.exists ? snap.data() : {};
+  const since = Number(entry?.since || 0);
+  const count = Number(entry?.count || 0);
+  if (!since || now - since >= policy.windowMs) {
+    return { allowed: true, remaining: policy.limit, resetAt: now + policy.windowMs, since: now, count: 0, policy };
+  }
+  return {
+    allowed: count < policy.limit,
+    remaining: Math.max(0, policy.limit - count),
+    resetAt: since + policy.windowMs,
+    since,
+    count,
+    policy,
+  };
+}
+
+/** Reserve one quota unit atomically before any upstream call, including failed attempts. */
+async function reserveMediaQuota(uid, kind, now = Date.now()) {
+  const policy = MEDIA_QUOTA_POLICY[kind];
+  if (!policy) throw new Error('Unsupported media quota capability');
+  const ref = getFirestore().collection('users').doc(uid).collection('aiQuota').doc(kind);
+  return getFirestore().runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    const entry = snap.exists ? snap.data() : {};
+    const oldSince = Number(entry?.since || 0);
+    const oldCount = Number(entry?.count || 0);
+    const expired = !oldSince || now - oldSince >= policy.windowMs;
+    const since = expired ? now : oldSince;
+    const count = expired ? 0 : oldCount;
+    if (count >= policy.limit) {
+      return { allowed: false, remaining: 0, resetAt: since + policy.windowMs };
+    }
+    const nextCount = count + 1;
+    transaction.set(ref, {
+      since,
+      count: nextCount,
+      windowMs: policy.windowMs,
+      limit: policy.limit,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    return { allowed: true, remaining: policy.limit - nextCount, resetAt: since + policy.windowMs };
+  });
+}
+
+async function generateGeminiImage({ prompt, apiKey }) {
+  const model = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
+  const url = new URL('https://generativelanguage.googleapis.com/v1beta/models/' +
+    encodeURIComponent(model) + ':generateContent');
+  url.searchParams.set('key', apiKey);
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error('Gemini image request failed');
+    error.status = response.status;
+    throw error;
+  }
+  const parts = data?.candidates?.[0]?.content?.parts ?? [];
+  const part = parts.find((item) => item?.inlineData?.data && item?.inlineData?.mimeType);
+  if (!part) throw Object.assign(new Error('Gemini returned no image'), { status: 502 });
+  return {
+    mimeType: part.inlineData.mimeType,
+    base64: part.inlineData.data,
+    text: parts.filter((item) => typeof item?.text === 'string').map((item) => item.text).join('\n'),
+  };
+}
+
+async function generateGrokImage({ prompt, apiKey }) {
+  const response = await fetch('https://api.x.ai/v1/images/generations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model: process.env.XAI_IMAGE_MODEL || 'grok-imagine-image',
+      prompt,
+      n: 1,
+      response_format: 'url',
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw Object.assign(new Error('Grok image request failed'), { status: response.status });
+  const url = data?.data?.[0]?.url;
+  if (typeof url !== 'string' || !url.startsWith('https://')) {
+    throw Object.assign(new Error('Grok returned no image URL'), { status: 502 });
+  }
+  return { url };
+}
+
+async function generateGrokVideo({ prompt, apiKey, durationSeconds }) {
+  const response = await fetch('https://api.x.ai/v1/videos/generations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model: process.env.XAI_VIDEO_MODEL || 'grok-imagine-video-1.5',
+      prompt,
+      duration: Math.min(15, Math.max(1, durationSeconds)),
+      aspect_ratio: '16:9',
+      resolution: process.env.XAI_VIDEO_RESOLUTION || '480p',
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw Object.assign(new Error('Grok video request failed'), { status: response.status });
+  const requestId = data?.request_id ?? data?.id;
+  if (typeof requestId !== 'string' || !requestId) {
+    throw Object.assign(new Error('Grok response has no request id'), { status: 502 });
+  }
+  const endpoint = process.env.XAI_VIDEO_STATUS_ENDPOINT ||
+    'https://api.x.ai/v1/videos/' + encodeURIComponent(requestId);
+  const deadline = Date.now() + 180000;
+  while (Date.now() < deadline) {
+    const statusResponse = await fetch(endpoint, {
+      headers: { Authorization: 'Bearer ' + apiKey },
+      signal: AbortSignal.timeout(20000),
+    });
+    const statusData = await statusResponse.json().catch(() => ({}));
+    if (!statusResponse.ok) throw Object.assign(new Error('Grok status request failed'), { status: statusResponse.status });
+    const state = String(statusData?.status ?? statusData?.state ?? '').toLowerCase();
+    const url = statusData?.video?.url ?? statusData?.url ?? statusData?.output?.url;
+    if (['done', 'completed', 'succeeded', 'success'].includes(state) && typeof url === 'string' && url.startsWith('https://')) {
+      return url;
+    }
+    if (['failed', 'error', 'cancelled'].includes(state)) throw Object.assign(new Error('Grok video generation failed'), { status: 502 });
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+  throw Object.assign(new Error('Grok video timed out'), { status: 504 });
+}
+
+app.get('/api/ai/media-quota', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  try {
+    const capabilities = {};
+    for (const kind of Object.keys(MEDIA_QUOTA_POLICY)) {
+      const state = await readMediaQuota(user.uid, kind);
+      capabilities[kind] = { limit: state.policy.limit, remaining: state.remaining, resetAt: state.resetAt };
+    }
+    return res.json({ capabilities, providers: mediaConfig() });
+  } catch (error) {
+    console.warn('Media quota lookup failed:', error?.message ?? error);
+    return res.status(503).json({ error: 'media-quota-unavailable' });
+  }
+});
+
 app.post('/api/ai/generate/:kind', async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
 
   const kind = String(req.params.kind ?? '').toLowerCase();
-  const provider = MEDIA_GENERATION_PROVIDERS[kind];
-  if (!provider) return res.status(400).json({ error: 'unsupported-generation-kind' });
-  if (!provider.endpoint || !provider.key) {
-    return res.status(503).json({ error: 'media-generation-not-configured', kind });
-  }
-  if (overQuota(mediaGenerationQuota, user.uid, MEDIA_GENERATION_QUOTA_PER_HOUR)) {
-    return res.status(429).json({ error: 'generation-quota-reached' });
+  if (!Object.prototype.hasOwnProperty.call(MEDIA_QUOTA_POLICY, kind)) {
+    return res.status(400).json({ error: 'unsupported-generation-kind' });
   }
 
   const prompt = String(req.body?.prompt ?? '').trim().slice(0, 2000);
   if (prompt.length < 3) return res.status(400).json({ error: 'prompt-required' });
+
+  // External media providers may incur charges. They are unreachable unless
+  // an administrator explicitly opts in via server Environment.
+  const paidEnabled = String(process.env.ALLOW_PAID_MEDIA_API || '').toLowerCase() === 'true';
+  const providerName = String(req.body?.provider ?? process.env.CHAT_AI_MEDIA_PROVIDER ?? 'gemini').toLowerCase();
   const durationSeconds = kind === 'video'
-    ? Math.min(30, Math.max(1, Number(req.body?.durationSeconds) || 8))
+    ? Math.min(15, Math.max(1, Number(req.body?.durationSeconds) || 8))
     : undefined;
 
+  if (kind === 'music') {
+    if (!(paidEnabled && process.env.MUSIC_GENERATION_ENDPOINT && process.env.MUSIC_GENERATION_API_KEY)) {
+      return res.status(503).json({ error: 'free-music-provider-not-configured', kind });
+    }
+  } else if (kind === 'image') {
+    const geminiFreeCandidate = providerName === 'gemini' && Boolean(process.env.GEMINI_API_KEY);
+    const grokPaid = providerName === 'grok' && Boolean(process.env.XAI_API_KEY) && paidEnabled;
+    if (!geminiFreeCandidate && !grokPaid) {
+      return res.status(503).json({
+        error: providerName === 'grok' ? 'paid-media-api-disabled' : 'provider-not-configured',
+        provider: providerName,
+        kind,
+      });
+    }
+  } else if (kind === 'video') {
+    if (!(providerName === 'grok' && process.env.XAI_API_KEY && paidEnabled)) {
+      return res.status(503).json({ error: 'paid-media-api-disabled', provider: providerName, kind });
+    }
+  }
+
+  let reservation;
   try {
-    const upstream = await fetch(provider.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + provider.key,
-      },
-      body: JSON.stringify({
-        prompt,
-        ...(durationSeconds !== undefined ? { durationSeconds } : {}),
-      }),
-      signal: AbortSignal.timeout(90000),
+    reservation = await reserveMediaQuota(user.uid, kind);
+  } catch (error) {
+    console.warn('Media quota reservation failed:', error?.message ?? error);
+    return res.status(503).json({ error: 'media-quota-unavailable' });
+  }
+  if (!reservation.allowed) {
+    return res.status(429).json({
+      error: 'generation-quota-reached',
+      kind,
+      limit: MEDIA_QUOTA_POLICY[kind].limit,
+      remaining: 0,
+      resetAt: reservation.resetAt,
     });
-    const data = await upstream.json().catch(() => ({}));
-    if (!upstream.ok) {
-      console.warn('ChatAI media provider failed:', kind, upstream.status);
-      return res.status(upstream.status === 429 ? 429 : 502).json({ error: 'media-generation-failed' });
+  }
+
+  try {
+    if (kind === 'image' && providerName === 'gemini') {
+      const result = await generateGeminiImage({ prompt, apiKey: process.env.GEMINI_API_KEY });
+      return res.json({
+        kind, provider: 'gemini', mimeType: result.mimeType,
+        base64: result.base64, text: result.text,
+        remaining: reservation.remaining, resetAt: reservation.resetAt,
+      });
     }
-    const mediaUrl = data?.url ?? data?.mediaUrl ?? data?.output?.url;
-    if (typeof mediaUrl !== 'string' || !mediaUrl.startsWith('https://')) {
-      return res.status(502).json({ error: 'media-provider-invalid-response' });
+    if (kind === 'image' && providerName === 'grok') {
+      const result = await generateGrokImage({ prompt, apiKey: process.env.XAI_API_KEY });
+      return res.json({ kind, provider: 'grok', url: result.url, remaining: reservation.remaining, resetAt: reservation.resetAt });
     }
-    return res.json({ kind, url: mediaUrl, durationSeconds: durationSeconds ?? null });
-  } catch (err) {
-    console.warn('ChatAI media provider error:', kind, err?.message ?? err);
-    return res.status(502).json({ error: 'media-generation-failed' });
+    if (kind === 'video' && providerName === 'grok') {
+      const url = await generateGrokVideo({ prompt, apiKey: process.env.XAI_API_KEY, durationSeconds });
+      return res.json({ kind, provider: 'grok', url, durationSeconds, remaining: reservation.remaining, resetAt: reservation.resetAt });
+    }
+    if (kind === 'music') {
+      const cfg = { endpoint: process.env.MUSIC_GENERATION_ENDPOINT, key: process.env.MUSIC_GENERATION_API_KEY };
+      const upstream = await fetch(cfg.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + cfg.key },
+        body: JSON.stringify({ prompt }),
+        signal: AbortSignal.timeout(90000),
+      });
+      const data = await upstream.json().catch(() => ({}));
+      if (!upstream.ok) throw Object.assign(new Error('Music provider failed'), { status: upstream.status });
+      const url = data?.url ?? data?.mediaUrl ?? data?.output?.url;
+      if (typeof url !== 'string' || !url.startsWith('https://')) throw Object.assign(new Error('Music provider invalid response'), { status: 502 });
+      return res.json({ kind, provider: 'external-music', url, remaining: reservation.remaining, resetAt: reservation.resetAt });
+    }
+    return res.status(400).json({ error: 'provider-kind-not-supported', kind, provider: providerName });
+  } catch (error) {
+    const status = Number(error?.status) || 502;
+    console.warn('ChatAI media generation failed:', kind, providerName, status);
+    if (status === 429) {
+      return res.status(429).json({
+        error: 'provider-quota-exhausted',
+        kind,
+        provider: providerName,
+        message: 'Квотаи провайдер тамом шудааст. Баъдтар аз нав кӯшиш кунед.',
+      });
+    }
+    return res.status(502).json({ error: 'media-generation-failed', kind, provider: providerName });
   }
 });
 
