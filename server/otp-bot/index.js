@@ -1065,6 +1065,8 @@ app.post('/api/ai/generate/:kind', async (req, res) => {
     const status = Number(error?.status) || 502;
     console.warn('ChatAI media generation failed:', kind, providerName, status);
     if (status === 429) {
+      // The upstream quota may be exhausted before ChatApp's cooldown ends.
+      // Keep the paid provider disabled unless the owner explicitly configured it.
       return res.status(429).json({
         error: 'provider-quota-exhausted',
         kind,
