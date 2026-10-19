@@ -67,48 +67,93 @@ class ChatAiService {
     return (data['reply'] as String).trim();
   }
 
-  /// Тавлиди медиа тавассути адаптери серверӣ. Калидҳои API ба Flutter намеоянд.
+  /// Reads server-side per-user media limits and provider availability.
+  static Future<Map<String, dynamic>> mediaQuota() async {
+    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (token == null) throw const ChatAiFailure('Аввал ба аккаунти ChatApp ворид шавед.');
+    final response = await http.get(
+      Uri.parse('${OtpServerConfig.baseUrl}/api/ai/media-quota'),
+      headers: {'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 10));
+    if (response.statusCode != 200) {
+      throw const ChatAiFailure('Лимити AI ҳоло дастрас нест. Каме баъдтар такрор кунед.');
+    }
+    final data = jsonDecode(response.body);
+    if (data is! Map<String, dynamic>) throw const ChatAiFailure();
+    return data;
+  }
+
+  /// Generates media only through an explicitly supported provider.
   static Future<GeneratedChatMedia> generateMedia({
     required String kind,
     required String prompt,
     int durationSeconds = 8,
+    String provider = 'gemini',
   }) async {
     if (!const {'image', 'video', 'music'}.contains(kind)) {
       throw const ChatAiFailure();
     }
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
-    if (token == null) throw const ChatAiFailure();
+    if (token == null) throw const ChatAiFailure('Аввал ба аккаунти ChatApp ворид шавед.');
 
-    final response = await http
-        .post(
-          Uri.parse('${OtpServerConfig.baseUrl}/api/ai/generate/$kind'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'prompt': prompt,
-            if (kind == 'video') 'durationSeconds': durationSeconds.clamp(1, 30),
-          }),
-        )
-        .timeout(const Duration(seconds: 100));
+    final response = await http.post(
+      Uri.parse('${OtpServerConfig.baseUrl}/api/ai/generate/$kind'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'prompt': prompt,
+        'provider': provider,
+        if (kind == 'video') 'durationSeconds': durationSeconds.clamp(1, 15),
+      }),
+    ).timeout(const Duration(seconds: 220));
 
     if (response.statusCode != 200) {
+      final code = _errorCode(response);
+      if (response.statusCode == 429) {
+        throw ChatAiFailure(code == 'generation-quota-reached'
+          ? 'Лимити ChatApp пур шуд. Баъдтар аз нав кӯшиш кунед.'
+          : 'Квотаи провайдер тамом шудааст. Вақте дастрас шавад, боз кӯшиш кунед.');
+      }
+      if (response.statusCode == 503 && code == 'paid-media-api-disabled') {
+        throw const ChatAiFailure('Ин генератор барои нигоҳ доштани истифодаи ройгон хомӯш аст.');
+      }
+      if (response.statusCode == 503 && code == 'free-music-provider-not-configured') {
+        throw const ChatAiFailure('Ҳоло провайдери мусиқии ройгон пайваст нест.');
+      }
       throw ChatAiFailure(_responseMessage(response));
     }
     final data = jsonDecode(response.body);
-    if (data is! Map<String, dynamic> ||
-        data['url'] is! String ||
-        !(data['url'] as String).startsWith('https://')) {
-      throw const ChatAiFailure();
-    }
+    if (data is! Map<String, dynamic>) throw const ChatAiFailure();
+    final url = data['url'];
+    final base64 = data['base64'];
+    final mimeType = data['mimeType'];
+    final mediaUrl = url is String && url.startsWith('https://')
+      ? url
+      : (base64 is String && mimeType is String && mimeType.startsWith('image/')
+          ? 'data:$mimeType;base64,$base64'
+          : null);
+    if (mediaUrl == null) throw const ChatAiFailure();
     return GeneratedChatMedia(
       kind: kind,
-      url: data['url'] as String,
+      url: mediaUrl,
       durationSeconds: data['durationSeconds'] is num
-          ? (data['durationSeconds'] as num).round()
-          : null,
+        ? (data['durationSeconds'] as num).round()
+        : null,
+      remaining: data['remaining'] is num ? (data['remaining'] as num).round() : null,
+      resetAt: data['resetAt'] is num ? DateTime.fromMillisecondsSinceEpoch((data['resetAt'] as num).round()) : null,
+      provider: data['provider'] is String ? data['provider'] as String : provider,
     );
+  }
+
+  static String _errorCode(http.Response response) {
+    try {
+      final data = jsonDecode(response.body);
+      return data is Map<String, dynamic> ? data['error']?.toString() ?? '' : '';
+    } catch (_) {
+      return '';
+    }
   }
 }
 
@@ -116,11 +161,17 @@ class GeneratedChatMedia {
   final String kind;
   final String url;
   final int? durationSeconds;
+  final int? remaining;
+  final DateTime? resetAt;
+  final String provider;
 
   const GeneratedChatMedia({
     required this.kind,
     required this.url,
     this.durationSeconds,
+    this.remaining,
+    this.resetAt,
+    this.provider = 'gemini',
   });
 }
 
