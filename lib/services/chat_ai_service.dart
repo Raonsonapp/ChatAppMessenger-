@@ -56,7 +56,7 @@ class ChatAiService {
         .timeout(const Duration(seconds: 40));
 
     if (response.statusCode != 200) {
-      throw ChatAiFailure(_responseMessage(response));
+      throw ChatAiFailure(_responseMessage(response, provider: provider));
     }
     final data = jsonDecode(response.body);
     if (data is! Map<String, dynamic> ||
@@ -124,7 +124,12 @@ class GeneratedChatMedia {
   });
 }
 
-String _responseMessage(http.Response response) {
+String _responseMessage(http.Response response, {String provider = 'gemini'}) {
+  final providerLabel = switch (provider) {
+    'openai' => 'OpenAI',
+    'grok' => 'Grok',
+    _ => 'Gemini',
+  };
   String code = '';
   try {
     final body = jsonDecode(response.body);
@@ -132,8 +137,8 @@ String _responseMessage(http.Response response) {
   } catch (_) {}
   if (response.statusCode == 401) return 'Аз нав ба аккаунти ChatApp ворид шавед.';
   if (response.statusCode == 429 || code == 'too-many-requests') return 'Дархостҳои AI маҳдуд шуданд. Каме баъдтар такрор кунед.';
-  if (response.statusCode == 503 || code == 'ai-not-configured') return 'ChatAI дар сервер фаъол нест. GEMINI_API_KEY-ро дар Render санҷед.';
-  if (response.statusCode == 502 || code == 'ai-request-failed') return 'Gemini ҷавоб надод. API key, квота ва номи моделро дар Render санҷед.';
+  if (response.statusCode == 503 || code == 'ai-not-configured' || code == 'provider-not-configured') return 'Провайдери $providerLabel дар сервер фаъол нест. API key ва ALLOW_PAID_AI_PROVIDERS-ро дар Render санҷед.';
+  if (response.statusCode == 502 || code == 'ai-request-failed' || code == 'provider-request-failed' || code == 'ai-empty-response') return '$providerLabel ҷавоб надод. API key, бақияи ҳисоб, квота ва номи моделро дар Render санҷед.';
   if (response.statusCode == 413 || code == 'conversation-too-long') return 'Гуфтугӯ хеле дароз аст; паёми кӯтоҳтар фиристед.';
   return 'ChatAI хатои HTTP ${response.statusCode} дод. Интернет ва серверро санҷед.';
 }
