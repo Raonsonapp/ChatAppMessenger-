@@ -420,7 +420,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 if (kind == 'image' || kind == 'video') ...[
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: provider,
+                    initialValue: provider,
                     decoration: InputDecoration(
                       labelText: 'Провайдер',
                       labelStyle: TextStyle(color: AppColors.textSecondary),
