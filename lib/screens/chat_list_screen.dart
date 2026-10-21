@@ -36,6 +36,7 @@ import '../theme/app_scope.dart';
 import '../widgets/connection_banner.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'notes_screen.dart';
+import 'bot_studio_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -231,73 +232,76 @@ class _ChatListScreenState extends State<ChatListScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _notesShortcut(),
-        const SizedBox(height: 8),
-        _aiShortcut(),
+        _quickToolsShortcut(),
         const SizedBox(height: 12),
         fab,
       ],
     );
   }
 
-  /// Notes shortcut sits directly above AI and the add-chat FAB.
-  Widget _notesShortcut() {
-    return GestureDetector(
-      onTap: _openNotes,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.callGreen.withValues(alpha: 0.55), width: 1.2),
-          boxShadow: [
-            BoxShadow(color: AppColors.callGreen.withValues(alpha: 0.18), blurRadius: 12),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.notebook_pen, color: AppColors.callGreen, size: 16),
-            const SizedBox(width: 7),
-            Text(
-              tr('k731'),
-              style: TextStyle(
-                color: AppColors.callGreen,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
+  /// A compact single entry keeps quick actions from stacking into a tall FAB.
+  Widget _quickToolsShortcut() {
+    return PopupMenuButton<String>(
+      tooltip: 'Воситаҳо',
+      onSelected: (value) {
+        switch (value) {
+          case 'notes':
+            _openNotes();
+            break;
+          case 'ai':
+            _openAi();
+            break;
+          case 'bots':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const BotStudioScreen()),
+            );
+            break;
+        }
+      },
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: AppColors.glassBorder),
       ),
-    );
-  }
-
-  /// Гузаргоҳи ҷамъушудаи ChatApp AI.
-  Widget _aiShortcut() {
-    return GestureDetector(
-      onTap: _openAi,
+      itemBuilder: (_) => [
+        PopupMenuItem<String>(
+          value: 'notes',
+          child: Row(children: [
+            Icon(LucideIcons.notebook_pen, color: AppColors.callGreen, size: 19),
+            const SizedBox(width: 12),
+            const Text('Заметкаҳо'),
+          ]),
+        ),
+        PopupMenuItem<String>(
+          value: 'ai',
+          child: Row(children: [
+            Icon(LucideIcons.sparkles, color: AppColors.neonCyan, size: 19),
+            const SizedBox(width: 12),
+            const Text('ChatApp AI'),
+          ]),
+        ),
+        PopupMenuItem<String>(
+          value: 'bots',
+          child: Row(children: [
+            Icon(LucideIcons.bot, color: AppColors.neonEmerald, size: 19),
+            const SizedBox(width: 12),
+            const Text('Сохтани бот'),
+          ]),
+        ),
+      ],
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        width: 46,
+        height: 46,
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.55), width: 1.2),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.65), width: 1.2),
           boxShadow: [
-            BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.22), blurRadius: 14, spreadRadius: 0.5),
+            BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.16), blurRadius: 12),
           ],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.sparkles, color: AppColors.neonCyan, size: 16),
-            const SizedBox(width: 7),
-            Text(
-              'AI',
-              style: TextStyle(color: AppColors.neonCyan, fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.4),
-            ),
-          ],
-        ),
+        child: Icon(LucideIcons.ellipsis, color: AppColors.neonCyan, size: 24),
       ),
     );
   }
