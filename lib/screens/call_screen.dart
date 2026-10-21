@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:floating/floating.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../theme/app_theme.dart';
 import '../models/app_call.dart';
@@ -59,6 +60,7 @@ class _CallScreenState extends State<CallScreen> {
   bool _videoOn = true;
   bool _everConnected = false;
   bool _finalized = false;
+  final AudioPlayer _ringtonePlayer = AudioPlayer();
   DocumentReference<Map<String, dynamic>>? _callDoc;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _callDocSub;
 
@@ -124,10 +126,27 @@ class _CallScreenState extends State<CallScreen> {
 
     if (widget.isCaller && mounted) {
       setState(() => _stage = _CallStage.ringing);
+      unawaited(_playOutgoingRingtone());
       _ringTimeout = Timer(const Duration(seconds: 45), () {
         if (!_everConnected) _endCall(outcome: CallOutcome.missed);
       });
     }
+  }
+
+  Future<void> _playOutgoingRingtone() async {
+    if (!widget.isCaller) return;
+    try {
+      await _ringtonePlayer.setReleaseMode(ReleaseMode.loop);
+      await _ringtonePlayer.play(AssetSource('sounds/ringtone.wav'));
+    } catch (_) {
+      // Call setup must continue even if this device cannot play the asset.
+    }
+  }
+
+  Future<void> _stopRingtone() async {
+    try {
+      await _ringtonePlayer.stop();
+    } catch (_) {}
   }
 
   /// Ба гиранда огоҳиномаи занг мефиристад.
@@ -261,6 +280,7 @@ class _CallScreenState extends State<CallScreen> {
         },
         onUserJoined: (connection, remoteUid, elapsed) {
           _ringTimeout?.cancel();
+          unawaited(_stopRingtone());
           if (!mounted) return;
           setState(() {
             _remoteUid = remoteUid;
@@ -333,6 +353,7 @@ class _CallScreenState extends State<CallScreen> {
     _finalized = true;
     _ringTimeout?.cancel();
     _durationTimer?.cancel();
+    await _stopRingtone();
     await _callDocSub?.cancel();
 
     if (!alreadyFinalizedRemotely) {
@@ -374,6 +395,7 @@ class _CallScreenState extends State<CallScreen> {
     }
     // Бе ин барнома пас аз занг ҳам ҳангоми баромадан хурд мешавад.
     _cancelPip();
+    unawaited(_ringtonePlayer.dispose());
     // Муҳаррик ҲАМЕША озод карда мешавад, на танҳо ҳангоми қатъи оддӣ.
     //
     // Пештар он танҳо дар дохили `if (!_finalized)` озод мешуд: агар экран
