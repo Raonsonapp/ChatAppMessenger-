@@ -22,12 +22,14 @@ class OtpScreen extends StatefulWidget {
   State<OtpScreen> createState() => _OtpScreenState();
 }
 
-class _OtpScreenState extends State<OtpScreen> {
+class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMixin {
   static const _resendCooldown = 60;
 
   final TextEditingController _codeController = TextEditingController();
   bool _isVerifying = false;
   bool _isResending = false;
+  bool _showDoorAnimation = false;
+  late final AnimationController _doorController;
   String? _errorText;
   int _secondsLeft = _resendCooldown;
   Timer? _timer;
@@ -35,6 +37,10 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   void initState() {
     super.initState();
+    _doorController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
     _startCountdown();
   }
 
@@ -71,6 +77,7 @@ class _OtpScreenState extends State<OtpScreen> {
   void dispose() {
     _codeController.dispose();
     _timer?.cancel();
+    _doorController.dispose();
     super.dispose();
   }
 
@@ -108,14 +115,17 @@ class _OtpScreenState extends State<OtpScreen> {
       // санҷиш корбари нав экрани профилро мегузарад ва бе ном мемонад.
       final hasProfile = (userDoc.data()?['name'] as String?)?.trim().isNotEmpty ?? false;
 
+      setState(() => _showDoorAnimation = true);
+      await _doorController.forward();
+      await Future<void>.delayed(const Duration(milliseconds: 180));
+      if (!mounted) return;
+
       if (hasProfile) {
-        // Корбари мавҷуда — мустақим ба Home
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const ChatListScreen()),
           (route) => false,
         );
       } else {
-        // Корбари нав — пур кардани профил
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => CompleteProfileScreen(phoneNumber: widget.phoneNumber)),
           (route) => false,
@@ -150,8 +160,10 @@ class _OtpScreenState extends State<OtpScreen> {
     AppScope.watch(context);
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: NeonBackdrop(
-        child: SafeArea(
+      body: Stack(
+        children: [
+          NeonBackdrop(
+            child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -243,6 +255,93 @@ class _OtpScreenState extends State<OtpScreen> {
               ],
             ),
           ),
+        ),
+          if (_showDoorAnimation) _buildDoorAnimation(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDoorAnimation() {
+    return Positioned.fill(
+      child: Container(
+        color: AppColors.background.withValues(alpha: 0.88),
+        alignment: Alignment.center,
+        child: AnimatedBuilder(
+          animation: _doorController,
+          builder: (context, child) {
+            final progress = Curves.easeOutCubic.transform(_doorController.value);
+            return SizedBox(
+              width: 176,
+              height: 190,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned(
+                    bottom: 18,
+                    child: Opacity(
+                      opacity: progress,
+                      child: Transform.translate(
+                        offset: Offset(38 * (1 - progress), 0),
+                        child: const Text('🧍', style: TextStyle(fontSize: 48)),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 28,
+                    top: 4,
+                    child: Container(
+                      width: 112,
+                      height: 160,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.neonEmerald, width: 2),
+                        color: AppColors.neonEmerald.withValues(alpha: 0.10),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 28,
+                    top: 4,
+                    child: Transform(
+                      alignment: Alignment.centerLeft,
+                      transform: Matrix4.identity()..setEntry(3, 2, 0.001)..rotateY(-1.15 * progress),
+                      child: Container(
+                        width: 112,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.surface,
+                          border: Border.all(color: AppColors.neonEmerald, width: 2),
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 10),
+                            child: Icon(Icons.circle, size: 9, color: AppColors.neonEmerald),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    child: Opacity(
+                      opacity: progress,
+                      child: Text(
+                        tr('k131'),
+                        style: TextStyle(
+                          color: AppColors.neonEmerald,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
