@@ -76,6 +76,18 @@ await check('A профили худро тағйир медиҳад', () =>
   assertSucceeds(setDoc(doc(a, 'users', A), { name: 'A2' }, { merge: true })));
 await check('A профили дигаронро мехонад (ҷустуҷӯи контакт)', () =>
   assertSucceeds(getDocs(collection(a, 'users'))));
+await check('A номи маҳаллии контактро сабт мекунад', () =>
+  assertSucceeds(setDoc(doc(a, 'users', A, 'localNames', B), {
+    name: 'Дӯст', updatedAt: new Date(),
+  })));
+await check('A номи маҳаллии худро мехонад', () =>
+  assertSucceeds(getDoc(doc(a, 'users', A, 'localNames', B))));
+await check('B номи маҳаллии A-ро хонда НАМЕТАВОНАД', () =>
+  assertFails(getDoc(doc(b, 'users', A, 'localNames', B))));
+await check('A номи маҳаллии контактро бо зиёда аз 60 аломат сабт карда НАМЕТАВОНАД', () =>
+  assertFails(setDoc(doc(a, 'users', A, 'localNames', B), {
+    name: 'x'.repeat(61), updatedAt: new Date(),
+  })));
 await check('A паёми ситорадорашро менависад', () =>
   assertSucceeds(setDoc(doc(a, 'users', A, 'starred', 'x1'), { text: 'y' })));
 await check('A паёми ситорадорашро мехонад', () =>
