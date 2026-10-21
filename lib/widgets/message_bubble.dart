@@ -680,25 +680,9 @@ class MessageBubble extends StatelessWidget {
     bool hasPoll,
     List<String> distinctReactions,
   ) {
-    return Dismissible(
-      key: ValueKey('swipe_${message.id}'),
-      // Ҳангоми интихоби гурӯҳӣ кашидан хомӯш аст — вагарна интихоб кардан
-      // ва ҷавоб додан бо ҳам омехта мешаванд.
-      direction: (onReply == null || message.deleted || selectionActive)
-          ? DismissDirection.none
-          : DismissDirection.startToEnd,
-      dismissThresholds: const {DismissDirection.startToEnd: 0.25},
-      confirmDismiss: (_) async {
-        onReply?.call(message);
-        return false;
-      },
-      background: Padding(
-        padding: const EdgeInsets.only(left: 12),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Icon(LucideIcons.corner_up_left, color: AppColors.textSecondary, size: 18),
-        ),
-      ),
+    return _SpringReplyGesture(
+      enabled: onReply != null && !message.deleted && !selectionActive,
+      onReply: () => onReply?.call(message),
       child: GestureDetector(
       // Дар ҳолати интихоб дарозфишорӣ низ интихобро иваз мекунад; вагарна
       // менюи паём кушода мешавад (интихоб аз ҳамон ҷо оғоз мешавад).
@@ -1033,6 +1017,121 @@ class MessageBubble extends StatelessWidget {
       ),
     );
   }
+
+}
+
+/// Swipe-to-reply with a half-screen cap and a spring return.
+class _SpringReplyGesture extends StatefulWidget {
+  const _SpringReplyGesture({
+    required this.child,
+    required this.enabled,
+    required this.onReply,
+  });
+
+  final Widget child;
+  final bool enabled;
+  final VoidCallback onReply;
+
+  @override
+  State<_SpringReplyGesture> createState() => _SpringReplyGestureState();
+}
+
+class _SpringReplyGestureState extends State<_SpringReplyGesture>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  Animation<double>? _returnAnimation;
+  double _dragOffset = 0;
+  double _dragStart = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    )..addListener(() {
+        final animation = _returnAnimation;
+        if (animation != null && mounted) {
+          setState(() => _dragOffset = animation.value);
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onDragStart(DragStartDetails details) {
+    if (!widget.enabled) return;
+    _controller.stop();
+    _returnAnimation = null;
+    _dragStart = _dragOffset;
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    if (!widget.enabled) return;
+    final maxTravel = MediaQuery.sizeOf(context).width * 0.5;
+    setState(() {
+      final raw = (_dragStart + details.delta.dx).clamp(0.0, maxTravel);
+      _dragOffset = raw.toDouble();
+    });
+  }
+
+  void _onDragEnd(DragEndDetails details) {
+    if (!widget.enabled) {
+      _animateBack();
+      return;
+    }
+    final maxTravel = MediaQuery.sizeOf(context).width * 0.5;
+    final shouldReply = _dragOffset >= maxTravel * 0.42 ||
+        details.velocity.pixelsPerSecond.dx >= 850;
+    if (shouldReply) widget.onReply();
+    _animateBack();
+  }
+
+  void _animateBack() {
+    _returnAnimation = Tween<double>(begin: _dragOffset, end: 0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+    _controller.forward(from: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragStart: widget.enabled ? _onDragStart : null,
+      onHorizontalDragUpdate: widget.enabled ? _onDragUpdate : null,
+      onHorizontalDragEnd: widget.enabled ? _onDragEnd : null,
+      child: Transform.translate(
+        offset: Offset(_dragOffset, 0),
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Opacity(
+                opacity: (_dragOffset / (width * 0.42)).clamp(0.0, 1.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Icon(LucideIcons.corner_up_left, color: AppColors.neonCyan, size: 19),
+                  ),
+                ),
+              ),
+            ),
+            widget.child,
+          ],
+        ),
+      ),
+    );
+  }
+}
 
   String _formatTime(DateTime? t) {
     if (t == null) return '...';
