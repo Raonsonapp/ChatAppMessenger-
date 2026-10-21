@@ -20,6 +20,7 @@ import '../services/agora_token_service.dart';
 import '../utils/agora_token_error.dart';
 import '../services/agora_engine_manager.dart';
 import '../services/call_video_profile.dart';
+import '../services/ringtone_service.dart';
 
 enum _CallStage { connecting, ringing, connected, ended }
 
@@ -136,8 +137,7 @@ class _CallScreenState extends State<CallScreen> {
   Future<void> _playOutgoingRingtone() async {
     if (!widget.isCaller) return;
     try {
-      await _ringtonePlayer.setReleaseMode(ReleaseMode.loop);
-      await _ringtonePlayer.play(AssetSource('sounds/ringtone.wav'));
+      await RingtoneService.playConfigured(_ringtonePlayer);
     } catch (_) {
       // Call setup must continue even if this device cannot play the asset.
     }
