@@ -9,6 +9,7 @@ import '../models/chat_message.dart';
 import '../models/chat_conversation.dart';
 import '../services/media_service.dart';
 import '../services/chat_ai_service.dart';
+import '../services/chat_ai_search_service.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
@@ -218,6 +219,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     setState(() => _isAITyping = true);
     _scrollToBottom();
     try {
+      // Ҷустуҷӯи веб мустақим аз телефон иҷро мешавад; ба Render/Gemini муроҷиат намекунад.
+      final searchReply = await ChatAiSearchService().answerIfSearch(latestPrompt);
+      if (searchReply != null) {
+        await _messagesRef.add({
+          'text': searchReply,
+          'senderId': 'ai_bot',
+          'isAI': true,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        _scrollToBottom();
+        return;
+      }
+
       final snapshot = await _messagesRef
           .orderBy('createdAt', descending: false)
           .limitToLast(12)
