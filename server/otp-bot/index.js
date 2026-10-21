@@ -873,6 +873,10 @@ app.post('/api/ai/chat', async (req, res) => {
   }
 });
 
+/** Маҳдудияти транскрипсияи овоз барои ҳар корбар дар як соат. */
+const TRANSCRIPTION_QUOTA_PER_HOUR = 30;
+const transcriptionQuota = new Map();
+
 app.post('/api/transcribe', async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
