@@ -39,6 +39,21 @@ service cloud.firestore {
         && request.resource.data.get('plus', null) == resource.data.get('plus', null);
       allow delete: if signedIn() && uid() == userId;
 
+      // Номҳои маҳаллии контактҳо — танҳо соҳибашон мехонад ва тағйир медиҳад.
+      // Ҳуҷҷат: users/{uid}/localNames/{contactUid}; инҳо номи расмии
+      // профили тарафи дигарро тағйир намедиҳанд.
+      match /localNames/{contactUid} {
+        allow read, delete: if signedIn() && uid() == userId;
+        allow create, update: if signedIn()
+          && uid() == userId
+          && request.resource.data.keys().hasOnly(['name', 'updatedAt'])
+          && (
+            !('name' in request.resource.data)
+            || (request.resource.data.name is string
+              && request.resource.data.name.size() <= 60)
+          );
+      }
+
       // Паёмҳои ситорадор — танҳо барои худи соҳиб. Қоидаҳои ҳуҷҷати падар ба
       // зерколлексия татбиқ намешаванд, бинобар ин ин ҷо алоҳида навишта шуд.
       match /starred/{starId} {
