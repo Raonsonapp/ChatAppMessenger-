@@ -139,7 +139,14 @@ class _StatusViewerScreenState extends State<StatusViewerScreen> {
     if (url == null || url.isEmpty) return;
     try {
       await _musicPlayer.setReleaseMode(ReleaseMode.loop);
-      await _musicPlayer.play(UrlSource(url), volume: 0.7);
+      if (url.startsWith('assets/')) {
+        await _musicPlayer.play(
+          AssetSource(url.replaceFirst('assets/', '')),
+          volume: 0.7,
+        );
+      } else {
+        await _musicPlayer.play(UrlSource(url), volume: 0.7);
+      }
     } catch (_) {}
   }
 
