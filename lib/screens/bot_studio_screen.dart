@@ -373,10 +373,10 @@ class _BotStudioScreenState extends State<BotStudioScreen> {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: AppColors.neonPurple.withValues(alpha: 0.13),
+                color: AppColors.neonCyan.withValues(alpha: 0.13),
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: Icon(LucideIcons.bot, color: AppColors.neonPurple, size: 21),
+              child: Icon(LucideIcons.bot, color: AppColors.neonCyan, size: 21),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -395,7 +395,7 @@ class _BotStudioScreenState extends State<BotStudioScreen> {
                   const SizedBox(height: 5),
                   Text(
                     'Лоиҳа • ҳоло фаъол нест',
-                    style: TextStyle(color: AppColors.neonAmber, fontSize: 10.5, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppColors.neonEmerald, fontSize: 10.5, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
