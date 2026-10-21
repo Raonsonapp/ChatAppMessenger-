@@ -35,8 +35,10 @@ test('paid providers appear only after an explicit server-side opt-in', () => {
   assert.equal(JSON.stringify(providers).includes('secret'), false);
 });
 
-test('OpenAI default model is a real supported model id, not a fabricated name', () => {
+test('default models match documented provider model IDs', () => {
+  assert.equal(modelFor('gemini', {}), 'gemini-2.5-flash');
   assert.equal(modelFor('openai', {}), 'gpt-5-mini');
+  assert.equal(modelFor('grok', {}), 'grok-4.7');
 });
 
 test('Gemini provider returns text and uses configured key/model', async () => {
