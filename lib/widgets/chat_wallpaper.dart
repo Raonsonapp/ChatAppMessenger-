@@ -74,7 +74,13 @@ class _WallpaperArtworkPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final paint = Paint();
     final colors = switch (design) {
+      '2d_aurora' => [const Color(0xFF063A46), const Color(0xFF40216D)],
+      '2d_grid' => [const Color(0xFF071C2C), const Color(0xFF123D55)],
+      '2d_waves' => [const Color(0xFF062D38), const Color(0xFF144B68)],
       '2d' => [const Color(0xFF081D35), const Color(0xFF35145C)],
+      '3d_crystal' => [const Color(0xFF170D35), const Color(0xFF204C67)],
+      '3d_orbit' => [const Color(0xFF071A31), const Color(0xFF174A48)],
+      '3d_mesh' => [const Color(0xFF20102C), const Color(0xFF154B55)],
       '3d' => [const Color(0xFF061A24), const Color(0xFF143D52)],
       'landscape' => [const Color(0xFF112B46), const Color(0xFF536D8A)],
       _ => [const Color(0xFF0A0E14), const Color(0xFF101820)],
@@ -87,8 +93,8 @@ class _WallpaperArtworkPainter extends CustomPainter {
     canvas.drawRect(rect, paint);
     paint.shader = null;
 
-    if (design == '2d') {
-      paint.color = const Color(0xFF23D5AB).withValues(alpha: 0.34);
+    if (design.startsWith('2d')) {
+      paint.color = (design == '2d_aurora' ? const Color(0xFF8B5CF6) : design == '2d_grid' ? const Color(0xFF38BDF8) : const Color(0xFF23D5AB)).withValues(alpha: 0.34);
       canvas.drawCircle(Offset(size.width * .82, size.height * .18), size.shortestSide * .24, paint);
       paint.color = const Color(0xFF7B61FF).withValues(alpha: 0.42);
       canvas.drawRRect(
@@ -100,7 +106,7 @@ class _WallpaperArtworkPainter extends CustomPainter {
       );
       paint.color = const Color(0xFF36BFFA).withValues(alpha: 0.35);
       canvas.drawCircle(Offset(size.width * .73, size.height * .78), size.shortestSide * .16, paint);
-    } else if (design == '3d') {
+    } else if (design.startsWith('3d')) {
       final s = size.shortestSide * .22;
       final centers = [
         Offset(size.width * .24, size.height * .35),
@@ -115,7 +121,7 @@ class _WallpaperArtworkPainter extends CustomPainter {
           ..lineTo(center.dx, center.dy)
           ..lineTo(center.dx - s, center.dy - s * .48)
           ..close();
-        paint.color = const Color(0xFF5EEAD4).withValues(alpha: .46 - i * .08);
+        paint.color = (design == '3d_crystal' ? const Color(0xFFF0ABFC) : design == '3d_orbit' ? const Color(0xFF67E8F9) : const Color(0xFF5EEAD4)).withValues(alpha: .46 - i * .08);
         canvas.drawPath(top, paint);
         final left = Path()
           ..moveTo(center.dx - s, center.dy - s * .48)
