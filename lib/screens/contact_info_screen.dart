@@ -406,39 +406,52 @@ class ContactInfoScreen extends StatelessWidget {
         final alias = (snapshot.data?.data()?['name'] as String?)?.trim() ?? '';
         final displayName = alias.isEmpty ? otherUserName : alias;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Text(
-                  displayName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
+        // WhatsApp-like contact header: saved name + small pencil affordance.
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: Text(
+                    displayName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              IconButton(
-                tooltip: tr('k680'),
-                visualDensity: VisualDensity.compact,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                padding: EdgeInsets.zero,
-                onPressed: () => _editLocalName(context, ref, alias),
-                icon: Icon(
-                  LucideIcons.pencil,
-                  color: AppColors.neonCyan,
-                  size: 17,
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: tr('k680'),
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                  padding: EdgeInsets.zero,
+                  onPressed: () => _editLocalName(context, ref, alias),
+                  icon: Icon(
+                    LucideIcons.pencil,
+                    color: AppColors.callGreen,
+                    size: 17,
+                  ),
                 ),
+              ],
+            ),
+            if (alias.isNotEmpty)
+              Text(
+                otherUserName,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+          ],
         );
       },
     );
