@@ -230,7 +230,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                               ),
                               title: Text(track['title']!, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
                               subtitle: Text(track['artist']!, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                              trailing: Icon(LucideIcons.play_circle, color: AppColors.neonEmerald, size: 26),
+                              trailing: Icon(LucideIcons.play_circle_2, color: AppColors.neonEmerald, size: 26),
                               onTap: () => Navigator.pop(sheetContext, track['path']),
                             )),
                         ],
