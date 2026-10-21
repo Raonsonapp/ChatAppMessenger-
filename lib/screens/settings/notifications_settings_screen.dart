@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
@@ -7,6 +10,7 @@ import '../../widgets/neon_backdrop.dart';
 import '../../l10n/l10n.dart';
 import '../../services/notification_prefs.dart';
 import '../../theme/app_scope.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationsSettingsScreen extends StatefulWidget {
   const NotificationsSettingsScreen({super.key});
@@ -21,6 +25,7 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   bool _vibration = true;
   bool _showPreview = true;
   bool _isLoading = true;
+  String? _callRingtonePath;
 
   @override
   void initState() {
@@ -41,6 +46,8 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
     _sound = values[1];
     _vibration = values[2];
     _showPreview = values[3];
+    final prefs = await SharedPreferences.getInstance();
+    _callRingtonePath = prefs.getString('call_ringtone_path');
     if (!mounted) return;
     setState(() => _isLoading = false);
   }
@@ -48,6 +55,30 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   Future<void> _update(String key, bool value) async {
     // Танҳо дар ҳамин дастгоҳ нигоҳ дошта мешавад; ҳеҷ навиштани Firestore.
     await NotificationPrefs.save(key, value);
+  }
+
+  Future<void> _pickCallRingtone() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.audio,
+      allowMultiple: false,
+      withData: false,
+    );
+    final path = result?.files.single.path;
+    if (path == null || path.isEmpty || !File(path).existsSync()) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('call_ringtone_path', path);
+    if (!mounted) return;
+    setState(() => _callRingtonePath = path);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Оҳанги занг нав карда шуд')),
+    );
+  }
+
+  Future<void> _resetCallRingtone() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('call_ringtone_path');
+    if (!mounted) return;
+    setState(() => _callRingtonePath = null);
   }
 
   @override
@@ -81,6 +112,35 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                     : ListView(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                         children: [
+                          GlassContainer(
+                            borderRadius: 18,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: ListTile(
+                              leading: Icon(LucideIcons.music, color: AppColors.neonEmerald),
+                              title: Text('Оҳанги занг', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                              subtitle: Text(
+                                _callRingtonePath == null
+                                    ? 'Оҳанги стандартии ChatApp'
+                                    : _callRingtonePath!.split(Platform.pathSeparator).last,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: AppColors.textSecondary),
+                              ),
+                              trailing: PopupMenuButton<String>(
+                                icon: Icon(LucideIcons.ellipsis_vertical, color: AppColors.textSecondary),
+                                onSelected: (value) {
+                                  if (value == 'choose') _pickCallRingtone();
+                                  if (value == 'default') _resetCallRingtone();
+                                },
+                                itemBuilder: (_) => [
+                                  const PopupMenuItem(value: 'choose', child: Text('Интихоб аз телефон')),
+                                  if (_callRingtonePath != null)
+                                    const PopupMenuItem(value: 'default', child: Text('Оҳанги стандартӣ')),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           GlassContainer(
                             borderRadius: 18,
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
