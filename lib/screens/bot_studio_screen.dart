@@ -136,6 +136,7 @@ class _BotStudioScreenState extends State<BotStudioScreen> {
     final id = bot['id'] as String? ?? '';
     if (id.isEmpty) return;
     final controller = TextEditingController();
+    final botName = bot['name'] as String? ?? 'бот';
     String? reply;
     String? error;
     bool busy = false;
@@ -146,7 +147,7 @@ class _BotStudioScreenState extends State<BotStudioScreen> {
         builder: (dialogContext, setDialogState) => AlertDialog(
           backgroundColor: AppColors.surface,
           title: Text(
-            'Санҷиши ${bot['name'] ?? 'бот'}',
+            'Санҷиши $botName',
             style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800),
           ),
           content: SingleChildScrollView(
