@@ -334,7 +334,7 @@ class _BotStudioScreenState extends State<BotStudioScreen> {
                           Text('Вазифаи асосӣ', style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 6),
                           DropdownButtonFormField<String>(
-                            value: _task,
+                            initialValue: _task,
                             dropdownColor: AppColors.surface,
                             style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
                             decoration: _decoration(),
@@ -520,7 +520,7 @@ class _BotStudioScreenState extends State<BotStudioScreen> {
             IconButton(
               tooltip: 'Нест кардан',
               onPressed: id.isEmpty ? null : () => _deleteBot(id),
-              icon: Icon(LucideIcons.trash_2, color: AppColors.textSecondary, size: 18),
+              icon: Icon(Icons.delete_outline_rounded, color: AppColors.textSecondary, size: 18),
             ),
           ],
         ),
