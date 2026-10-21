@@ -799,38 +799,51 @@ class MessageBubble extends StatelessWidget {
                           ),
                         if (hasImage)
                           GestureDetector(
+                            behavior: HitTestBehavior.opaque,
                             onTap: () => Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => ImageViewerScreen(
-                                  url: message.mediaUrl!,
-                                  title: senderLabel ?? chatTitle,
+                              PageRouteBuilder<void>(
+                                transitionDuration: const Duration(milliseconds: 220),
+                                reverseTransitionDuration: const Duration(milliseconds: 180),
+                                pageBuilder: (_, animation, __) => FadeTransition(
+                                  opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                                  child: ImageViewerScreen(
+                                    url: message.mediaUrl!,
+                                    title: senderLabel ?? chatTitle,
+                                  ),
                                 ),
                               ),
                             ),
-                            child: ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: NetImage(
-                              url: message.mediaUrl!,
-                              width: 220,
-                              fit: BoxFit.cover,
-                              memCacheWidth: 660,
-                              // Аксҳои чат ба танзимоти «Боркунии худкор» тобеъ
-                              // ҳастанд — маҳз онҳо трафикро мехӯранд.
-                              respectAutoDownload: true,
-                              loading: Container(
-                                width: 220,
-                                height: 220,
-                                alignment: Alignment.center,
-                                child: CircularProgressIndicator(color: AppColors.neonEmerald, strokeWidth: 2),
+                            child: Hero(
+                              tag: 'chat-image-${message.id}',
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: NetImage(
+                                  url: message.mediaUrl!,
+                                  width: 260,
+                                  fit: BoxFit.contain,
+                                  memCacheWidth: 780,
+                                  respectAutoDownload: true,
+                                  loading: Container(
+                                    width: 260,
+                                    height: 220,
+                                    alignment: Alignment.center,
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.neonEmerald,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                  error: Container(
+                                    width: 260,
+                                    height: 120,
+                                    alignment: Alignment.center,
+                                    child: Icon(
+                                      LucideIcons.triangle_alert,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
                               ),
-                              error: Container(
-                                width: 220,
-                                height: 120,
-                                alignment: Alignment.center,
-                                child: Icon(LucideIcons.triangle_alert, color: AppColors.textSecondary),
-                              ),
-                            ),
                             ),
                           ),
                         if (message.forwarded && !message.deleted)
