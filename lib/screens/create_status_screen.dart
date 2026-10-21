@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../theme/app_theme.dart';
 import '../models/app_status.dart';
@@ -33,6 +34,9 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
   XFile? _pickedImage;
   String? _pickedMusicUrl;
   String? _pickedMusicName;
+  final AudioPlayer _musicPreviewPlayer = AudioPlayer();
+  final TextEditingController _musicSearchController = TextEditingController();
+  bool _musicPreviewPlaying = false;
   String? _selectedSticker;
   bool _drawingEnabled = false;
   final List<List<Offset>> _drawingStrokes = [];
@@ -51,6 +55,8 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
   @override
   void dispose() {
     _textController.dispose();
+    _musicSearchController.dispose();
+    _musicPreviewPlayer.dispose();
     super.dispose();
   }
 
@@ -100,9 +106,11 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
         'statuses/$uid/music',
       );
       if (!mounted) return;
+      await _musicPreviewPlayer.stop();
       setState(() {
         _pickedMusicUrl = url;
         _pickedMusicName = file.name;
+        _musicPreviewPlaying = false;
       });
     } catch (e) {
       if (mounted) {
@@ -112,6 +120,178 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
       }
     } finally {
       if (mounted) setState(() => _isPosting = false);
+    }
+  }
+
+  Future<void> _openMusicPicker() async {
+    final search = TextEditingController();
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        var query = '';
+        var category = 'Ҳама';
+        const categories = ['Ҳама', 'Ором', 'Энергетикӣ', 'Романтикӣ', 'Файлҳои телефон'];
+        return StatefulBuilder(
+          builder: (context, setSheet) {
+            final matches = <Map<String, String>>[
+              {'title': 'Рингтон-и ChatApp', 'artist': 'Дар дохили барнома', 'path': 'assets/sounds/ringtone.wav', 'category': 'Энергетикӣ'},
+            ].where((track) {
+              final text = ('${track['title']} ${track['artist']}').toLowerCase();
+              return (category == 'Ҳама' || category == 'Файлҳои телефон' || track['category'] == category) &&
+                  text.contains(query.trim().toLowerCase());
+            }).toList();
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.88,
+              decoration: BoxDecoration(
+                color: AppColors.backgroundSecondary,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border.all(color: AppColors.glassBorder),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    Container(width: 38, height: 4, decoration: BoxDecoration(color: AppColors.textSecondary.withValues(alpha: .5), borderRadius: BorderRadius.circular(4))),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+                      child: Row(children: [
+                        Icon(LucideIcons.music_2, color: AppColors.neonEmerald, size: 23),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text('Мусиқӣ барои статус', style: TextStyle(color: AppColors.textPrimary, fontSize: 19, fontWeight: FontWeight.w800))),
+                        IconButton(onPressed: () => Navigator.pop(sheetContext), icon: Icon(LucideIcons.x, color: AppColors.textSecondary)),
+                      ]),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      child: TextField(
+                        controller: search,
+                        onChanged: (value) => setSheet(() => query = value),
+                        style: TextStyle(color: AppColors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Ҷустуҷӯи суруд ё иҷрокунанда',
+                          prefixIcon: Icon(LucideIcons.search, color: AppColors.textSecondary),
+                          filled: true,
+                          fillColor: AppColors.surface,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      height: 42,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: categories.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (_, i) => ChoiceChip(
+                          label: Text(categories[i]),
+                          selected: category == categories[i],
+                          onSelected: (_) => setSheet(() => category = categories[i]),
+                          selectedColor: AppColors.neonEmerald.withValues(alpha: .22),
+                          labelStyle: TextStyle(color: AppColors.textPrimary, fontSize: 12),
+                          side: BorderSide(color: category == categories[i] ? AppColors.neonEmerald : AppColors.glassBorder),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                        children: [
+                          ListTile(
+                            leading: Container(
+                              width: 44, height: 44,
+                              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
+                              child: Icon(LucideIcons.folder_open, color: AppColors.neonCyan),
+                            ),
+                            title: Text('Аз телефони ман интихоб кардан', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+                            subtitle: Text('MP3, WAV ва файлҳои дигари аудио', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                            trailing: Icon(LucideIcons.chevron_right, color: AppColors.textSecondary),
+                            onTap: () async {
+                              Navigator.pop(sheetContext, '__device__');
+                            },
+                          ),
+                          const Divider(height: 20),
+                          if (matches.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.all(22),
+                              child: Text('Суруде ёфт нашуд. Аз телефони худ файл интихоб кун.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
+                            )
+                          else
+                            ...matches.map((track) => ListTile(
+                              leading: Container(
+                                width: 44, height: 44,
+                                decoration: BoxDecoration(gradient: AppColors.neonGradient, borderRadius: BorderRadius.circular(12)),
+                                child: Icon(LucideIcons.music, color: AppColors.background),
+                              ),
+                              title: Text(track['title']!, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+                              subtitle: Text(track['artist']!, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                              trailing: Icon(LucideIcons.play_circle, color: AppColors.neonEmerald, size: 26),
+                              onTap: () => Navigator.pop(sheetContext, track['path']),
+                            )),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => Navigator.pop(sheetContext, '__device__'),
+                          icon: const Icon(LucideIcons.smartphone),
+                          label: const Text('Кушодани мусиқии телефон'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+    search.dispose();
+    if (!mounted || selected == null) return;
+    if (selected == '__device__') {
+      await _pickMusic();
+      return;
+    }
+    if (selected.startsWith('assets/')) {
+      await _musicPreviewPlayer.stop();
+      setState(() {
+        _pickedMusicUrl = selected;
+        _pickedMusicName = 'Рингтон-и ChatApp';
+        _musicPreviewPlaying = false;
+      });
+      try {
+        await _musicPreviewPlayer.setSource(AssetSource(selected.replaceFirst('assets/', '')));
+        await _musicPreviewPlayer.resume();
+        if (mounted) setState(() => _musicPreviewPlaying = true);
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _toggleMusicPreview() async {
+    if (_pickedMusicUrl == null) return;
+    try {
+      if (_musicPreviewPlaying) {
+        await _musicPreviewPlayer.pause();
+        if (mounted) setState(() => _musicPreviewPlaying = false);
+      } else if (_pickedMusicUrl!.startsWith('assets/')) {
+        await _musicPreviewPlayer.setSource(AssetSource(_pickedMusicUrl!.replaceFirst('assets/', '')));
+        await _musicPreviewPlayer.resume();
+        if (mounted) setState(() => _musicPreviewPlaying = true);
+      } else {
+        await _musicPreviewPlayer.play(UrlSource(_pickedMusicUrl!));
+        if (mounted) setState(() => _musicPreviewPlaying = true);
+      }
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Пешнамоиши мусиқӣ дастрас нест')));
     }
   }
 
@@ -443,22 +623,37 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                         const SizedBox(height: 8),
                       ],
                       OutlinedButton.icon(
-                        onPressed: _isPosting ? null : _pickMusic,
-                        icon: const Icon(Icons.music_note),
+                        onPressed: _isPosting ? null : _openMusicPicker,
+                        icon: const Icon(LucideIcons.music_2),
                         label: Text(
                           _pickedMusicName == null
-                              ? 'Илова кардани мусиқӣ'
+                              ? 'Мусиқӣ барои статус'
                               : 'Мусиқӣ: $_pickedMusicName',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (_pickedMusicName != null)
+                        Row(
+                          children: [
+                            Expanded(child: Text(_pickedMusicName!, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textSecondary, fontSize: 12))),
+                            IconButton(
+                              tooltip: _musicPreviewPlaying ? 'Таваққуф' : 'Пешнамоиш',
+                              onPressed: _toggleMusicPreview,
+                              icon: Icon(_musicPreviewPlaying ? LucideIcons.pause : LucideIcons.play, color: AppColors.neonEmerald),
+                            ),
+                          ],
+                        ),
+                      if (_pickedMusicName != null)
                         TextButton.icon(
-                          onPressed: () => setState(() {
-                            _pickedMusicUrl = null;
-                            _pickedMusicName = null;
-                          }),
+                          onPressed: () async {
+                            await _musicPreviewPlayer.stop();
+                            setState(() {
+                              _pickedMusicUrl = null;
+                              _pickedMusicName = null;
+                              _musicPreviewPlaying = false;
+                            });
+                          },
                           icon: const Icon(Icons.close),
                           label: const Text('Хориҷ кардани мусиқӣ'),
                         ),
