@@ -81,6 +81,7 @@ Future<void> _showMessageNotification(Map<String, dynamic> data) async {
     importance: Importance.high,
     priority: Priority.high,
     category: AndroidNotificationCategory.message,
+    subtitle: 'ChatApp',
     icon: '@drawable/ic_notification',
     color: _brandColor,
     playSound: withSound,
