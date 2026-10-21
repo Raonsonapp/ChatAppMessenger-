@@ -267,6 +267,62 @@ class ChatThemeController extends ChangeNotifier {
       accent: Color(0xFF90A4AE),
       wallpaper: Color(0xFF0D0D0D),
     ),
+    ChatThemePreset(
+      id: 'rose_glass',
+      nameKey: 'k748',
+      bubble: Color(0xFFE91E63),
+      accent: Color(0xFFFF80AB),
+      wallpaper: Color(0xFF1B0B18),
+    ),
+    ChatThemePreset(
+      id: 'golden_hour',
+      nameKey: 'k749',
+      bubble: Color(0xFFFFA000),
+      accent: Color(0xFFFFD54F),
+      wallpaper: Color(0xFF201307),
+    ),
+    ChatThemePreset(
+      id: 'arctic',
+      nameKey: 'k750',
+      bubble: Color(0xFF80DEEA),
+      accent: Color(0xFF4DD0E1),
+      wallpaper: Color(0xFF071820),
+    ),
+    ChatThemePreset(
+      id: 'cherry',
+      nameKey: 'k751',
+      bubble: Color(0xFFD81B60),
+      accent: Color(0xFFFF5252),
+      wallpaper: Color(0xFF1B0710),
+    ),
+    ChatThemePreset(
+      id: 'forest',
+      nameKey: 'k752',
+      bubble: Color(0xFF558B2F),
+      accent: Color(0xFFAED581),
+      wallpaper: Color(0xFF0A170B),
+    ),
+    ChatThemePreset(
+      id: 'lavender',
+      nameKey: 'k753',
+      bubble: Color(0xFF9575CD),
+      accent: Color(0xFFD1C4E9),
+      wallpaper: Color(0xFF160E27),
+    ),
+    ChatThemePreset(
+      id: 'copper',
+      nameKey: 'k754',
+      bubble: Color(0xFFBF6D3A),
+      accent: Color(0xFFFFAB91),
+      wallpaper: Color(0xFF1B100C),
+    ),
+    ChatThemePreset(
+      id: 'matrix',
+      nameKey: 'k755',
+      bubble: Color(0xFF00C853),
+      accent: Color(0xFF69F0AE),
+      wallpaper: Color(0xFF020D08),
+    ),
   ];
 
   static ChatThemePreset? presetById(String? id) {
