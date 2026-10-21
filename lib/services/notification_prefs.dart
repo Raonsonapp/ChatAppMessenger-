@@ -17,19 +17,6 @@ class NotificationPrefs {
   }
 
   /// Ҳамаи чор танзимотро якбора нусхабардорӣ мекунад (ҳангоми воридшавӣ).
-  static Future<void> saveAll(Map<String, dynamic>? settings) async {
-    if (settings == null) return;
-    for (final key in const [
-      'messageNotifications',
-      'notificationSound',
-      'notificationVibration',
-      'notificationPreview',
-    ]) {
-      final value = settings[key];
-      if (value is bool) await save(key, value);
-    }
-  }
-
   /// `true` — агар танзимот гузошта нашуда бошад (пешфарз ҳамеша фаъол).
   static Future<bool> read(String key) async {
     try {
