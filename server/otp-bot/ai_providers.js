@@ -83,8 +83,8 @@ async function responseJson(response) {
   }
 }
 
-async function requestResponsesApi({ endpoint, key, model, messages, webContext, fetchImpl }) {
-  const input = [{ role: 'system', content: SYSTEM_INSTRUCTION }];
+async function requestResponsesApi({ endpoint, key, model, messages, webContext, systemInstruction = SYSTEM_INSTRUCTION, fetchImpl }) {
+  const input = [{ role: 'system', content: systemInstruction }];
   const cleanMessages = messages.map((message, index) => {
     const isLatestUserMessage =
       message.role !== 'assistant' &&
@@ -128,9 +128,14 @@ async function generateChatReply({
   messages,
   webContext = '',
   env = process.env,
+  systemInstruction = '',
   fetchImpl = globalThis.fetch,
 }) {
   const selected = PROVIDERS[provider];
+  const effectiveSystemInstruction = [
+    SYSTEM_INSTRUCTION,
+    String(systemInstruction || '').trim().slice(0, 4000),
+  ].filter(Boolean).join('\n\n');
   if (!selected) throw errorWithStatus('Unsupported AI provider', 400, 'provider-not-supported');
 
   const key = String(env[selected.keyName] || '').trim();
@@ -167,7 +172,7 @@ async function generateChatReply({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+        systemInstruction: { parts: [{ text: effectiveSystemInstruction }] },
         contents,
         generationConfig: { temperature: 0.6, maxOutputTokens: 1200 },
       }),
@@ -199,6 +204,7 @@ async function generateChatReply({
     model,
     messages: cleanMessages,
     webContext,
+    systemInstruction: effectiveSystemInstruction,
     fetchImpl,
   });
 }
