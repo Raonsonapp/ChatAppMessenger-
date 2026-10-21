@@ -1041,7 +1041,6 @@ class _SpringReplyGestureState extends State<_SpringReplyGesture>
   late final AnimationController _controller;
   Animation<double>? _returnAnimation;
   double _dragOffset = 0;
-  double _dragStart = 0;
 
   @override
   void initState() {
@@ -1067,14 +1066,13 @@ class _SpringReplyGestureState extends State<_SpringReplyGesture>
     if (!widget.enabled) return;
     _controller.stop();
     _returnAnimation = null;
-    _dragStart = _dragOffset;
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
     if (!widget.enabled) return;
     final maxTravel = MediaQuery.sizeOf(context).width * 0.5;
     setState(() {
-      final raw = (_dragStart + details.delta.dx).clamp(0.0, maxTravel);
+      final raw = (_dragOffset + details.delta.dx).clamp(0.0, maxTravel);
       _dragOffset = raw.toDouble();
     });
   }
