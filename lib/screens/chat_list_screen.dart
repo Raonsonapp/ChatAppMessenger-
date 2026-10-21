@@ -232,10 +232,32 @@ class _ChatListScreenState extends State<ChatListScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        _notesShortcut(),
+        const SizedBox(height: 8),
         _quickToolsShortcut(),
         const SizedBox(height: 12),
         fab,
       ],
+    );
+  }
+
+  /// Notes has a direct shortcut; AI and bot creation stay inside the compact menu.
+  Widget _notesShortcut() {
+    return GestureDetector(
+      onTap: _openNotes,
+      child: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.callGreen.withValues(alpha: 0.65), width: 1.2),
+          boxShadow: [
+            BoxShadow(color: AppColors.callGreen.withValues(alpha: 0.16), blurRadius: 12),
+          ],
+        ),
+        child: Icon(LucideIcons.notebook_pen, color: AppColors.callGreen, size: 22),
+      ),
     );
   }
 
@@ -245,9 +267,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
       tooltip: 'Воситаҳо',
       onSelected: (value) {
         switch (value) {
-          case 'notes':
-            _openNotes();
-            break;
           case 'ai':
             _openAi();
             break;
@@ -265,14 +284,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
         side: BorderSide(color: AppColors.glassBorder),
       ),
       itemBuilder: (_) => [
-        PopupMenuItem<String>(
-          value: 'notes',
-          child: Row(children: [
-            Icon(LucideIcons.notebook_pen, color: AppColors.callGreen, size: 19),
-            const SizedBox(width: 12),
-            const Text('Заметкаҳо'),
-          ]),
-        ),
         PopupMenuItem<String>(
           value: 'ai',
           child: Row(children: [
