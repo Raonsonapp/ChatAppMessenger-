@@ -11,6 +11,7 @@ import '../../l10n/l10n.dart';
 import '../../services/notification_prefs.dart';
 import '../../theme/app_scope.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 
 class NotificationsSettingsScreen extends StatefulWidget {
   const NotificationsSettingsScreen({super.key});
@@ -65,10 +66,23 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
     );
     final path = result?.files.single.path;
     if (path == null || path.isEmpty || !File(path).existsSync()) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('call_ringtone_path', path);
-    if (!mounted) return;
-    setState(() => _callRingtonePath = path);
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final extension = result!.files.single.extension ?? 'audio';
+      final savedPath =
+          '${directory.path}${Platform.pathSeparator}call_ringtone.$extension';
+      await File(path).copy(savedPath);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('call_ringtone_path', savedPath);
+      if (!mounted) return;
+      setState(() => _callRingtonePath = savedPath);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Оҳанг нигоҳ дошта нашуд: $error')),
+      );
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Оҳанги занг нав карда шуд')),
     );
