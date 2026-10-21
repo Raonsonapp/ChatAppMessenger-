@@ -124,7 +124,7 @@ class _CallScreenState extends State<CallScreen> {
     _watchCallDoc();
     await _joinChannel();
 
-    if (widget.isCaller && mounted) {
+    if (widget.isCaller && mounted && !_everConnected) {
       setState(() => _stage = _CallStage.ringing);
       unawaited(_playOutgoingRingtone());
       _ringTimeout = Timer(const Duration(seconds: 45), () {
