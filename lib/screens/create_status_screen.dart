@@ -338,7 +338,7 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final text = _textController.text.trim();
-    if (text.isEmpty && _pickedImage == null) return;
+    if (text.isEmpty && _pickedImage == null && _pickedMusicUrl == null) return;
 
     setState(() => _isPosting = true);
     try {
