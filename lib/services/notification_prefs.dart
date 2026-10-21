@@ -12,12 +12,11 @@ class NotificationPrefs {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('$_prefix$key', value);
     } catch (_) {
-      // Танзимот дар Firestore ба ҳар ҳол сабт шуд.
+      // Storage unavailable: caller keeps the current in-memory UI value.
     }
   }
 
-  /// Ҳамаи чор танзимотро якбора нусхабардорӣ мекунад (ҳангоми воридшавӣ).
-  /// `true` — агар танзимот гузошта нашуда бошад (пешфарз ҳамеша фаъол).
+  /// `true` is the default when this device has no saved preference.
   static Future<bool> read(String key) async {
     try {
       final prefs = await SharedPreferences.getInstance();
