@@ -134,7 +134,7 @@ class SettingsHomeScreen extends StatelessWidget {
                                       left: 0,
                                       right: 0,
                                       child: Container(
-                                        height: 100,
+                                        height: 74,
                                         decoration: BoxDecoration(
                                           gradient: AppColors.neonGradient,
                                           borderRadius:
@@ -147,9 +147,9 @@ class SettingsHomeScreen extends StatelessWidget {
                                     Padding(
                                       padding: const EdgeInsets.fromLTRB(
                                         18,
-                                        36,
+                                        28,
                                         18,
-                                        18,
+                                        16,
                                       ),
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
@@ -157,7 +157,7 @@ class SettingsHomeScreen extends StatelessWidget {
                                           UserAvatar(
                                             name: name,
                                             photoUrl: data?['photoUrl'] as String?,
-                                            size: 100,
+                                            size: 72,
                                           ),
                                           const SizedBox(height: 12),
                                           Row(
@@ -250,6 +250,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.sparkles,
                         label: tr('k587'),
+                        description: 'Имтиёзҳо ва имкониятҳои Plus',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -261,6 +262,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.circle_user,
                         label: tr('k506'),
+                        description: 'Маълумоти ҳисоб ва амният',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -272,6 +274,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.bot,
                         label: 'Bot Studio',
+                        description: 'Ботҳои шахсӣ созед ва идора кунед',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -283,6 +286,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.store,
                         label: tr('k619'),
+                        description: 'Воситаҳои тиҷоратӣ ва хизматрасонӣ',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -300,6 +304,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.shield,
                         label: tr('k174'),
+                        description: 'Кӣ маълумот ва ҳолати шуморо мебинад',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -311,6 +316,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: Icons.list_alt_rounded,
                         label: tr('k444'),
+                        description: 'Идоракунии рӯйхатҳо ва алоқаҳо',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -322,6 +328,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.smartphone,
                         label: tr('k411'),
+                        description: 'Истифодаи ChatApp дар дастгоҳҳои дигар',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -339,6 +346,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.message_circle,
                         label: tr('k044'),
+                        description: 'Таърихи чат, нусха ва андозаи матн',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -350,6 +358,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.eye,
                         label: tr('k147'),
+                        description: 'Мавзӯъ, замина ва андозаи ҳарф',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -361,6 +370,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.bell,
                         label: tr('k146'),
+                        description: 'Овозҳои паём, гурӯҳ ва занг',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -373,6 +383,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.database,
                         label: tr('k182'),
+                        description: 'Истифодаи шабака ва фазои дастгоҳ',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -390,6 +401,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.users,
                         label: tr('k445'),
+                        description: 'Танзимоти оила ва назорат',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -404,6 +416,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: Icons.accessibility_new_rounded,
                         label: tr('k446'),
+                        description: 'Контраст, ҳаракат ва дастрасӣ',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -420,6 +433,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.globe,
                         label: tr('k183'),
+                        description: 'Забони интерфейси барнома',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -437,6 +451,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.circle_question_mark,
                         label: tr('k169'),
+                        description: 'Маркази кӯмак ва сиёсати махфият',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -448,12 +463,14 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: Icons.ios_share_rounded,
                         label: tr('k447'),
+                        description: 'ChatApp-ро ба дӯстатон пешниҳод кунед',
                         onTap: () => _inviteFriend(context),
                       ),
                       _row(
                         context,
                         icon: LucideIcons.info,
                         label: tr('k139'),
+                        description: 'Маълумот дар бораи ChatApp',
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -471,6 +488,7 @@ class SettingsHomeScreen extends StatelessWidget {
                         context,
                         icon: LucideIcons.trash,
                         label: tr('k385'),
+                        description: 'Ҳисобро нест кардан',
                         danger: true,
                         onTap: () => Navigator.push(
                           context,
@@ -492,21 +510,8 @@ class SettingsHomeScreen extends StatelessWidget {
   }
 
   Widget _sectionCard(BuildContext context, List<Widget> children) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF17211B).withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF26382D),
-          width: 0.7,
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 4,
-        vertical: 4,
-      ),
-      child: Column(children: children),
-    );
+    // Flat WhatsApp-style settings groups: clean dark canvas, no heavy cards.
+    return Column(children: children);
   }
 
   Widget _row(
@@ -514,11 +519,11 @@ class SettingsHomeScreen extends StatelessWidget {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    String? description,
     bool showDivider = true,
     bool danger = false,
   }) {
-    final tint =
-        danger ? Colors.redAccent : const Color(0xFF25D366);
+    final tint = danger ? Colors.redAccent : const Color(0xFF8B9698);
     final labelColor =
         danger ? Colors.redAccent : AppColors.textPrimary;
 
@@ -531,7 +536,7 @@ class SettingsHomeScreen extends StatelessWidget {
             onTap: onTap,
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                vertical: 12,
+                vertical: 13,
                 horizontal: 12,
               ),
               child: Row(
@@ -539,13 +544,29 @@ class SettingsHomeScreen extends StatelessWidget {
                   Icon(icon, color: tint, size: 19),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        color: labelColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14.5,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: TextStyle(
+                            color: labelColor,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                          ),
+                        ),
+                        if (description != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            description,
+                            style: TextStyle(
+                              color: AppColors.textSecondary.withValues(alpha: 0.92),
+                              fontSize: 13,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   Icon(
@@ -560,7 +581,7 @@ class SettingsHomeScreen extends StatelessWidget {
         ),
         if (showDivider)
           const Divider(
-            color: Color(0xFF26382D),
+            color: Color(0xFF202629),
             height: 1,
             indent: 46,
             endIndent: 10,
