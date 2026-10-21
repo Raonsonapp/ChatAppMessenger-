@@ -256,6 +256,7 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
             ),
           ),
         ),
+      ),
           if (_showDoorAnimation) _buildDoorAnimation(),
         ],
       ),
