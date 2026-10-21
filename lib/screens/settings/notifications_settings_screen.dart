@@ -60,12 +60,11 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
 
   Future<void> _pickCallRingtone() async {
     final picked = await FilePicker.pickFile(type: FileType.audio);
-    if (picked == null) return;
-    final path = picked.path;
+    final path = picked?.path;
     if (path == null || path.isEmpty || !File(path).existsSync()) return;
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final extension = picked.extension ?? 'audio';
+      final extension = picked?.extension ?? 'audio';
       final savedPath =
           '${directory.path}${Platform.pathSeparator}call_ringtone.$extension';
       await File(path).copy(savedPath);
