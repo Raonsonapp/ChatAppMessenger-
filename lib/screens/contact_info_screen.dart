@@ -184,13 +184,6 @@ class ContactInfoScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            Center(
-                              child: Text(
-                                otherUserName,
-                                style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 18),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
                             _localNameEditor(context),
                             const SizedBox(height: 18),
                             Row(
