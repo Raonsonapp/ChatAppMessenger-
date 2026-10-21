@@ -699,10 +699,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
     );
   }
 
-  void _openContactInfo() {
-    Navigator.push(
+  void _openContactInfo() async {
+    final action = await Navigator.push<String>(
       context,
-      MaterialPageRoute(
+      MaterialPageRoute<String>(
         builder: (_) => ContactInfoScreen(
           conversationId: widget.conversationId,
           otherUserId: widget.otherUserId,
@@ -710,6 +710,9 @@ class _UserChatScreenState extends State<UserChatScreen> {
         ),
       ),
     );
+    // The search action on the contact profile returns to this chat and opens
+    // the existing in-chat search UI.
+    if (action == 'search' && mounted) _openSearch();
   }
 
 
