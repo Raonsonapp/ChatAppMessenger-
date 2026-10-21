@@ -1018,6 +1018,13 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
+
+  String _formatTime(DateTime? t) {
+    if (t == null) return '...';
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 }
 
 /// Swipe-to-reply with a half-screen cap and a spring return.
@@ -1128,13 +1135,5 @@ class _SpringReplyGestureState extends State<_SpringReplyGesture>
         ),
       ),
     );
-  }
-}
-
-  String _formatTime(DateTime? t) {
-    if (t == null) return '...';
-    final h = t.hour.toString().padLeft(2, '0');
-    final m = t.minute.toString().padLeft(2, '0');
-    return '$h:$m';
   }
 }
