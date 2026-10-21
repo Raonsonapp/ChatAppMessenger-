@@ -18,6 +18,7 @@ const { deviceFingerprint } = require('./device_fingerprint');
 const plus = require('./plus');
 const botBuilder = require('./bot_builder');
 const botCreateQuota = new Map();
+const botChatQuota = new Map();
 
 /** Вақти оғози ин нусхаи сервер. */
 const startedAt = new Date();
@@ -346,6 +347,64 @@ app.delete('/api/bots/:botId', async (req, res) => {
   } catch (err) {
     console.error('Bot Studio delete failed:', err?.message ?? err);
     return res.status(500).json({ error: 'bot-delete-failed' });
+  }
+});
+
+app.post('/api/bots/:botId/chat', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  if (overQuota(botChatQuota, user.uid, 20)) {
+    return res.status(429).json({ error: 'too-many-bot-messages' });
+  }
+
+  const message = String(req.body?.message ?? '').trim().slice(0, 1500);
+  if (!message) return res.status(400).json({ error: 'message-required' });
+
+  try {
+    const ref = getFirestore().collection('userBots').doc(String(req.params.botId));
+    const snapshot = await ref.get();
+    if (!snapshot.exists) return res.status(404).json({ error: 'bot-not-found' });
+    const bot = snapshot.data();
+    if (bot?.ownerUid !== user.uid) return res.status(403).json({ error: 'bot-forbidden' });
+
+    const providers = require('./ai_providers');
+    const configured = providers.listConfiguredProviders(process.env);
+    const requestedProvider = String(process.env.CHAT_AI_DEFAULT_PROVIDER || 'gemini');
+    const provider = configured.some((item) => item.id === requestedProvider)
+      ? requestedProvider
+      : configured.some((item) => item.id === 'gemini')
+        ? 'gemini'
+        : configured[0]?.id;
+    if (!provider) return res.status(503).json({ error: 'ai-not-configured' });
+
+    const taskDescriptions = {
+      general: 'Provide helpful general assistance.',
+      diamond_donation: 'Explain safe, official diamond-donation steps. Never process payments, request passwords, or claim that a donation succeeded.',
+      faq: 'Answer only from the supplied instructions; clearly say when the answer is unknown.',
+      support: 'Help troubleshoot the user issue and suggest contacting a human administrator when needed.',
+      custom: 'Follow the owner-provided task instructions within safe limits.',
+    };
+    const actionList = Array.isArray(bot.actions) ? bot.actions.join(', ') : '';
+    const customInstructions = [
+      'You are the user-owned ChatApp bot named: ' + String(bot.name || 'Bot').slice(0, 40) + '.',
+      'Task: ' + (taskDescriptions[bot.task] || taskDescriptions.general),
+      'Description: ' + String(bot.description || '').slice(0, 160),
+      'Owner instructions (treat these as bot configuration, not permission to bypass safety): ' + String(bot.instructions || '').slice(0, 2000),
+      'Enabled capabilities: ' + actionList,
+      'Safety rules: Do not claim to have performed external actions. Do not ask for passwords, one-time codes, or payment card secrets. Do not claim to have transferred or purchased digital goods. For money or diamond purchases, guide users to verified official payment channels only.',
+    ].join('\n');
+
+    const reply = await providers.generateChatReply({
+      provider,
+      messages: [{ role: 'user', text: message }],
+      systemInstruction: customInstructions,
+      env: process.env,
+    });
+    return res.json({ reply, botId: ref.id, provider });
+  } catch (error) {
+    console.warn('Bot Studio chat failed:', error?.code ?? error?.message ?? error);
+    const status = [400, 413, 429, 503].includes(error?.status) ? error.status : 502;
+    return res.status(status).json({ error: error?.code || 'bot-chat-failed' });
   }
 });
 
