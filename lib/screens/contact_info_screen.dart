@@ -185,6 +185,7 @@ class ContactInfoScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             _localNameEditor(context),
+                            _contactPhone(),
                             const SizedBox(height: 18),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -211,6 +212,13 @@ class ContactInfoScreen extends StatelessWidget {
                                       builder: (_) => CallScreen(otherUserId: otherUserId, otherUserName: otherUserName, type: CallType.video),
                                     ),
                                   ),
+                                ),
+                                const SizedBox(width: 16),
+                                _callButton(
+                                  context,
+                                  icon: LucideIcons.search,
+                                  label: tr('k048'),
+                                  onTap: () => Navigator.pop(context, 'search'),
                                 ),
                               ],
                             ),
@@ -330,6 +338,27 @@ class ContactInfoScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// Show the saved contact number like the WhatsApp contact information page.
+  Widget _contactPhone() {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('users').doc(otherUserId).snapshots(),
+      builder: (context, snapshot) {
+        final data = snapshot.data?.data();
+        final phone = (data?['phone'] ?? data?['phoneNumber'] ?? '').toString().trim();
+        if (phone.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Center(
+            child: Text(
+              phone,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+          ),
+        );
+      },
     );
   }
 
