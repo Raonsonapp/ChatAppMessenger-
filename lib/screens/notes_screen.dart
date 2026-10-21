@@ -80,7 +80,7 @@ class _NotesScreenState extends State<NotesScreen> {
                     controller: title, maxLength: 90,
                     textCapitalization: TextCapitalization.sentences,
                     style: TextStyle(color: AppColors.textPrimary),
-                    decoration: _decoration(tr('k734'), LucideIcons.text),
+                    decoration: _decoration(tr('k734'), LucideIcons.type),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -246,7 +246,11 @@ class _NotesScreenState extends State<NotesScreen> {
                   const SizedBox(height: 8),
                   Text(tr('k747'), textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary, height: 1.4)),
                   const SizedBox(height: 18),
-                  OutlinedButton.icon(onPressed: () => _edit(), icon: const Icon(LucideIcons.plus), label: Text(tr('k732))),
+                  OutlinedButton.icon(
+                    onPressed: () => _edit(),
+                    icon: const Icon(LucideIcons.plus),
+                    label: Text(tr('k732')),
+                  ),
                 ]),
               ))
             : ListView.separated(
@@ -261,7 +265,7 @@ class _NotesScreenState extends State<NotesScreen> {
                     background: Container(
                       alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 20),
                       decoration: BoxDecoration(color: AppColors.missedRed, borderRadius: BorderRadius.circular(18)),
-                      child: const Icon(LucideIcons.trash_2, color: Colors.white)),
+                      child: const Icon(LucideIcons.trash, color: Colors.white)),
                     confirmDismiss: (_) async { await _delete(note); return false; },
                     child: Material(
                       color: AppColors.surface, borderRadius: BorderRadius.circular(18),
