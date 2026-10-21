@@ -699,7 +699,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
     );
   }
 
-  void _openContactInfo() async {
+  Future<void> _openContactInfo() async {
     final action = await Navigator.push<String>(
       context,
       MaterialPageRoute<String>(
