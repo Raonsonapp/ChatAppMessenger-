@@ -35,6 +35,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_scope.dart';
 import '../widgets/connection_banner.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../screens/notes_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -230,10 +231,45 @@ class _ChatListScreenState extends State<ChatListScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        _notesShortcut(),
+        const SizedBox(height: 8),
         _aiShortcut(),
         const SizedBox(height: 12),
         fab,
       ],
+    );
+  }
+
+  /// Notes shortcut sits directly above AI and the add-chat FAB.
+  Widget _notesShortcut() {
+    return GestureDetector(
+      onTap: _openNotes,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.callGreen.withValues(alpha: 0.55), width: 1.2),
+          boxShadow: [
+            BoxShadow(color: AppColors.callGreen.withValues(alpha: 0.18), blurRadius: 12),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.notebook_pen, color: AppColors.callGreen, size: 16),
+            const SizedBox(width: 7),
+            Text(
+              tr('k731'),
+              style: TextStyle(
+                color: AppColors.callGreen,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -264,6 +300,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
         ),
       ),
     );
+  }
+
+  void _openNotes() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const NotesScreen()));
   }
 
   void _openAi() {
