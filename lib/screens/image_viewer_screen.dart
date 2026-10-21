@@ -47,20 +47,28 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: InteractiveViewer(
-              minScale: 1,
-              maxScale: 5,
-              child: Center(
-                child: NetImage(
-                  url: widget.url,
-                  fit: BoxFit.contain,
-                  loading: const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  ),
-                  error: const Icon(
-                    LucideIcons.triangle_alert,
-                    color: Colors.white54,
-                    size: 40,
+            child: LayoutBuilder(
+              builder: (context, constraints) => InteractiveViewer(
+                minScale: 1,
+                maxScale: 5,
+                panEnabled: true,
+                child: SizedBox(
+                  width: constraints.maxWidth,
+                  height: constraints.maxHeight,
+                  child: NetImage(
+                    url: widget.url,
+                    fit: BoxFit.contain,
+                    width: constraints.maxWidth,
+                    height: constraints.maxHeight,
+                    memCacheWidth: (constraints.maxWidth * MediaQuery.devicePixelRatioOf(context)).round(),
+                    loading: const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                    error: const Icon(
+                      LucideIcons.triangle_alert,
+                      color: Colors.white54,
+                      size: 40,
+                    ),
                   ),
                 ),
               ),
