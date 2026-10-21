@@ -93,7 +93,6 @@ class _NotesScreenState extends State<NotesScreen> {
         text: text,
         selection: TextSelection.collapsed(offset: cursor.clamp(0, text.length)),
       );
-      setSheet(() {});
     }
     final note = await showModalBottomSheet<_Note>(
       context: context,
@@ -147,8 +146,8 @@ class _NotesScreenState extends State<NotesScreen> {
                       switch (v) {
                         case 'pin': setSheet(() => isPinned = !isPinned); break;
                         case 'checklist': applyBodyEdit('${body.text}${body.text.isEmpty ? '' : '\n'}☐  ', body.text.length + 3); setSheet(() => isChecklist = true); break;
-                        case 'bullet': applyBodyEdit('${body.text}${body.text.isEmpty ? '' : '\n'}•  ', body.text.length + 3); break;
-                        case 'number': applyBodyEdit('${body.text}${body.text.isEmpty ? '' : '\n'}1.  ', body.text.length + 4); break;
+                        case 'bullet': applyBodyEdit('${body.text}${body.text.isEmpty ? '' : '\n'}•  ', body.text.length + 3); setSheet(() {}); break;
+                        case 'number': applyBodyEdit('${body.text}${body.text.isEmpty ? '' : '\n'}1.  ', body.text.length + 4); setSheet(() {}); break;
                         case 'date': body.text = '${body.text}${body.text.isEmpty ? '' : '\n'}${DateTime.now().toLocal().toString().substring(0, 16)}'; setSheet(() {}); break;
                         case 'copy': await Clipboard.setData(ClipboardData(text: '${title.text}\n\n${body.text}')); if (ctx.mounted) _message('Матн нусхабардорӣ шуд'); break;
                         case 'share': await SharePlus.instance.share(ShareParams(text: '${title.text}\n\n${body.text}')); break;
