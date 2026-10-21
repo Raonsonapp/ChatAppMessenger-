@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
@@ -24,8 +22,6 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   bool _showPreview = true;
   bool _isLoading = true;
 
-  String? get _uid => FirebaseAuth.instance.currentUser?.uid;
-
   @override
   void initState() {
     super.initState();
@@ -33,32 +29,25 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   }
 
   Future<void> _load() async {
-    final uid = _uid;
-    if (uid == null) return;
-    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    final settings = doc.data()?['settings'] as Map<String, dynamic>?;
-    // Танзимот метавонад дар дастгоҳи дигар иваз шуда бошад — нусхаи маҳаллиро
-    // ҳамоҳанг мекунем.
-    await NotificationPrefs.saveAll(settings);
-    if (settings != null) {
-      _messageNotifications = (settings['messageNotifications'] ?? true) as bool;
-      _sound = (settings['notificationSound'] ?? true) as bool;
-      _vibration = (settings['notificationVibration'] ?? true) as bool;
-      _showPreview = (settings['notificationPreview'] ?? true) as bool;
-    }
+    // Интихоби огоҳинома ба худи телефон тааллуқ дорад. Аз сервер хонда
+    // намешавад, то танзимоти ин дастгоҳ бо дастгоҳи дигар омехта нашавад.
+    final values = await Future.wait([
+      NotificationPrefs.read('messageNotifications'),
+      NotificationPrefs.read('notificationSound'),
+      NotificationPrefs.read('notificationVibration'),
+      NotificationPrefs.read('notificationPreview'),
+    ]);
+    _messageNotifications = values[0];
+    _sound = values[1];
+    _vibration = values[2];
+    _showPreview = values[3];
     if (!mounted) return;
     setState(() => _isLoading = false);
   }
 
   Future<void> _update(String key, bool value) async {
-    // Дар ҳофизаи дастгоҳ ҳам сабт мешавад — худи огоҳинома метавонад дар
-    // изоляти паснамо нишон дода шавад, ки Firestore-ро хонда наметавонад.
+    // Танҳо дар ҳамин дастгоҳ нигоҳ дошта мешавад; ҳеҷ навиштани Firestore.
     await NotificationPrefs.save(key, value);
-    final uid = _uid;
-    if (uid == null) return;
-    await FirebaseFirestore.instance.collection('users').doc(uid).set({
-      'settings': {key: value},
-    }, SetOptions(merge: true));
   }
 
   @override
