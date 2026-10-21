@@ -60,6 +60,23 @@ test('Gemini provider returns text and uses configured key/model', async () => {
   assert.equal(body.contents[0].parts[0].text, 'Салом');
 });
 
+test('custom bot instructions are passed as a separate system instruction', async () => {
+  let body;
+  await generateChatReply({
+    provider: 'gemini',
+    messages: [{ role: 'user', text: 'Алмазро чӣ тавр гирам?' }],
+    systemInstruction: 'You are a safe diamond-donation guide. Never claim a payment was made.',
+    env: { GEMINI_API_KEY: 'not-real-test-key' },
+    fetchImpl: async (_url, options) => {
+      body = JSON.parse(options.body);
+      return fakeResponse({ candidates: [{ content: { parts: [{ text: 'Аз манбаи расмӣ истифода баред.' }] } }] });
+    },
+  });
+  assert.match(body.systemInstruction.parts[0].text, /safe diamond-donation guide/);
+  assert.match(body.systemInstruction.parts[0].text, /Never claim a payment was made/);
+  assert.equal(body.contents[0].parts[0].text, 'Алмазро чӣ тавр гирам?');
+});
+
 test('OpenAI provider uses Responses API and extracts output text', async () => {
   let requestedUrl = '';
   let body;
