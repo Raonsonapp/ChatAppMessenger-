@@ -15,6 +15,8 @@ import '../theme/app_scope.dart';
 import '../services/report_service.dart';
 import '../sheets/report_sheet.dart';
 import '../widgets/profile_details_card.dart';
+import '../widgets/net_image.dart';
+import 'image_viewer_screen.dart';
 
 /// Маълумоти воқеии контакт — mute/манъ/тоза кардани чат ҳама воқеан
 /// дар Firestore сабт мешаванд.
@@ -223,6 +225,8 @@ class ContactInfoScreen extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 24),
+                            _sharedMediaPreview(context),
+                            const SizedBox(height: 14),
                             ProfileDetailsCard(uid: otherUserId),
                             GlassContainer(
                               borderRadius: 16,
@@ -342,6 +346,171 @@ class ContactInfoScreen extends StatelessWidget {
   }
 
   /// Show the saved contact number like the WhatsApp contact information page.
+  /// Пешнамоиши файлҳои мубодилашуда, мисли қисми Media-и WhatsApp.
+  Widget _sharedMediaPreview(BuildContext context) {
+    final messages = FirebaseFirestore.instance
+        .collection('conversations')
+        .doc(conversationId)
+        .collection('messages');
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: messages.orderBy('createdAt', descending: true).snapshots(),
+      builder: (context, snapshot) {
+        final media = (snapshot.data?.docs ?? const [])
+            .where((doc) {
+              final data = doc.data();
+              return data['mediaUrl'] != null &&
+                  data['deleted'] != true &&
+                  data['mediaType'] != 'location';
+            })
+            .take(4)
+            .toList();
+        if (media.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        return GlassContainer(
+          borderRadius: 16,
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SharedMediaScreen(
+                      parentPath: 'conversations/$conversationId',
+                      title: tr('k294'),
+                    ),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Медиа, ссылки и документы',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        media.isEmpty ? '›' : '${media.length} ›',
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (snapshot.connectionState == ConnectionState.waiting && media.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Center(
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.neonEmerald,
+                      ),
+                    ),
+                  ),
+                )
+              else if (media.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 76,
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < media.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 8),
+                        Expanded(
+                          child: _mediaPreviewTile(context, media[i].data()),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _mediaPreviewTile(
+    BuildContext context,
+    Map<String, dynamic> data,
+  ) {
+    final url = data['mediaUrl'] as String? ?? '';
+    final type = data['mediaType'] as String? ?? '';
+    final isImage = type == 'image' || type == 'gif' || type == 'sticker';
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: url.isEmpty
+          ? null
+          : () {
+              if (isImage) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ImageViewerScreen(
+                      url: url,
+                      title: 'Медиа, ссылки и документы',
+                    ),
+                  ),
+                );
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SharedMediaScreen(
+                      parentPath: 'conversations/$conversationId',
+                      title: tr('k294'),
+                    ),
+                  ),
+                );
+              }
+            },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: isImage
+            ? NetImage(
+                url: url,
+                fit: BoxFit.cover,
+                memCacheWidth: 240,
+                error: Container(
+                  color: AppColors.surface,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    LucideIcons.image,
+                    color: AppColors.textSecondary,
+                    size: 22,
+                  ),
+                ),
+              )
+            : Container(
+                color: AppColors.surface,
+                alignment: Alignment.center,
+                child: Icon(
+                  type == 'video'
+                      ? LucideIcons.video
+                      : type == 'audio'
+                          ? LucideIcons.mic
+                          : LucideIcons.file_text,
+                  color: AppColors.textSecondary,
+                  size: 24,
+                ),
+              ),
+      ),
+    );
+  }
+
   Widget _contactPhone() {
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance.collection('users').doc(otherUserId).snapshots(),
