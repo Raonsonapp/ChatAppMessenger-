@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:io';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:vibration/vibration.dart';
@@ -43,11 +46,7 @@ class RingtoneService {
     try {
       final player = AudioPlayer();
       _player = player;
-      // Режими занг: садо аз баландгӯяк меравад ва бо садоҳои дигар омехта
-      // намешавад.
-      await player.setReleaseMode(ReleaseMode.loop);
-      await player.setVolume(1);
-      await player.play(AssetSource(_assetPath));
+      await playConfigured(player);
     } catch (_) {
       // Файли садо нест ё дастгоҳ иҷозат надод — ларзиш ба ҳар ҳол ҳаст.
       await _disposePlayer();
@@ -55,6 +54,19 @@ class RingtoneService {
   }
 
   static const _assetPath = 'sounds/ringtone.wav';
+  static const _customPathKey = 'call_ringtone_path';
+
+  /// Uses a ringtone selected by the user, falling back to ChatApp's bundled tone.
+  static Future<void> playConfigured(AudioPlayer player) async {
+    final prefs = await SharedPreferences.getInstance();
+    final customPath = prefs.getString(_customPathKey);
+    final hasCustomFile = customPath != null && File(customPath).existsSync();
+    await player.setReleaseMode(ReleaseMode.loop);
+    await player.setVolume(1);
+    await player.play(
+      hasCustomFile ? DeviceFileSource(customPath) : AssetSource(_assetPath),
+    );
+  }
 
   Future<void> _startVibration() async {
     try {
