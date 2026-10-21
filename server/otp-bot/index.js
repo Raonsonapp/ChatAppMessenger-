@@ -16,6 +16,8 @@ const agora = require('./agora');
 const linkPreview = require('./link_preview');
 const { deviceFingerprint } = require('./device_fingerprint');
 const plus = require('./plus');
+const botBuilder = require('./bot_builder');
+const botCreateQuota = new Map();
 
 /** Вақти оғози ин нусхаи сервер. */
 const startedAt = new Date();
@@ -261,6 +263,91 @@ async function authenticate(req, res) {
     return null;
   }
 }
+
+/** Bot Studio: конфигуратсияҳо бо Firebase ID token ва ownership муҳофизат мешаванд. */
+app.get('/api/bots', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  try {
+    const snapshot = await getFirestore()
+      .collection('userBots')
+      .where('ownerUid', '==', user.uid)
+      .limit(50)
+      .get();
+    const bots = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return res.json({ bots });
+  } catch (err) {
+    console.error('Bot Studio list failed:', err?.message ?? err);
+    return res.status(500).json({ error: 'bots-read-failed' });
+  }
+});
+
+app.post('/api/bots', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  if (overQuota(botCreateQuota, user.uid, 10)) {
+    return res.status(429).json({ error: 'too-many-bot-creates' });
+  }
+
+  const validated = botBuilder.validateBotDefinition(req.body);
+  if (!validated.ok) return res.status(400).json({ error: validated.error });
+
+  try {
+    const collection = getFirestore().collection('userBots');
+    const existing = await collection.where('ownerUid', '==', user.uid).limit(20).get();
+    if (existing.size >= 20) return res.status(409).json({ error: 'bot-limit-reached' });
+
+    const ref = collection.doc();
+    const now = FieldValue.serverTimestamp();
+    await ref.set({
+      ...validated.value,
+      ownerUid: user.uid,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return res.status(201).json({ bot: { id: ref.id, ...validated.value, ownerUid: user.uid } });
+  } catch (err) {
+    console.error('Bot Studio create failed:', err?.message ?? err);
+    return res.status(500).json({ error: 'bot-create-failed' });
+  }
+});
+
+app.put('/api/bots/:botId', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+  const validated = botBuilder.validateBotDefinition(req.body);
+  if (!validated.ok) return res.status(400).json({ error: validated.error });
+
+  try {
+    const ref = getFirestore().collection('userBots').doc(String(req.params.botId));
+    const snapshot = await ref.get();
+    if (!snapshot.exists) return res.status(404).json({ error: 'bot-not-found' });
+    if (snapshot.data()?.ownerUid !== user.uid) return res.status(403).json({ error: 'bot-forbidden' });
+
+    await ref.set({ ...validated.value, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return res.json({ bot: { id: ref.id, ...validated.value, ownerUid: user.uid } });
+  } catch (err) {
+    console.error('Bot Studio update failed:', err?.message ?? err);
+    return res.status(500).json({ error: 'bot-update-failed' });
+  }
+});
+
+app.delete('/api/bots/:botId', async (req, res) => {
+  const user = await authenticate(req, res);
+  if (!user) return;
+
+  try {
+    const ref = getFirestore().collection('userBots').doc(String(req.params.botId));
+    const snapshot = await ref.get();
+    if (!snapshot.exists) return res.status(404).json({ error: 'bot-not-found' });
+    if (snapshot.data()?.ownerUid !== user.uid) return res.status(403).json({ error: 'bot-forbidden' });
+    await ref.delete();
+    return res.json({ deleted: true });
+  } catch (err) {
+    console.error('Bot Studio delete failed:', err?.message ?? err);
+    return res.status(500).json({ error: 'bot-delete-failed' });
+  }
+});
 
 /** Ҳуқуқи Plus-и корбар дар шакли қобили фиристодан ба барнома. */
 function plusPayload(uid, data) {
