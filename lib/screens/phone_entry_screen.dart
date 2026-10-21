@@ -18,8 +18,11 @@ class PhoneEntryScreen extends StatefulWidget {
 
 class _PhoneEntryScreenState extends State<PhoneEntryScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _phoneAnimation;
+  late final AnimationController _flightController;
   final TextEditingController _codeController = TextEditingController(text: '992');
   final TextEditingController _numberController = TextEditingController();
+  final FocusNode _numberFocusNode = FocusNode();
+  bool _isTypingPhone = false;
   bool _isOpeningBot = false;
   String? _errorText;
 
@@ -27,11 +30,21 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> with SingleTickerPr
   void initState() {
     super.initState();
     _phoneAnimation = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..repeat(reverse: true);
+    _flightController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 850),
+    );
+    _numberFocusNode.addListener(() {
+      if (!mounted) return;
+      setState(() => _isTypingPhone = _numberFocusNode.hasFocus);
+    });
   }
 
   @override
   void dispose() {
     _phoneAnimation.dispose();
+    _flightController.dispose();
+    _numberFocusNode.dispose();
     _codeController.dispose();
     _numberController.dispose();
     super.dispose();
@@ -53,6 +66,7 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> with SingleTickerPr
       _isOpeningBot = true;
       _errorText = null;
     });
+    _flightController.forward(from: 0);
 
     final phone = _fullPhoneNumber;
     bool opened;
@@ -107,54 +121,78 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> with SingleTickerPr
                 const SizedBox(height: 18),
                 Center(
                   child: AnimatedBuilder(
-                    animation: _phoneAnimation,
+                    animation: Listenable.merge([_phoneAnimation, _flightController]),
                     builder: (context, child) {
-                      final scale = 0.94 + (_phoneAnimation.value * 0.08);
-                      final ringOpacity = 0.18 + (_phoneAnimation.value * 0.24);
+                      final ringOpacity = 0.16 + (_phoneAnimation.value * 0.20);
                       return SizedBox(
-                        width: 112,
-                        height: 104,
+                        width: 238,
+                        height: 112,
                         child: Stack(
-                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
                           children: [
-                            Container(
-                              width: 92,
-                              height: 92,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.neonEmerald.withValues(alpha: ringOpacity), width: 2),
-                              ),
-                            ),
-                            Container(
-                              width: 72,
-                              height: 72,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.neonEmerald.withValues(alpha: 0.10),
-                                boxShadow: [
-                                  BoxShadow(color: AppColors.neonEmerald.withValues(alpha: ringOpacity), blurRadius: 20, spreadRadius: 2),
-                                ],
-                              ),
-                            ),
-                            Transform.scale(
-                              scale: scale,
+                            Positioned(
+                              left: 8,
+                              top: 8,
                               child: Container(
-                                width: 58,
-                                height: 58,
-                                decoration: BoxDecoration(color: AppColors.neonEmerald, borderRadius: BorderRadius.circular(19)),
-                                child: Icon(LucideIcons.smartphone, size: 29, color: AppColors.background),
+                                width: 88,
+                                height: 88,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.neonEmerald.withValues(alpha: 0.08),
+                                  border: Border.all(
+                                    color: AppColors.neonEmerald.withValues(alpha: ringOpacity),
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.neonEmerald.withValues(alpha: ringOpacity),
+                                      blurRadius: 18,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                child: AnimatedScale(
+                                  duration: const Duration(milliseconds: 180),
+                                  scale: _isTypingPhone ? 0.94 : 1,
+                                  child: Text(
+                                    _isTypingPhone ? '🙈' : '🐵',
+                                    style: const TextStyle(fontSize: 52),
+                                  ),
+                                ),
                               ),
                             ),
                             Positioned(
-                              right: 8,
-                              bottom: 7,
+                              right: 5,
+                              top: 29,
                               child: Container(
-                                width: 27,
-                                height: 27,
-                                decoration: BoxDecoration(color: AppColors.background, shape: BoxShape.circle, border: Border.all(color: AppColors.neonEmerald, width: 1.5)),
-                                child: Icon(LucideIcons.check, size: 15, color: AppColors.neonEmerald),
+                                width: 66,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(color: AppColors.glassBorder),
+                                ),
+                                child: Icon(
+                                  LucideIcons.message_circle,
+                                  color: AppColors.neonCyan,
+                                  size: 25,
+                                ),
                               ),
                             ),
+                            if (_isOpeningBot || _flightController.isAnimating)
+                              Positioned(
+                                left: 85 + (_flightController.value * 86),
+                                top: 35 - (12 * (1 - (_flightController.value - 0.5).abs() * 2)),
+                                child: Transform.rotate(
+                                  angle: 0.15,
+                                  child: Icon(
+                                    LucideIcons.send,
+                                    color: AppColors.neonEmerald,
+                                    size: 22,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       );
@@ -197,7 +235,9 @@ class _PhoneEntryScreenState extends State<PhoneEntryScreen> with SingleTickerPr
                       Expanded(
                         child: TextField(
                           controller: _numberController,
+                          focusNode: _numberFocusNode,
                           keyboardType: TextInputType.phone,
+                          onChanged: (_) => setState(() {}),
                           style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
                           decoration: InputDecoration(
                             hintText: '90 123 45 67',
