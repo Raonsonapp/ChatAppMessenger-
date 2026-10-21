@@ -28,6 +28,7 @@ import '../../l10n/l10n.dart';
 import '../../theme/app_scope.dart';
 import 'plus_screen.dart';
 import '../business/business_center_screen.dart';
+import '../bot_studio_screen.dart';
 import '../../widgets/plus_badge.dart';
 import '../../services/plus_service.dart';
 
@@ -264,6 +265,17 @@ class SettingsHomeScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const AccountSettingsScreen(),
+                          ),
+                        ),
+                      ),
+                      _row(
+                        context,
+                        icon: LucideIcons.bot,
+                        label: 'Bot Studio',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const BotStudioScreen(),
                           ),
                         ),
                       ),
