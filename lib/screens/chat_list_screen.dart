@@ -35,7 +35,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_scope.dart';
 import '../widgets/connection_banner.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../screens/notes_screen.dart';
+import 'notes_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
