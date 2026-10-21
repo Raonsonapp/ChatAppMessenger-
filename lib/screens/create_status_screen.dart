@@ -275,21 +275,28 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
   }
 
   Future<void> _toggleMusicPreview() async {
-    if (_pickedMusicUrl == null) return;
+    final musicUrl = _pickedMusicUrl;
+    if (musicUrl == null || musicUrl.isEmpty) return;
     try {
       if (_musicPreviewPlaying) {
         await _musicPreviewPlayer.pause();
         if (mounted) setState(() => _musicPreviewPlaying = false);
-      } else if (_pickedMusicUrl!.startsWith('assets/')) {
-        await _musicPreviewPlayer.setSource(AssetSource(_pickedMusicUrl!.replaceFirst('assets/', '')));
+      } else if (musicUrl.startsWith('assets/')) {
+        await _musicPreviewPlayer.setSource(
+          AssetSource(musicUrl.replaceFirst('assets/', '')),
+        );
         await _musicPreviewPlayer.resume();
         if (mounted) setState(() => _musicPreviewPlaying = true);
       } else {
-        await _musicPreviewPlayer.play(UrlSource(_pickedMusicUrl!));
+        await _musicPreviewPlayer.play(UrlSource(musicUrl));
         if (mounted) setState(() => _musicPreviewPlaying = true);
       }
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Пешнамоиши мусиқӣ дастрас нест')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Пешнамоиши мусиқӣ дастрас нест')),
+        );
+      }
     }
   }
 
@@ -539,7 +546,10 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
                                     Colors.transparent,
                                     BlendMode.dst,
                                   ),
-                                  child: Image.file(File(_pickedImage!.path), fit: BoxFit.cover),
+                                  child: Image.file(
+                                    File(_pickedImage?.path ?? ''),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                                 if (_drawingStrokes.isNotEmpty)
                                   Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _StoryDrawingPainter(_drawingStrokes)))),
