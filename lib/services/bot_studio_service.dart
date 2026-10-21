@@ -33,6 +33,8 @@ class BotStudioService {
   static String _messageFor(String error) => switch (error) {
         'bot-limit-reached' => 'Шумо ҳадди аксар 20 бот сохта метавонед.',
         'too-many-bot-creates' => 'Шумораи сохтани бот зиёд шуд. Баъдтар кӯшиш кунед.',
+        'too-many-bot-messages' => 'Шумораи санҷиши бот зиёд шуд. Каме баъдтар кӯшиш кунед.',
+        'ai-not-configured' => 'AI дар сервер ҳоло танзим нашудааст.',
         'donation-guide-required' => 'Барои ботҳои донати алмаз амали «Роҳнамои донат»-ро интихоб кунед.',
         'name-invalid' => 'Номи бот бояд аз 2 то 40 аломат бошад.',
         'task-invalid' => 'Вазифаи бот нодуруст аст.',
@@ -67,6 +69,18 @@ class BotStudioService {
         'instructions': instructions,
         'actions': actions,
       }),
+    );
+    return _decode(response);
+  }
+
+  static Future<Map<String, dynamic>> chatBot({
+    required String botId,
+    required String message,
+  }) async {
+    final response = await http.post(
+      _baseUri.resolve('/api/bots/${Uri.encodeComponent(botId)}/chat'),
+      headers: await _headers(),
+      body: jsonEncode({'message': message}),
     );
     return _decode(response);
   }
