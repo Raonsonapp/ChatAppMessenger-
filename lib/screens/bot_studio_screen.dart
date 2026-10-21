@@ -132,6 +132,117 @@ class _BotStudioScreenState extends State<BotStudioScreen> {
     }
   }
 
+  Future<void> _testBot(Map<String, dynamic> bot) async {
+    final id = bot['id'] as String? ?? '';
+    if (id.isEmpty) return;
+    final controller = TextEditingController();
+    String? reply;
+    String? error;
+    bool busy = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            'Санҷиши ${bot['name'] ?? 'бот'}',
+            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Паём нависед, то ҷавоби AI-и ин ботро бинед.',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  maxLength: 1500,
+                  maxLines: 3,
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Салом, чӣ кор карда метавонӣ?',
+                    hintStyle: TextStyle(color: AppColors.textSecondary),
+                    filled: true,
+                    fillColor: AppColors.background.withValues(alpha: 0.5),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                if (busy) ...[
+                  const SizedBox(height: 12),
+                  Center(child: CircularProgressIndicator(color: AppColors.neonEmerald)),
+                ],
+                if (error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(error!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+                ],
+                if (reply != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.neonCyan.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.25)),
+                    ),
+                    child: SelectableText(
+                      reply!,
+                      style: TextStyle(color: AppColors.textPrimary, fontSize: 13, height: 1.45),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: busy ? null : () => Navigator.pop(dialogContext),
+              child: Text('Пӯшидан', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton.icon(
+              onPressed: busy
+                  ? null
+                  : () async {
+                      final message = controller.text.trim();
+                      if (message.isEmpty) {
+                        setDialogState(() => error = 'Аввал паём нависед.');
+                        return;
+                      }
+                      setDialogState(() {
+                        busy = true;
+                        error = null;
+                        reply = null;
+                      });
+                      try {
+                        final result = await BotStudioService.chatBot(botId: id, message: message);
+                        if (!dialogContext.mounted) return;
+                        setDialogState(() => reply = result['reply'] as String? ?? '');
+                      } catch (exception) {
+                        if (!dialogContext.mounted) return;
+                        setDialogState(() => error = exception.toString().replaceFirst('Exception: ', ''));
+                      } finally {
+                        if (dialogContext.mounted) setDialogState(() => busy = false);
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.neonEmerald,
+                foregroundColor: AppColors.background,
+              ),
+              icon: const Icon(Icons.send_rounded, size: 16),
+              label: const Text('Санҷидан'),
+            ),
+          ],
+        ),
+      ),
+    );
+    controller.dispose();
+  }
+
   Future<void> _deleteBot(String id) async {
     try {
       await BotStudioService.deleteBot(id);
@@ -399,6 +510,11 @@ class _BotStudioScreenState extends State<BotStudioScreen> {
                   ),
                 ],
               ),
+            ),
+            IconButton(
+              tooltip: 'Санҷидани бот',
+              onPressed: id.isEmpty ? null : () => _testBot(bot),
+              icon: Icon(LucideIcons.message_circle, color: AppColors.neonCyan, size: 19),
             ),
             IconButton(
               tooltip: 'Нест кардан',
