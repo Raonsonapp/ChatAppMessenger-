@@ -810,6 +810,7 @@ class MessageBubble extends StatelessWidget {
                                   child: ImageViewerScreen(
                                     url: message.mediaUrl!,
                                     title: senderLabel ?? chatTitle,
+                                    heroTag: 'chat-image-${message.id}',
                                   ),
                                 ),
                               ),
