@@ -83,6 +83,18 @@ class _NotesScreenState extends State<NotesScreen> {
     var selectedAccent = (old?.accent ?? _accentIndex).clamp(0, _accents.length - 1);
     var isPinned = old?.pinned ?? false;
     var isChecklist = old?.checklist ?? false;
+    final undoStack = <TextEditingValue>[];
+    final redoStack = <TextEditingValue>[];
+    void applyBodyEdit(String text, int cursor) {
+      undoStack.add(body.value);
+      if (undoStack.length > 100) undoStack.removeAt(0);
+      redoStack.clear();
+      body.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: cursor.clamp(0, text.length)),
+      );
+      setSheet(() {});
+    }
     final note = await showModalBottomSheet<_Note>(
       context: context,
       isScrollControlled: true,
@@ -134,9 +146,9 @@ class _NotesScreenState extends State<NotesScreen> {
                     PopupMenuButton<String>(icon: Icon(LucideIcons.ellipsis, color: AppColors.textPrimary), onSelected: (v) async {
                       switch (v) {
                         case 'pin': setSheet(() => isPinned = !isPinned); break;
-                        case 'checklist': body.text = '${body.text}${body.text.isEmpty ? '' : '\n'}☐  '; setSheet(() => isChecklist = true); break;
-                        case 'bullet': body.text = '${body.text}${body.text.isEmpty ? '' : '\n'}•  '; setSheet(() {}); break;
-                        case 'number': body.text = '${body.text}${body.text.isEmpty ? '' : '\n'}1.  '; setSheet(() {}); break;
+                        case 'checklist': applyBodyEdit('${body.text}${body.text.isEmpty ? '' : '\n'}☐  ', body.text.length + 3); setSheet(() => isChecklist = true); break;
+                        case 'bullet': applyBodyEdit('${body.text}${body.text.isEmpty ? '' : '\n'}•  ', body.text.length + 3); break;
+                        case 'number': applyBodyEdit('${body.text}${body.text.isEmpty ? '' : '\n'}1.  ', body.text.length + 4); break;
                         case 'date': body.text = '${body.text}${body.text.isEmpty ? '' : '\n'}${DateTime.now().toLocal().toString().substring(0, 16)}'; setSheet(() {}); break;
                         case 'copy': await Clipboard.setData(ClipboardData(text: '${title.text}\n\n${body.text}')); if (ctx.mounted) _message('Матн нусхабардорӣ шуд'); break;
                         case 'share': await SharePlus.instance.share(ShareParams(text: '${title.text}\n\n${body.text}')); break;
@@ -173,8 +185,8 @@ class _NotesScreenState extends State<NotesScreen> {
                     IconButton(tooltip: 'Курсив', onPressed: () { final s = body.selection; final a = s.start < 0 ? body.text.length : s.start; final b = s.end < 0 ? a : s.end; final selected = body.text.substring(a,b); body.value = body.value.copyWith(text: body.text.replaceRange(a,b,'_${selected}_'), selection: TextSelection.collapsed(offset: a+selected.length+2)); setSheet(() {}); }, icon: const Icon(LucideIcons.italic)),
                     IconButton(tooltip: 'Зерхат', onPressed: () { final s = body.selection; final a = s.start < 0 ? body.text.length : s.start; final b = s.end < 0 ? a : s.end; final selected = body.text.substring(a,b); body.value = body.value.copyWith(text: body.text.replaceRange(a,b,'<u>$selected</u>'), selection: TextSelection.collapsed(offset: a+selected.length+7)); setSheet(() {}); }, icon: const Icon(LucideIcons.underline)),
                     IconButton(tooltip: 'Рӯйхат', onPressed: () { body.text = '${body.text}${body.text.isEmpty ? '' : '\n'}•  '; setSheet(() {}); }, icon: const Icon(LucideIcons.list)),
-                    IconButton(tooltip: 'Undo', onPressed: () { setSheet(() {}); }, icon: const Icon(LucideIcons.undo_2)),
-                    IconButton(tooltip: 'Redo', onPressed: () { setSheet(() {}); }, icon: const Icon(LucideIcons.redo_2)),
+                    IconButton(tooltip: 'Undo', onPressed: undoStack.isEmpty ? null : () { redoStack.add(body.value); body.value = undoStack.removeLast(); setSheet(() {}); }, icon: const Icon(LucideIcons.undo_2)),
+                    IconButton(tooltip: 'Redo', onPressed: redoStack.isEmpty ? null : () { undoStack.add(body.value); body.value = redoStack.removeLast(); setSheet(() {}); }, icon: const Icon(LucideIcons.redo_2)),
                   ]),
                   Text('${body.text.trim().isEmpty ? 0 : body.text.trim().split(RegExp(r'\\s+')).length} калима · ${body.text.length} аломат', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
                   const SizedBox(height: 8),
