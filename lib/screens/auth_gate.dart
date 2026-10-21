@@ -81,7 +81,6 @@ class _ProfileGate extends StatelessWidget {
           );
         }
         final data = snapshot.data!.data();
-        // Огоҳиномаҳо танҳо аз танзимоти ҳамин дастгоҳ истифода мебаранд.
         final name = (data?['name'] as String?)?.trim() ?? '';
         if (name.isEmpty) {
           final phone = (data?['phone'] as String?) ?? '';
