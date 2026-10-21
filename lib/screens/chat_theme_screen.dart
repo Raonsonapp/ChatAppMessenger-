@@ -389,7 +389,13 @@ class _ChatThemeScreenState extends State<ChatThemeScreen> {
             runSpacing: 8,
             children: [
               _designCard('2d', tr('k706')),
+              _designCard('2d_aurora', tr('k756')),
+              _designCard('2d_grid', tr('k757')),
+              _designCard('2d_waves', tr('k758')),
               _designCard('3d', tr('k707')),
+              _designCard('3d_crystal', tr('k759')),
+              _designCard('3d_orbit', tr('k760')),
+              _designCard('3d_mesh', tr('k761')),
               _designCard('landscape', tr('k708')),
             ],
           ),
@@ -442,9 +448,9 @@ class _ChatThemeScreenState extends State<ChatThemeScreen> {
                   design: design,
                   child: Center(
                     child: Icon(
-                      design == '2d'
+                      design.startsWith('2d')
                           ? LucideIcons.layers
-                          : design == '3d'
+                          : design.startsWith('3d')
                               ? LucideIcons.box
                               : LucideIcons.mountain,
                       size: 21,
