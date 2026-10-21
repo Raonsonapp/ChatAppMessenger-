@@ -107,7 +107,28 @@ class _NotesScreenState extends State<NotesScreen> {
                   Row(children: [
                     Expanded(child: Text(old == null ? 'Заметкаи нав' : 'Таҳрири заметка', style: TextStyle(color: AppColors.textPrimary, fontSize: 21, fontWeight: FontWeight.w800))),
                     IconButton(tooltip: 'Неон', onPressed: () async {
-                      final picked = await showModalBottomSheet<int>(context: ctx, backgroundColor: AppColors.surface, builder: (s) => SafeArea(child: Padding(padding: const EdgeInsets.all(18), child: Wrap(spacing: 12, children: List.generate(_accents.length, (i) => IconButton(onPressed: () => Navigator.pop(s, i), icon: Icon(i == selectedAccent ? LucideIcons.circle_check : LucideIcons.circle, color: _accents[i], size: 28))))));
+                      final picked = await showModalBottomSheet<int>(
+                        context: ctx,
+                        backgroundColor: AppColors.surface,
+                        builder: (s) => SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.all(18),
+                            child: Wrap(
+                              spacing: 12,
+                              children: List.generate(_accents.length, (i) =>
+                                IconButton(
+                                  onPressed: () => Navigator.pop(s, i),
+                                  icon: Icon(
+                                    i == selectedAccent ? LucideIcons.circle_check : LucideIcons.circle,
+                                    color: _accents[i],
+                                    size: 28,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
                       if (picked != null) setSheet(() => selectedAccent = picked);
                     }, icon: Icon(LucideIcons.palette, color: _accents[selectedAccent])),
                     PopupMenuButton<String>(icon: Icon(LucideIcons.ellipsis, color: AppColors.textPrimary), onSelected: (v) async {
@@ -149,7 +170,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   const SizedBox(height: 4),
                   Wrap(spacing: 2, children: [
                     IconButton(tooltip: 'Ғафс', onPressed: () { final s = body.selection; final a = s.start < 0 ? body.text.length : s.start; final b = s.end < 0 ? a : s.end; final selected = body.text.substring(a,b); body.value = body.value.copyWith(text: body.text.replaceRange(a,b,'**$selected**'), selection: TextSelection.collapsed(offset: a+selected.length+4)); setSheet(() {}); }, icon: const Icon(LucideIcons.bold)),
-                    IconButton(tooltip: 'Курсив', onPressed: () { final s = body.selection; final a = s.start < 0 ? body.text.length : s.start; final b = s.end < 0 ? a : s.end; final selected = body.text.substring(a,b); body.value = body.value.copyWith(text: body.text.replaceRange(a,b,'_$selected_'), selection: TextSelection.collapsed(offset: a+selected.length+2)); setSheet(() {}); }, icon: const Icon(LucideIcons.italic)),
+                    IconButton(tooltip: 'Курсив', onPressed: () { final s = body.selection; final a = s.start < 0 ? body.text.length : s.start; final b = s.end < 0 ? a : s.end; final selected = body.text.substring(a,b); body.value = body.value.copyWith(text: body.text.replaceRange(a,b,'_${selected}_'), selection: TextSelection.collapsed(offset: a+selected.length+2)); setSheet(() {}); }, icon: const Icon(LucideIcons.italic)),
                     IconButton(tooltip: 'Зерхат', onPressed: () { final s = body.selection; final a = s.start < 0 ? body.text.length : s.start; final b = s.end < 0 ? a : s.end; final selected = body.text.substring(a,b); body.value = body.value.copyWith(text: body.text.replaceRange(a,b,'<u>$selected</u>'), selection: TextSelection.collapsed(offset: a+selected.length+7)); setSheet(() {}); }, icon: const Icon(LucideIcons.underline)),
                     IconButton(tooltip: 'Рӯйхат', onPressed: () { body.text = '${body.text}${body.text.isEmpty ? '' : '\n'}•  '; setSheet(() {}); }, icon: const Icon(LucideIcons.list)),
                     IconButton(tooltip: 'Undo', onPressed: () { setSheet(() {}); }, icon: const Icon(LucideIcons.undo_2)),
