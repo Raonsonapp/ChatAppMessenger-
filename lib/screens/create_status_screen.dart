@@ -35,7 +35,6 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
   String? _pickedMusicUrl;
   String? _pickedMusicName;
   final AudioPlayer _musicPreviewPlayer = AudioPlayer();
-  final TextEditingController _musicSearchController = TextEditingController();
   bool _musicPreviewPlaying = false;
   String? _selectedSticker;
   bool _drawingEnabled = false;
@@ -55,7 +54,6 @@ class _CreateStatusScreenState extends State<CreateStatusScreen> {
   @override
   void dispose() {
     _textController.dispose();
-    _musicSearchController.dispose();
     _musicPreviewPlayer.dispose();
     super.dispose();
   }
