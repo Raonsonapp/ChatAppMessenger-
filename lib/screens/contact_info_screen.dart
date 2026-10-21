@@ -368,64 +368,132 @@ class ContactInfoScreen extends StatelessWidget {
   }
 
   /// Local display name stored per signed-in account only.
+  /// A compact WhatsApp-style name row with a pencil edit affordance.
   Widget _localNameEditor(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
-    final ref = FirebaseFirestore.instance.collection('users').doc(uid)
-        .collection('localNames').doc(otherUserId);
+    final ref = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('localNames')
+        .doc(otherUserId);
+
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: ref.snapshots(),
       builder: (context, snapshot) {
         final alias = (snapshot.data?.data()?['name'] as String?)?.trim() ?? '';
-        return GlassContainer(
-          borderRadius: 14,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(children: [
-            Icon(LucideIcons.pencil, color: AppColors.neonEmerald, size: 18),
-            const SizedBox(width: 10),
-            Expanded(child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(tr('k679'), style: TextStyle(color: AppColors.textSecondary, fontSize: 11.5)),
-                const SizedBox(height: 2),
-                Text(alias.isEmpty ? otherUserName : alias, style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 14)),
-              ],
-            )),
-            TextButton(onPressed: () => _editLocalName(context, ref, alias), child: Text(tr('k680'), style: TextStyle(color: AppColors.neonEmerald, fontSize: 12))),
-          ]),
+        final displayName = alias.isEmpty ? otherUserName : alias;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  displayName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              IconButton(
+                tooltip: tr('k680'),
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                padding: EdgeInsets.zero,
+                onPressed: () => _editLocalName(context, ref, alias),
+                icon: Icon(
+                  LucideIcons.pencil,
+                  color: AppColors.neonCyan,
+                  size: 17,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
-  Future<void> _editLocalName(BuildContext context, DocumentReference<Map<String, dynamic>> ref, String currentName) async {
-    final controller = TextEditingController(text: currentName);
+  Future<void> _editLocalName(
+    BuildContext context,
+    DocumentReference<Map<String, dynamic>> ref,
+    String currentName,
+  ) async {
+    final controller = TextEditingController(
+      text: currentName.isEmpty ? otherUserName : currentName,
+    );
     final result = await showDialog<String?>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: Text(tr('k681'), style: TextStyle(color: AppColors.textPrimary)),
-        content: TextField(controller: controller, autofocus: true, maxLength: 60, style: TextStyle(color: AppColors.textPrimary), decoration: InputDecoration(hintText: otherUserName, hintStyle: TextStyle(color: AppColors.textSecondary))),
+        title: Text(
+          tr('k681'),
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 60,
+          textCapitalization: TextCapitalization.words,
+          style: TextStyle(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: otherUserName,
+            hintStyle: TextStyle(color: AppColors.textSecondary),
+          ),
+          onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('k277'))),
-          TextButton(onPressed: () => Navigator.pop(dialogContext, ''), child: Text(tr('k684'))),
-          FilledButton(onPressed: () => Navigator.pop(dialogContext, controller.text.trim()), child: Text(tr('k117'))),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(tr('k277')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, ''),
+            child: Text(tr('k684')),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, controller.text.trim()),
+            child: Text(tr('k117')),
+          ),
         ],
       ),
     );
     controller.dispose();
     if (result == null) return;
+
     try {
-      if (result.isEmpty) {
+      if (result.trim().isEmpty || result.trim() == otherUserName.trim()) {
         await ref.delete();
       } else {
-        await ref.set({'name': result, 'updatedAt': FieldValue.serverTimestamp()});
+        await ref.set({
+          'name': result.trim(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       }
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.isEmpty ? tr('k684') : tr('k682'))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.trim().isEmpty || result.trim() == otherUserName.trim()
+                ? tr('k684')
+                : tr('k682'),
+          ),
+        ),
+      );
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('k683'))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('k683'))),
+      );
     }
   }
 
