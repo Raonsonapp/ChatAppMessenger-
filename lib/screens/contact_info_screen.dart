@@ -493,19 +493,25 @@ class ContactInfoScreen extends StatelessWidget {
     if (result == null) return;
 
     try {
-      if (result.trim().isEmpty || result.trim() == otherUserName.trim()) {
-        await ref.delete();
+      final normalizedName = result.trim();
+      if (normalizedName.isEmpty || normalizedName == otherUserName.trim()) {
+        // If the user resets the alias, remove the local override. The
+        // document may not exist yet, so deleting it must not fail.
+        await ref.set({
+          'name': FieldValue.delete(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       } else {
         await ref.set({
-          'name': result.trim(),
+          'name': normalizedName,
           'updatedAt': FieldValue.serverTimestamp(),
-        });
+        }, SetOptions(merge: true));
       }
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            result.trim().isEmpty || result.trim() == otherUserName.trim()
+            normalizedName.isEmpty || normalizedName == otherUserName.trim()
                 ? tr('k684')
                 : tr('k682'),
           ),
