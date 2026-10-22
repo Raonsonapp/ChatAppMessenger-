@@ -799,11 +799,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       final file = await MediaService.recordVideo();
       if (file == null || !mounted) return;
       setState(() {
-        _recordingVideoPath = file.path;
         _videoDuration = Duration.zero;
         _isRecordingVideo = true;
-        _isLockedVideo = false;
-        _cancelVideoByGesture = false;
       });
       _videoTimer?.cancel();
       _videoTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
