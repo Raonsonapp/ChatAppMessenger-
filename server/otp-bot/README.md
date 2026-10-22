@@ -55,3 +55,15 @@ npm start
 ## Маҳдудият
 
 Рамзҳои якдафъаина ҳоло дар хотираи процесс нигоҳ дошта мешаванд; баъди restart онҳо гум мешаванд. Барои истеҳсолот ва миқёси калон, нигоҳдории муваққатиро ба Redis ё Firestore кӯчонидан лозим аст.
+
+
+## ChatApp AI media quota guard (free-first)
+
+- The server exposes `GET /api/ai/media-quota` and `POST /api/ai/generate/:kind`.
+- Per-user quota counters are stored in Firestore under `users/{uid}/aiQuota/{image|video|music}`, reserved atomically before provider calls, and survive server restarts.
+- Default app limits: image 2 per 5 hours, video 1 per 12 hours, music 1 per 12 hours. These are app-side limits, not provider guarantees.
+- Image generation via Gemini stays disabled unless `GEMINI_IMAGE_API_FREE_TIER_CONFIRMED=true` is set by the deploy owner after checking the actual Google AI Studio project/model billing tier. Having a Gemini API key alone is not proof of free usage.
+- Grok image/video and external music API calls are disabled unless `ALLOW_PAID_MEDIA_API=true` is explicitly set. Keep it unset/false for the zero-API-spend requirement.
+- Music is unavailable until an actual provider endpoint/key is configured and paid media is explicitly enabled. No fictional free quota is promised.
+- Provider HTTP 429 responses stop the current request and return a quota error. The app should show the cooldown to the user.
+- Because the provider's own quota may change independently, app-side caps reduce risk but cannot guarantee a provider never returns a quota error.
