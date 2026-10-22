@@ -457,7 +457,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final title = _tabTitle;
     // Таби "Зангҳо" менюи худашро дорад (шортикатҳо + 3-нуқта дар боло),
     // бинобар ин ин қатори сарлавҳа дар он ҳоло танҳо ном нишон медиҳад.
-    final isCallsTab = _currentIndex == 4;
+    // Calls actions are also available in this shared header.
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 14, 14, 8),
       child: Row(
