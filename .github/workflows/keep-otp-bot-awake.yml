@@ -18,8 +18,8 @@ jobs:
           response_file="$(mktemp)"
           trap 'rm -f "$response_file"' EXIT
 
-          # Free-tier Render may sleep between requests. Allow a cold start,
-          # retry transient 5xx/network timeouts, and only fail after all tries.
+          # Render free-tier may sleep between requests. Retry transient
+          # cold starts, network timeouts, and temporary 5xx responses.
           for attempt in 1 2 3 4 5 6; do
             echo "Health check attempt $attempt/6"
             if curl --silent --show-error --fail \
