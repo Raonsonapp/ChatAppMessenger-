@@ -188,23 +188,47 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Future<void> _handleSend() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+
+    // ChatAI requires a real Firebase session. Do not write an "anon" message
+    // and then silently skip the request when the session is missing.
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Барои фиристодани паём аввал ба ChatApp ворид шавед.'),
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
+    final uid = user.uid;
     final replying = _replyingTo;
-    _controller.clear();
-    setState(() => _replyingTo = null);
+    try {
+      await _messagesRef.add({
+        'text': text,
+        'senderId': uid,
+        'isAI': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        if (replying != null) 'replyToText': replying.text,
+        if (replying != null) 'replyToSenderId': replying.senderId,
+      });
+      if (!mounted) return;
+      _controller.clear();
+      setState(() => _replyingTo = null);
+      _scrollToBottom();
 
-    await _messagesRef.add({
-      'text': text,
-      'senderId': uid,
-      'isAI': false,
-      'createdAt': FieldValue.serverTimestamp(),
-      if (replying != null) 'replyToText': replying.text,
-      if (replying != null) 'replyToSenderId': replying.senderId,
-    });
-    _scrollToBottom();
-
-    if (widget.conversation.isAIChat) {
-      _requestAIReply(text);
+      if (widget.conversation.isAIChat) {
+        await _requestAIReply(text);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Паём фиристода нашуд. Пайвасти интернет ё иҷозати Firestore-ро санҷед.'),
+          duration: const Duration(seconds: 5),
+        ),
+      );
     }
   }
 

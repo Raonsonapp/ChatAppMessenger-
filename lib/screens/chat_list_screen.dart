@@ -321,6 +321,70 @@ class _ChatListScreenState extends State<ChatListScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const NotesScreen()));
   }
 
+  /// Сарлавҳаи «+» — амалҳои зуд дар як ҷои пешбинишаванда.
+  void _openHeaderQuickAction(String value) {
+    switch (value) {
+      case 'new_chat':
+        _openNewChatSheet();
+        break;
+      case 'ai':
+        _openAi();
+        break;
+      case 'telegram_bot':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const BotStudioScreen()));
+        break;
+      case 'new_group':
+        _openNewGroup();
+        break;
+      case 'new_call':
+        _openNewCallSheet();
+        break;
+      case 'new_status':
+        _openCreateStatus();
+        break;
+      case 'settings':
+        _openSettings();
+        break;
+    }
+  }
+
+  Widget _buildHeaderPlusButton() {
+    return PopupMenuButton<String>(
+      tooltip: 'Амалҳои зуд',
+      onSelected: _openHeaderQuickAction,
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: AppColors.glassBorder),
+      ),
+      itemBuilder: (_) => [
+        _quickMenuItem('new_chat', LucideIcons.message_circle_plus, 'Чати нав'),
+        _quickMenuItem('ai', LucideIcons.sparkles, 'ChatApp AI'),
+        _quickMenuItem('telegram_bot', LucideIcons.bot, 'Telegram-ботҳо'),
+        _quickMenuItem('new_group', LucideIcons.users, 'Гурӯҳи нав'),
+        _quickMenuItem('new_call', LucideIcons.phone_call, 'Занги нав'),
+        _quickMenuItem('new_status', LucideIcons.circle_plus, 'Статуси нав'),
+        _quickMenuItem('settings', LucideIcons.settings, 'Танзимот'),
+      ],
+      child: GlassContainer(
+        borderRadius: 14,
+        padding: const EdgeInsets.all(9),
+        child: Icon(LucideIcons.plus, color: AppColors.textPrimary, size: 20),
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _quickMenuItem(String value, IconData icon, String label) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(children: [
+        Icon(icon, size: 19, color: value == 'ai' ? AppColors.neonCyan : AppColors.textPrimary),
+        const SizedBox(width: 12),
+        Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
+      ]),
+    );
+  }
+
   void _openAi() {
     Navigator.push(
       context,
@@ -393,7 +457,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final title = _tabTitle;
     // Таби "Зангҳо" менюи худашро дорад (шортикатҳо + 3-нуқта дар боло),
     // бинобар ин ин қатори сарлавҳа дар он ҳоло танҳо ном нишон медиҳад.
-    final isCallsTab = _currentIndex == 4;
+    // Calls actions are also available in this shared header.
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 14, 14, 8),
       child: Row(
@@ -421,22 +485,28 @@ class _ChatListScreenState extends State<ChatListScreen> {
               ],
             ),
           ),
-          if (!isCallsTab)
-            Row(
-              children: [
-                if (_currentIndex == 0) ...[
-                  _iconButton(LucideIcons.camera, onTap: _openCameraStatus),
-                  const SizedBox(width: 8),
-                ],
-                // Дар ҷадвалҳое ки сатри ҷустуҷӯ доранд, нишонаи ҷустуҷӯ дар
-                // сарлавҳа такрор мешавад — он ҷо пинҳон мешавад.
-                if (_currentIndex != 0 && _currentIndex != 2) ...[
-                  _iconButton(LucideIcons.search, onTap: _openSearch),
-                  const SizedBox(width: 8),
-                ],
-                _iconButton(LucideIcons.ellipsis_vertical, onTap: _openMainMenu),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Quick actions remain visible on every tab, including Calls.
+              _buildHeaderPlusButton(),
+              const SizedBox(width: 7),
+              if (_currentIndex == 0) ...[
+                _iconButton(LucideIcons.camera, onTap: _openCameraStatus),
+                const SizedBox(width: 7),
               ],
-            ),
+              if (_currentIndex == 4) ...[
+                _iconButton(LucideIcons.phone_call, onTap: _openNewCallSheet),
+                const SizedBox(width: 7),
+              ],
+              // Search stays in the header only where it is not already inline.
+              if (_currentIndex != 0 && _currentIndex != 2) ...[
+                _iconButton(LucideIcons.search, onTap: _openSearch),
+                const SizedBox(width: 7),
+              ],
+              _iconButton(LucideIcons.ellipsis_vertical, onTap: _openMainMenu),
+            ],
+          ),
         ],
       ),
     );
