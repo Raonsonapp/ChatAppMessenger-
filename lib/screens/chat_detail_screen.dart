@@ -53,9 +53,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   bool _isLockedAudio = false;
   bool _cancelAudioByGesture = false;
   bool _showRecordedAudioPreview = false;
-  String? _recordingVideoPath;
-  bool _isLockedVideo = false;
-  bool _cancelVideoByGesture = false;
   bool _isRecordingVideo = false;
   Duration _videoDuration = Duration.zero;
   Timer? _videoTimer;
