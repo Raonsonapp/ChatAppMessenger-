@@ -8,8 +8,34 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 4
     steps:
-      - name: Пинг кардани сервери OTP-бот
+      - name: Бедор кардани сервери OTP-бот ва санҷидани health
+        shell: bash
         run: |
-          curl -fsS --max-time 20 "https://chatappmessenger.onrender.com/" -o response.json -w "HTTP %{http_code}\n"
-          cat response.json
+          set -u
+          url="https://chatappmessenger.onrender.com/"
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+
+          # Free-tier Render may sleep between requests. Allow a cold start,
+          # retry transient 5xx/network timeouts, and only fail after all tries.
+          for attempt in 1 2 3 4 5 6; do
+            echo "Health check attempt $attempt/6"
+            if curl --silent --show-error --fail \
+              --connect-timeout 15 --max-time 45 \
+              "$url" -o "$response_file" -w "HTTP %{http_code}\n"; then
+              cat "$response_file"
+              if node -e "const d=JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8')); if (d.ok !== true || d.service !== 'chatapp-otp-bot') process.exit(1);" "$response_file"; then
+                echo "OTP bot health check passed."
+                exit 0
+              fi
+              echo "Server replied, but the health JSON was unexpected." >&2
+            else
+              echo "OTP bot did not answer on attempt $attempt." >&2
+            fi
+            if [ "$attempt" -lt 6 ]; then sleep 8; fi
+          done
+
+          echo "OTP bot health check failed after all retries." >&2
+          exit 1
