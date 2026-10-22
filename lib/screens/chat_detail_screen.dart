@@ -796,26 +796,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Future<void> _startVideoCapture() async {
     if (_isRecordingVideo || _isUploading) return;
     try {
+      // image_picker opens the native camera UI and only returns after the
+      // user stops or cancels recording. Avoid showing a fake live timer here.
       final file = await MediaService.recordVideo();
       if (file == null || !mounted) return;
-      setState(() {
-        _videoDuration = Duration.zero;
-        _isRecordingVideo = true;
-      });
-      _videoTimer?.cancel();
-      _videoTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
-        if (!mounted || !_isRecordingVideo) return;
-        setState(() => _videoDuration += const Duration(milliseconds: 200));
-      });
       await _sendImageMessage(file, mediaType: 'video');
-      if (!mounted) return;
-      setState(() => _isRecordingVideo = false);
-      _videoTimer?.cancel();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Камераи видео кушода нашуд. Иҷозати камераро санҷед.')),
       );
+    } finally {
+      if (mounted) setState(() => _isRecordingVideo = false);
+      _videoTimer?.cancel();
     }
   }
 
@@ -922,22 +915,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Widget _buildInputBar() {
     if (_isRecordingAudio || _showRecordedAudioPreview) {
       return _buildRecordingPreview();
-    }
-    if (_isRecordingVideo) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(28)),
-          child: Row(children: [
-            const Icon(LucideIcons.circle, color: Color(0xFFFF5263), size: 13),
-            const SizedBox(width: 10),
-            Text('Видео ${_formatRecordTime(_videoDuration)}', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-            const Spacer(),
-            IconButton(onPressed: () { setState(() => _isRecordingVideo = false); _videoTimer?.cancel(); }, icon: const Icon(LucideIcons.x, color: Color(0xFFFF6878))),
-          ]),
-        ),
-      );
     }
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 14),
