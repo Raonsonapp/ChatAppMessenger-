@@ -170,6 +170,44 @@ test('web context is appended to latest user message only', async () => {
   assert.equal(body.input[3].content, 'latest question\\nWeb evidence: https://example.com');
   assert.equal(body.input[2].content, 'older answer');
 });
+
+test('Gemini falls back to the default model when an explicit model override is unavailable', async () => {
+  const requested = [];
+  const reply = await generateChatReply({
+    provider: 'gemini',
+    messages: [{ role: 'user', text: 'Салом' }],
+    env: { GEMINI_API_KEY: 'not-real-test-key', GEMINI_CHAT_MODEL: 'old-disabled-model' },
+    fetchImpl: async (url) => {
+      const parsed = new URL(String(url));
+      const model = parsed.pathname.match(/models\/([^:]+)/)?.[1] ?? '';
+      requested.push(model);
+      if (model === 'old-disabled-model') {
+        return fakeResponse({ error: { status: 'NOT_FOUND', message: 'not available' } }, 404);
+      }
+      return fakeResponse({ candidates: [{ content: { parts: [{ text: 'Салом! Ман ChatAI ҳастам.' }] } }] });
+    },
+  });
+  assert.equal(reply, 'Салом! Ман ChatAI ҳастам.');
+  assert.deepEqual(requested, ['old-disabled-model', 'gemini-2.5-flash']);
+});
+
+test('Gemini auth and rate-limit failures are mapped to safe diagnostic codes', async () => {
+  for (const [status, providerStatus, expected] of [
+    [401, 'UNAUTHENTICATED', 'provider-auth-failed'],
+    [429, 'RESOURCE_EXHAUSTED', 'provider-rate-limited'],
+  ]) {
+    await assert.rejects(
+      generateChatReply({
+        provider: 'gemini',
+        messages: [{ role: 'user', text: 'Салом' }],
+        env: { GEMINI_API_KEY: 'not-real-test-key' },
+        fetchImpl: async () => fakeResponse({ error: { status: providerStatus } }, status),
+      }),
+      (error) => error.code === expected,
+    );
+  }
+});
+
 test('extractResponseText handles Responses API and compatible chat completions', () => {
   assert.equal(extractResponseText({ output_text: 'direct' }), 'direct');
   assert.equal(
