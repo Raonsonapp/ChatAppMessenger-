@@ -17,9 +17,13 @@
    - `FIREBASE_SERVICE_ACCOUNT_JSON` — тамоми матни JSON-и private key
    - `GEMINI_API_KEY` — барои `/api/ai/chat`, `/api/transcribe` ва тарҷумаи серверӣ
    - `GEMINI_CHAT_MODEL` — ихтиёрӣ; пешфарз `gemini-2.5-flash`
-   - `IMAGE_GENERATION_ENDPOINT` ва `IMAGE_GENERATION_API_KEY` — агар провайдери расм танзим карда шавад
-   - `VIDEO_GENERATION_ENDPOINT` ва `VIDEO_GENERATION_API_KEY` — агар провайдери видео танзим карда шавад
-   - `MUSIC_GENERATION_ENDPOINT` ва `MUSIC_GENERATION_API_KEY` — агар провайдери мусиқӣ танзим карда шавад
+   - `GEMINI_API_KEY` — инчунин барои тавлиди расм аз Gemini истифода мешавад
+   - `XAI_API_KEY` — барои тавлиди расм ва видео аз Grok истифода мешавад
+   - `GEMINI_IMAGE_MODEL` — ихтиёрӣ; пешфарз `gemini-2.5-flash-image`
+   - `XAI_IMAGE_MODEL` — ихтиёрӣ; пешфарз `grok-imagine-image`
+   - `XAI_VIDEO_MODEL` — ихтиёрӣ; пешфарз `grok-imagine-video-1.5`
+   - `MEDIA_GENERATION_QUOTA_PER_HOUR` — лимити иловагии ChatApp барои ҳар корбар; аз 1 то 5, пешфарз 5
+   - `IMAGE_GENERATION_ENDPOINT`, `VIDEO_GENERATION_ENDPOINT`, `MUSIC_GENERATION_ENDPOINT` ва калидҳои мувофиқ дигар барои image/video-и native-и Gemini/Grok лозим нестанд; мусиқӣ ҳанӯз провайдери алоҳида мехоҳад
    - `GEMINI_TRANSCRIBE_MODEL` — ихтиёрӣ; пешфарз `gemini-2.5-flash`
    - `GEMINI_TRANSLATE_MODEL` — ихтиёрӣ; барои тарҷума низ пешфарз `gemini-2.5-flash`
    - `TRANSLATE_ENDPOINT` ва `TRANSLATE_API_KEY` — танҳо агар тарҷумони алтернативии сервериро истифода баред
@@ -32,8 +36,11 @@
 ## ChatAI
 
 - `/api/ai/chat` ба Gemini тавассути `GEMINI_API_KEY` пайваст мешавад; ин endpoint бояд дар Render deploy шуда бошад.
-- `/api/ai/generate/image`, `/video` ва `/music` ҳоло адаптери провайдер мебошанд. Барои воқеан тавлид кардани медиа, ҳар яке бояд ба провайдери мувофиқ пайваст шавад ва JSON-и `url`-и HTTPS баргардонад. Танҳо илова кардани тағйирёбандаҳо бе провайдери мувофиқ кофӣ нест.
-- Видео дар UI то 30 сония интихоб мешавад, вале провайдери воқеӣ бояд ҳамин давомнокиро дастгирӣ кунад; вақти тавлид ва нарх аз провайдер вобастаанд.
+- `/api/ai/generate/image` тавлиди native-и Gemini ё Grok-ро дастгирӣ мекунад; `provider`-ро ҳамчун `gemini` ё `grok` фиристед.
+- `/api/ai/generate/video` ҳоло тавлиди native-и Grok Imagine Video-ро дастгирӣ мекунад; дархост то 15 сония маҳдуд аст.
+- `/api/ai/generate/music` ҳанӯз тавлиди мусиқиро таъмин намекунад. Видеоҳои Grok метавонанд аудио дошта бошанд, аммо ин ба тавлиди мустақили мусиқӣ баробар нест.
+- Лимити ChatApp (пешфарз 5 дархост дар як соат барои ҳар корбар) танҳо муҳофизати иловагӣ аст; лимити воқеии Gemini/xAI метавонад камтар бошад ва API метавонад пулакӣ бошад. Квотаи ройгони кафолатноки умумӣ вуҷуд надорад.
+- Тавлиди видео вақти бештар мегирад; URL-и видео аз провайдер бармегардад ва давомнокии ниҳоӣ ба маҳдудиятҳои модели Grok вобаста аст.
 
 ## Амният
 

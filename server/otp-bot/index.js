@@ -939,68 +939,221 @@ app.post('/api/transcribe', async (req, res) => {
  * Each provider returns JSON with a publicly accessible media URL in
  * url, mediaUrl, or output.url. Provider credentials never reach Flutter.
  */
+// Per-user application safety limits. The AI provider has its own rate/quota limits
+// and can reject requests earlier. This cap is intentionally conservative.
 const mediaGenerationQuota = new Map();
-const MEDIA_GENERATION_QUOTA_PER_HOUR = 5;
-const MEDIA_GENERATION_PROVIDERS = {
-  image: {
-    endpoint: process.env.IMAGE_GENERATION_ENDPOINT,
-    key: process.env.IMAGE_GENERATION_API_KEY,
-  },
-  video: {
-    endpoint: process.env.VIDEO_GENERATION_ENDPOINT,
-    key: process.env.VIDEO_GENERATION_API_KEY,
-  },
-  music: {
-    endpoint: process.env.MUSIC_GENERATION_ENDPOINT,
-    key: process.env.MUSIC_GENERATION_API_KEY,
-  },
-};
+const MEDIA_GENERATION_QUOTA_PER_HOUR = Math.max(
+  1,
+  Math.min(5, Number.parseInt(process.env.MEDIA_GENERATION_QUOTA_PER_HOUR || '5', 10) || 5),
+);
+
+async function generateWithGeminiImage({ prompt, apiKey, fetchImpl = fetch }) {
+  const model = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
+  const response = await fetchImpl(
+    'https://generativelanguage.googleapis.com/v1beta/models/' +
+      encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(apiKey),
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
+      }),
+      signal: AbortSignal.timeout(90000),
+    },
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error('Gemini image generation failed');
+    error.status = response.status;
+    throw error;
+  }
+  const parts = data?.candidates?.[0]?.content?.parts ?? [];
+  const imagePart = parts.find((part) => part?.inlineData?.data && part?.inlineData?.mimeType);
+  if (!imagePart) {
+    const error = new Error('Gemini returned no image');
+    error.status = 502;
+    throw error;
+  }
+  return {
+    mimeType: imagePart.inlineData.mimeType,
+    base64: imagePart.inlineData.data,
+    text: parts.filter((part) => typeof part?.text === 'string').map((part) => part.text).join('\n'),
+  };
+}
+
+async function generateWithGrokImage({ prompt, apiKey, fetchImpl = fetch }) {
+  const response = await fetchImpl('https://api.x.ai/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + apiKey,
+    },
+    body: JSON.stringify({
+      model: process.env.XAI_IMAGE_MODEL || 'grok-imagine-image',
+      prompt,
+      n: 1,
+      response_format: 'url',
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error('Grok image generation failed');
+    error.status = response.status;
+    throw error;
+  }
+  const url = data?.data?.[0]?.url;
+  if (typeof url !== 'string' || !url.startsWith('https://')) {
+    const error = new Error('Grok returned no image URL');
+    error.status = 502;
+    throw error;
+  }
+  return { url };
+}
+
+async function generateWithGrokVideo({ prompt, apiKey, durationSeconds, fetchImpl = fetch }) {
+  const response = await fetchImpl('https://api.x.ai/v1/videos/generations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + apiKey,
+    },
+    body: JSON.stringify({
+      model: process.env.XAI_VIDEO_MODEL || 'grok-imagine-video-1.5',
+      prompt,
+      duration: Math.min(15, Math.max(1, durationSeconds)),
+      aspect_ratio: '16:9',
+      resolution: process.env.XAI_VIDEO_RESOLUTION || '480p',
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error('Grok video generation failed');
+    error.status = response.status;
+    throw error;
+  }
+  const requestId = data?.request_id ?? data?.id;
+  if (typeof requestId !== 'string' || requestId.length === 0) {
+    const error = new Error('Grok video response has no request id');
+    error.status = 502;
+    throw error;
+  }
+  return { requestId };
+}
+
+async function pollGrokVideo({ requestId, apiKey, fetchImpl = fetch }) {
+  const endpoint = process.env.XAI_VIDEO_STATUS_ENDPOINT ||
+    'https://api.x.ai/v1/videos/' + encodeURIComponent(requestId);
+  const deadline = Date.now() + 180000;
+  while (Date.now() < deadline) {
+    const response = await fetchImpl(endpoint, {
+      headers: { Authorization: 'Bearer ' + apiKey },
+      signal: AbortSignal.timeout(20000),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error('Grok video status request failed');
+      error.status = response.status;
+      throw error;
+    }
+    const status = String(data?.status ?? data?.state ?? '').toLowerCase();
+    const url = data?.video?.url ?? data?.url ?? data?.output?.url;
+    if (['done', 'completed', 'succeeded', 'success'].includes(status) &&
+        typeof url === 'string' && url.startsWith('https://')) {
+      return url;
+    }
+    if (['failed', 'error', 'cancelled'].includes(status)) {
+      const error = new Error('Grok video generation failed');
+      error.status = 502;
+      throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+  const error = new Error('Grok video generation timed out');
+  error.status = 504;
+  throw error;
+}
+
 app.post('/api/ai/generate/:kind', async (req, res) => {
   const user = await authenticate(req, res);
   if (!user) return;
 
   const kind = String(req.params.kind ?? '').toLowerCase();
-  const provider = MEDIA_GENERATION_PROVIDERS[kind];
-  if (!provider) return res.status(400).json({ error: 'unsupported-generation-kind' });
-  if (!provider.endpoint || !provider.key) {
-    return res.status(503).json({ error: 'media-generation-not-configured', kind });
-  }
-  if (overQuota(mediaGenerationQuota, user.uid, MEDIA_GENERATION_QUOTA_PER_HOUR)) {
-    return res.status(429).json({ error: 'generation-quota-reached' });
+  if (!['image', 'video'].includes(kind)) {
+    return res.status(501).json({
+      error: 'media-kind-not-supported',
+      kind,
+      message: 'Music generation needs a dedicated audio-generation model/provider.',
+    });
   }
 
+  const providerName = String(req.body?.provider ?? process.env.CHAT_AI_MEDIA_PROVIDER ?? 'grok').toLowerCase();
+  const durationSeconds = kind === 'video'
+    ? Math.min(15, Math.max(1, Number(req.body?.durationSeconds) || 8))
+    : undefined;
   const prompt = String(req.body?.prompt ?? '').trim().slice(0, 2000);
   if (prompt.length < 3) return res.status(400).json({ error: 'prompt-required' });
-  const durationSeconds = kind === 'video'
-    ? Math.min(30, Math.max(1, Number(req.body?.durationSeconds) || 8))
-    : undefined;
+
+  const quota = overQuota(mediaGenerationQuota, user.uid, MEDIA_GENERATION_QUOTA_PER_HOUR);
+  if (quota) {
+    return res.status(429).json({
+      error: 'generation-quota-reached',
+      limitPerHour: MEDIA_GENERATION_QUOTA_PER_HOUR,
+    });
+  }
 
   try {
-    const upstream = await fetch(provider.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer ' + provider.key,
-      },
-      body: JSON.stringify({
+    let result;
+    if (kind === 'image' && providerName === 'gemini') {
+      if (!process.env.GEMINI_API_KEY) {
+        return res.status(503).json({ error: 'provider-not-configured', provider: 'gemini' });
+      }
+      result = await generateWithGeminiImage({ prompt, apiKey: process.env.GEMINI_API_KEY });
+      return res.json({
+        kind,
+        provider: 'gemini',
+        mimeType: result.mimeType,
+        base64: result.base64,
+        text: result.text,
+      });
+    }
+    if (kind === 'image' && providerName === 'grok') {
+      if (!process.env.XAI_API_KEY) {
+        return res.status(503).json({ error: 'provider-not-configured', provider: 'grok' });
+      }
+      result = await generateWithGrokImage({ prompt, apiKey: process.env.XAI_API_KEY });
+      return res.json({ kind, provider: 'grok', url: result.url });
+    }
+    if (kind === 'video' && providerName === 'grok') {
+      if (!process.env.XAI_API_KEY) {
+        return res.status(503).json({ error: 'provider-not-configured', provider: 'grok' });
+      }
+      result = await generateWithGrokVideo({
         prompt,
-        ...(durationSeconds !== undefined ? { durationSeconds } : {}),
-      }),
-      signal: AbortSignal.timeout(90000),
+        apiKey: process.env.XAI_API_KEY,
+        durationSeconds,
+      });
+      const url = await pollGrokVideo({ requestId: result.requestId, apiKey: process.env.XAI_API_KEY });
+      return res.json({ kind, provider: 'grok', url, durationSeconds });
+    }
+    return res.status(400).json({
+      error: 'provider-kind-not-supported',
+      provider: providerName,
+      kind,
     });
-    const data = await upstream.json().catch(() => ({}));
-    if (!upstream.ok) {
-      console.warn('ChatAI media provider failed:', kind, upstream.status);
-      return res.status(upstream.status === 429 ? 429 : 502).json({ error: 'media-generation-failed' });
+  } catch (error) {
+    const upstreamStatus = Number(error?.status) || 502;
+    console.warn('ChatAI media provider failed:', kind, providerName, upstreamStatus);
+    if (upstreamStatus === 429) {
+      return res.status(429).json({
+        error: 'provider-rate-limited',
+        provider: providerName,
+        message: 'Провайдер лимит ё quota-ро пур кардааст; баъдтар такрор кунед.',
+      });
     }
-    const mediaUrl = data?.url ?? data?.mediaUrl ?? data?.output?.url;
-    if (typeof mediaUrl !== 'string' || !mediaUrl.startsWith('https://')) {
-      return res.status(502).json({ error: 'media-provider-invalid-response' });
-    }
-    return res.json({ kind, url: mediaUrl, durationSeconds: durationSeconds ?? null });
-  } catch (err) {
-    console.warn('ChatAI media provider error:', kind, err?.message ?? err);
-    return res.status(502).json({ error: 'media-generation-failed' });
+    return res.status(502).json({ error: 'media-generation-failed', provider: providerName });
   }
 });
 

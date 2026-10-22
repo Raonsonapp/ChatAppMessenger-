@@ -72,6 +72,7 @@ class ChatAiService {
     required String kind,
     required String prompt,
     int durationSeconds = 8,
+    String provider = 'grok',
   }) async {
     if (!const {'image', 'video', 'music'}.contains(kind)) {
       throw const ChatAiFailure();
@@ -88,6 +89,7 @@ class ChatAiService {
           },
           body: jsonEncode({
             'prompt': prompt,
+            'provider': provider,
             if (kind == 'video') 'durationSeconds': durationSeconds.clamp(1, 30),
           }),
         )
@@ -97,14 +99,19 @@ class ChatAiService {
       throw ChatAiFailure(_responseMessage(response));
     }
     final data = jsonDecode(response.body);
-    if (data is! Map<String, dynamic> ||
-        data['url'] is! String ||
-        !(data['url'] as String).startsWith('https://')) {
-      throw const ChatAiFailure();
-    }
+    if (data is! Map<String, dynamic>) throw const ChatAiFailure();
+    final url = data['url'];
+    final base64 = data['base64'];
+    final mimeType = data['mimeType'];
+    final mediaUrl = url is String && url.startsWith('https://')
+        ? url
+        : (base64 is String && mimeType is String && mimeType.startsWith('image/')
+            ? 'data:$mimeType;base64,$base64'
+            : null);
+    if (mediaUrl == null) throw const ChatAiFailure();
     return GeneratedChatMedia(
       kind: kind,
-      url: data['url'] as String,
+      url: mediaUrl,
       durationSeconds: data['durationSeconds'] is num
           ? (data['durationSeconds'] as num).round()
           : null,
