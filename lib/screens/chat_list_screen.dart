@@ -158,6 +158,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             _menuItem(Icons.campaign_outlined, tr('k410'), _openNewBroadcast),
             _menuItem(Icons.devices_other_outlined, tr('k411'), _openLinkedDevices),
             _menuItem(LucideIcons.star, tr('k412'), _openFavorites),
+            _menuItem(LucideIcons.notebook_pen, 'Заметка', _openNotes),
             _menuItem(LucideIcons.check_check, tr('k413'), _markAllRead),
             _menuItem(LucideIcons.settings, tr('k181'), _openSettings),
           ];
@@ -184,7 +185,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
         switch (value) {
           case 'new_chat': _openNewChatSheet(); break;
           case 'ai': _openAi(); break;
-          case 'notes': _openNotes(); break;
           case 'telegram': Navigator.push(context, MaterialPageRoute(builder: (_) => const BotStudioScreen())); break;
           case 'group': _openNewGroup(); break;
           case 'broadcast': _openNewBroadcast(); break;
@@ -199,7 +199,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
       itemBuilder: (_) => [
         _headerAction('new_chat', LucideIcons.message_circle, 'Чати нав'),
         _headerAction('telegram', LucideIcons.bot, 'Ботҳо / Telegram'),
-        _headerAction('notes', LucideIcons.notebook_pen, 'Заметка'),
         const PopupMenuDivider(),
         _headerAction('group', LucideIcons.users, 'Гурӯҳи нав'),
         _headerAction('broadcast', Icons.campaign_outlined, 'Паёми умумӣ'),
