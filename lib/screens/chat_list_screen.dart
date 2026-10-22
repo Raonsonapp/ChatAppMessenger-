@@ -142,14 +142,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacySettingsScreen()));
   }
 
-  /// Менюи 3-нуқта дар сарлавҳа — мундариҷаи он вобаста ба таб-и фаъол аст:
-  /// дар "Чатҳо" мисли WhatsApp (Гурӯҳи нав, Паёми умумӣ, Дастгоҳҳои
-  /// пайвастшуда, Интихобшудаҳо, Ҳама хонда шуд, Танзимот), дар "Статусҳо"
-  /// бошад мувофиқи ҳамон таб (Канали нав, Махфияти статус, Интихобшудаҳо,
-  /// Танзимот).
-  ///
-  /// Мавқеи дақиқи тугма муҳим нест — менюи торик ҳамеша аз кунҷи болои
-  /// рост мекушояд, мисли менюи 3-нуқтаи WhatsApp.
+  /// Менюи 3-нуқта: танзимоти вобаста ба таби фаъол.
   void _openMainMenu() {
     final size = MediaQuery.of(context).size;
     final position = RelativeRect.fromLTRB(size.width - 220, 70, 12, 0);
@@ -174,6 +167,63 @@ class _ChatListScreenState extends State<ChatListScreen> {
       color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: AppColors.glassBorder)),
       items: items,
+    );
+  }
+
+  /// Менюи зуди "+" — танзимоти зудро аз 3-нуқта ҷудо нигоҳ медорад.
+  Widget _buildHeaderPlusButton() {
+    return PopupMenuButton<String>(
+      tooltip: 'Амали нав',
+      icon: Icon(LucideIcons.plus, color: AppColors.textPrimary, size: 22),
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: AppColors.glassBorder),
+      ),
+      onSelected: (value) {
+        switch (value) {
+          case 'new_chat': _openNewChatSheet(); break;
+          case 'ai': _openAi(); break;
+          case 'telegram': Navigator.push(context, MaterialPageRoute(builder: (_) => const BotStudioScreen())); break;
+          case 'group': _openNewGroup(); break;
+          case 'broadcast': _openNewBroadcast(); break;
+          case 'linked': _openLinkedDevices(); break;
+          case 'community': _openCreateCommunity(); break;
+          case 'channel': _openCreateChannel(); break;
+          case 'status': _openCreateStatus(); break;
+          case 'call': _openNewCallSheet(); break;
+          case 'settings': _openSettings(); break;
+        }
+      },
+      itemBuilder: (_) => [
+        _headerAction('new_chat', LucideIcons.message_circle, 'Чати нав'),
+        _headerAction('ai', LucideIcons.sparkles, 'ChatAI'),
+        _headerAction('telegram', LucideIcons.bot, 'Ботҳо / Telegram'),
+        const PopupMenuDivider(),
+        _headerAction('group', LucideIcons.users, 'Гурӯҳи нав'),
+        _headerAction('broadcast', Icons.campaign_outlined, 'Паёми умумӣ'),
+        _headerAction('linked', Icons.devices_other_outlined, 'Дастгоҳҳои пайвастшуда'),
+        _headerAction('community', LucideIcons.users_round, 'Ҷамъияти нав'),
+        _headerAction('channel', LucideIcons.hash, 'Канали нав'),
+        _headerAction('status', LucideIcons.circle_plus, 'Статуси нав'),
+        _headerAction('call', LucideIcons.phone_call, 'Занги нав'),
+        const PopupMenuDivider(),
+        _headerAction('settings', LucideIcons.settings, 'Танзимот'),
+      ],
+    );
+  }
+
+  PopupMenuItem<String> _headerAction(String value, IconData icon, String label) {
+    return PopupMenuItem<String>(
+      value: value,
+      height: 48,
+      child: Row(
+        children: [
+          SizedBox(width: 28, child: Icon(icon, size: 19, color: AppColors.neonCyan)),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 14))),
+        ],
+      ),
     );
   }
 
@@ -391,9 +441,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Widget _buildAppBar() {
     final title = _tabTitle;
-    // Таби "Зангҳо" менюи худашро дорад (шортикатҳо + 3-нуқта дар боло),
-    // бинобар ин ин қатори сарлавҳа дар он ҳоло танҳо ном нишон медиҳад.
-    final isCallsTab = _currentIndex == 4;
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 14, 14, 8),
       child: Row(
@@ -421,22 +468,22 @@ class _ChatListScreenState extends State<ChatListScreen> {
               ],
             ),
           ),
-          if (!isCallsTab)
-            Row(
-              children: [
-                if (_currentIndex == 0) ...[
-                  _iconButton(LucideIcons.camera, onTap: _openCameraStatus),
-                  const SizedBox(width: 8),
-                ],
-                // Дар ҷадвалҳое ки сатри ҷустуҷӯ доранд, нишонаи ҷустуҷӯ дар
-                // сарлавҳа такрор мешавад — он ҷо пинҳон мешавад.
-                if (_currentIndex != 0 && _currentIndex != 2) ...[
-                  _iconButton(LucideIcons.search, onTap: _openSearch),
-                  const SizedBox(width: 8),
-                ],
-                _iconButton(LucideIcons.ellipsis_vertical, onTap: _openMainMenu),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_currentIndex == 0) ...[
+                _iconButton(LucideIcons.camera, onTap: _openCameraStatus),
+                const SizedBox(width: 6),
               ],
-            ),
+              if (_currentIndex != 0 && _currentIndex != 2) ...[
+                _iconButton(LucideIcons.search, onTap: _openSearch),
+                const SizedBox(width: 6),
+              ],
+              SizedBox(width: 44, height: 44, child: _buildHeaderPlusButton()),
+              const SizedBox(width: 2),
+              _iconButton(LucideIcons.ellipsis_vertical, onTap: _openMainMenu),
+            ],
+          ),
         ],
       ),
     );
