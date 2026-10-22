@@ -741,6 +741,26 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     });
   }
 
+  Future<void> _finishAudioRecordingForPreview() async {
+    _recordingTimer?.cancel();
+    try {
+      final path = await _audioRecorder.stop();
+      if (!mounted) return;
+      setState(() {
+        _recordingPath = path ?? _recordingPath;
+        _isRecordingAudio = false;
+        _isPausedAudio = false;
+        _isLockedAudio = false;
+        _showRecordedAudioPreview = true;
+      });
+    } catch (_) {
+      await _cancelAudioRecording();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Сабти овоз нигоҳ дошта нашуд. Боз кӯшиш кунед.')),
+      );
+    }
+  }
+
   Future<void> _uploadAndSendAudio() async {
     final path = _recordingPath;
     if (path == null || !File(path).existsSync()) return;
@@ -991,7 +1011,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 if (_cancelAudioByGesture || details.offsetFromOrigin.dx < -100) {
                   _cancelAudioRecording();
                 } else {
-                  setState(() => _showRecordedAudioPreview = true);
+                  _finishAudioRecordingForPreview();
                 }
               },
               child: GestureDetector(
