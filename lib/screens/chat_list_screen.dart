@@ -184,6 +184,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         switch (value) {
           case 'new_chat': _openNewChatSheet(); break;
           case 'ai': _openAi(); break;
+          case 'notes': _openNotes(); break;
           case 'telegram': Navigator.push(context, MaterialPageRoute(builder: (_) => const BotStudioScreen())); break;
           case 'group': _openNewGroup(); break;
           case 'broadcast': _openNewBroadcast(); break;
@@ -197,8 +198,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
       },
       itemBuilder: (_) => [
         _headerAction('new_chat', LucideIcons.message_circle, 'Чати нав'),
-        _headerAction('ai', LucideIcons.sparkles, 'ChatAI'),
         _headerAction('telegram', LucideIcons.bot, 'Ботҳо / Telegram'),
+        _headerAction('notes', LucideIcons.notebook_pen, 'Заметка'),
         const PopupMenuDivider(),
         _headerAction('group', LucideIcons.users, 'Гурӯҳи нав'),
         _headerAction('broadcast', Icons.campaign_outlined, 'Паёми умумӣ'),
@@ -291,7 +292,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  /// Notes has a direct shortcut; AI and bot creation stay inside the compact menu.
+  /// AI remains a standalone first-class shortcut; bot creation stays in the plus menu.
   Widget _notesShortcut() {
     return GestureDetector(
       onTap: _openNotes,
@@ -311,58 +312,38 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  /// A compact single entry keeps quick actions from stacking into a tall FAB.
+  /// Standalone ChatAI button: it is intentionally not hidden under overflow/ellipsis.
   Widget _quickToolsShortcut() {
-    return PopupMenuButton<String>(
-      tooltip: 'Воситаҳо',
-      onSelected: (value) {
-        switch (value) {
-          case 'ai':
-            _openAi();
-            break;
-          case 'bots':
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const BotStudioScreen()),
-            );
-            break;
-        }
-      },
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: AppColors.glassBorder),
-      ),
-      itemBuilder: (_) => [
-        PopupMenuItem<String>(
-          value: 'ai',
-          child: Row(children: [
-            Icon(LucideIcons.sparkles, color: AppColors.neonCyan, size: 19),
-            const SizedBox(width: 12),
-            const Text('ChatApp AI'),
-          ]),
-        ),
-        PopupMenuItem<String>(
-          value: 'bots',
-          child: Row(children: [
-            Icon(LucideIcons.bot, color: AppColors.neonEmerald, size: 19),
-            const SizedBox(width: 12),
-            const Text('Сохтани бот'),
-          ]),
-        ),
-      ],
-      child: Container(
-        width: 46,
-        height: 46,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
+    return Semantics(
+      button: true,
+      label: 'ChatAI',
+      child: Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: _openAi,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.65), width: 1.2),
-          boxShadow: [
-            BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.16), blurRadius: 12),
-          ],
+          child: Container(
+            width: 54,
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.72), width: 1.2),
+              boxShadow: [
+                BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.16), blurRadius: 12),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(LucideIcons.zap, color: AppColors.neonCyan, size: 18),
+                const SizedBox(height: 1),
+                Text('ChatAI', style: TextStyle(color: AppColors.neonCyan, fontSize: 9, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
         ),
-        child: Icon(LucideIcons.ellipsis, color: AppColors.neonCyan, size: 24),
       ),
     );
   }
