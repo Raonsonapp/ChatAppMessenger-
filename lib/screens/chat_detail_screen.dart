@@ -53,6 +53,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   bool _isLockedAudio = false;
   bool _cancelAudioByGesture = false;
   bool _showRecordedAudioPreview = false;
+  String? _recordingVideoPath;
+  bool _isLockedVideo = false;
+  bool _cancelVideoByGesture = false;
   bool _isRecordingVideo = false;
   Duration _videoDuration = Duration.zero;
   Timer? _videoTimer;
@@ -899,7 +902,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   tooltip: 'Нест кардани сабт',
                   onPressed: _cancelAudioRecording,
                   style: IconButton.styleFrom(backgroundColor: const Color(0xFF51232D), foregroundColor: const Color(0xFFFF6878)),
-                  icon: const Icon(LucideIcons.trash2),
+                  icon: const Icon(Icons.delete_outline_rounded),
                 ),
                 const SizedBox(width: 10),
                 Expanded(child: _recordingAction(
