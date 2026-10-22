@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:video_player/video_player.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -55,9 +54,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   bool _cancelAudioByGesture = false;
   bool _showRecordedAudioPreview = false;
   bool _isRecordingVideo = false;
-  bool _isLockedVideo = false;
-  bool _cancelVideoByGesture = false;
-  String? _recordingVideoPath;
   Duration _videoDuration = Duration.zero;
   Timer? _videoTimer;
 
@@ -903,7 +899,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   tooltip: 'Нест кардани сабт',
                   onPressed: _cancelAudioRecording,
                   style: IconButton.styleFrom(backgroundColor: const Color(0xFF51232D), foregroundColor: const Color(0xFFFF6878)),
-                  icon: const Icon(LucideIcons.trash_2),
+                  icon: const Icon(LucideIcons.trash2),
                 ),
                 const SizedBox(width: 10),
                 Expanded(child: _recordingAction(
@@ -1008,7 +1004,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               },
               onLongPressEnd: (details) {
                 if (!_isRecordingAudio || _isLockedAudio) return;
-                if (_cancelAudioByGesture || details.offsetFromOrigin.dx < -100) {
+                if (_cancelAudioByGesture) {
                   _cancelAudioRecording();
                 } else {
                   _finishAudioRecordingForPreview();
