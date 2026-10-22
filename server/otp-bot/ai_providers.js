@@ -112,11 +112,18 @@ async function requestResponsesApi({ endpoint, key, model, messages, webContext,
   });
   const data = await responseJson(response);
   if (!response.ok) {
-    throw errorWithStatus(
-      'AI provider request failed',
-      response.status === 429 ? 429 : 502,
-      response.status === 429 ? 'provider-rate-limited' : 'provider-request-failed',
-    );
+    // Keep user-visible and server logs diagnostic but never include response
+    // bodies, request URLs, or credentials because provider errors can echo secrets.
+    const providerCode = String(data?.error?.code || data?.error?.type || '').toLowerCase();
+    const providerStatus = response.status;
+    const safeCode = providerStatus === 401 || providerStatus === 403
+      ? 'provider-auth-failed'
+      : providerStatus === 429
+        ? 'provider-rate-limited'
+        : providerCode.includes('model')
+          ? 'provider-model-unavailable'
+          : 'provider-request-failed';
+    throw errorWithStatus('AI provider request failed', providerStatus === 429 ? 429 : 502, safeCode);
   }
   const reply = extractResponseText(data);
   if (!reply) throw errorWithStatus('AI provider returned an empty response', 502, 'ai-empty-response');
@@ -180,11 +187,17 @@ async function generateChatReply({
     });
     const data = await responseJson(response);
     if (!response.ok) {
-      throw errorWithStatus(
-        'Gemini request failed',
-        response.status === 429 ? 429 : 502,
-        response.status === 429 ? 'provider-rate-limited' : 'provider-request-failed',
-      );
+      // Log only harmless status/code details. Never log the provider response
+      // body or the request URL because Google's URL includes the API key.
+      const providerCode = String(data?.error?.status || data?.error?.details?.[0]?.reason || '').toLowerCase();
+      const safeCode = response.status === 401 || response.status === 403
+        ? 'provider-auth-failed'
+        : response.status === 429
+          ? 'provider-rate-limited'
+          : providerCode.includes('model') || providerCode.includes('not_found')
+            ? 'provider-model-unavailable'
+            : 'provider-request-failed';
+      throw errorWithStatus('Gemini request failed', response.status === 429 ? 429 : 502, safeCode);
     }
     const reply = (data?.candidates?.[0]?.content?.parts || [])
       .map((part) => typeof part.text === 'string' ? part.text : '')
