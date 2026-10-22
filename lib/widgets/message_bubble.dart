@@ -692,7 +692,9 @@ class MessageBubble extends StatelessWidget {
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * (hasImage || hasVideo ? 0.88 : 0.72),
+          ),
           margin: EdgeInsets.symmetric(vertical: grouped ? 1.5 : 5),
           padding: selected ? const EdgeInsets.all(4) : EdgeInsets.zero,
           decoration: selected
