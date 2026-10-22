@@ -131,9 +131,21 @@ String _responseMessage(http.Response response) {
     if (body is Map<String, dynamic>) code = body['error']?.toString() ?? '';
   } catch (_) {}
   if (response.statusCode == 401) return 'Аз нав ба аккаунти ChatApp ворид шавед.';
-  if (response.statusCode == 429 || code == 'too-many-requests') return 'Дархостҳои AI маҳдуд шуданд. Каме баъдтар такрор кунед.';
-  if (response.statusCode == 503 || code == 'ai-not-configured') return 'ChatAI дар сервер фаъол нест. GEMINI_API_KEY-ро дар Render санҷед.';
-  if (response.statusCode == 502 || code == 'ai-request-failed') return 'Gemini ҷавоб надод. API key, квота ва номи моделро дар Render санҷед.';
+  if (response.statusCode == 429 || code == 'too-many-requests' || code == 'provider-rate-limited') {
+    return 'Gemini лимити дархостро баргардонд. Квотаи Google AI Studio-ро санҷед ё каме баъдтар такрор кунед.';
+  }
+  if (code == 'provider-auth-failed') {
+    return 'Калиди Gemini қабул нашуд. GEMINI_API_KEY-ро дар Render бо калиди дурусти Google AI Studio иваз кунед.';
+  }
+  if (code == 'provider-model-unavailable') {
+    return 'Модели Gemini дар сервер дастрас нест. GEMINI_CHAT_MODEL-ро тоза кунед ё ба gemini-2.5-flash гузоред.';
+  }
+  if (response.statusCode == 503 || code == 'ai-not-configured' || code == 'provider-not-configured') {
+    return 'ChatAI танзим нашудааст. GEMINI_API_KEY-ро дар Render санҷед.';
+  }
+  if (response.statusCode == 502 || code == 'ai-request-failed' || code == 'provider-request-failed') {
+    return 'Gemini дархостро қабул накард. Номи модел, калиди API ва квотаро дар Render санҷед.';
+  }
   if (response.statusCode == 413 || code == 'conversation-too-long') return 'Гуфтугӯ хеле дароз аст; паёми кӯтоҳтар фиристед.';
   return 'ChatAI хатои HTTP ${response.statusCode} дод. Интернет ва серверро санҷед.';
 }
