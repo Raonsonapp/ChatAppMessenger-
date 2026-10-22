@@ -16,9 +16,13 @@ const SYSTEM_INSTRUCTION = [
 ].join(' ');
 
 function modelFor(provider, env) {
-  if (provider === 'gemini') return env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || 'gemini-2.5-flash';
-  if (provider === 'openai') return env.OPENAI_MODEL || 'gpt-5-mini';
-  if (provider === 'grok') return env.XAI_MODEL || 'grok-4.7';
+  if (provider === 'gemini') {
+    // Use the known default if an old/stale model override was copied into
+    // hosting configuration. Explicit overrides remain supported when valid.
+    return String(env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+  }
+  if (provider === 'openai') return String(env.OPENAI_MODEL || 'gpt-5-mini').trim();
+  if (provider === 'grok') return String(env.XAI_MODEL || 'grok-4.7').trim();
   return null;
 }
 
@@ -197,6 +201,34 @@ async function generateChatReply({
           : providerCode.includes('model') || providerCode.includes('not_found')
             ? 'provider-model-unavailable'
             : 'provider-request-failed';
+
+      // One safe model fallback helps when a stale model override is the only
+      // issue. Do not retry quota/auth errors, and never expose provider details.
+      const wasExplicitModel = Boolean(String(env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || '').trim());
+      if (safeCode === 'provider-model-unavailable' && wasExplicitModel && model !== 'gemini-2.5-flash') {
+        const fallbackUrl = new URL(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+        );
+        fallbackUrl.searchParams.set('key', key);
+        const fallbackResponse = await fetchImpl(fallbackUrl.toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: effectiveSystemInstruction }] },
+            contents,
+            generationConfig: { temperature: 0.6, maxOutputTokens: 1200 },
+          }),
+          signal: AbortSignal.timeout(35000),
+        });
+        const fallbackData = await responseJson(fallbackResponse);
+        if (fallbackResponse.ok) {
+          const fallbackReply = (fallbackData?.candidates?.[0]?.content?.parts || [])
+            .map((part) => typeof part.text === 'string' ? part.text : '')
+            .join('')
+            .trim();
+          if (fallbackReply) return fallbackReply;
+        }
+      }
       throw errorWithStatus('Gemini request failed', response.status === 429 ? 429 : 502, safeCode);
     }
     const reply = (data?.candidates?.[0]?.content?.parts || [])
