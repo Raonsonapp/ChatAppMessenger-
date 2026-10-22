@@ -1027,7 +1027,7 @@ class MessageBubble extends StatelessWidget {
   }
 }
 
-/// Swipe-to-reply with a half-screen cap and a spring return.
+/// Short swipe-to-reply with a compact travel cap and a spring return.
 class _SpringReplyGesture extends StatefulWidget {
   const _SpringReplyGesture({
     required this.child,
@@ -1077,7 +1077,7 @@ class _SpringReplyGestureState extends State<_SpringReplyGesture>
 
   void _onDragUpdate(DragUpdateDetails details) {
     if (!widget.enabled) return;
-    final maxTravel = MediaQuery.sizeOf(context).width * 0.5;
+    final maxTravel = (MediaQuery.sizeOf(context).width * 0.28).clamp(72.0, 124.0);
     setState(() {
       final raw = (_dragOffset + details.delta.dx).clamp(0.0, maxTravel);
       _dragOffset = raw.toDouble();
@@ -1092,7 +1092,10 @@ class _SpringReplyGestureState extends State<_SpringReplyGesture>
     final maxTravel = MediaQuery.sizeOf(context).width * 0.5;
     final shouldReply = _dragOffset >= maxTravel * 0.42 ||
         details.velocity.pixelsPerSecond.dx >= 850;
-    if (shouldReply) widget.onReply();
+    if (shouldReply) {
+      HapticFeedback.selectionClick();
+      widget.onReply();
+    }
     _animateBack();
   }
 
