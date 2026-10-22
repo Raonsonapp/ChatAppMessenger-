@@ -221,7 +221,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       if (widget.conversation.isAIChat) {
         await _requestAIReply(text);
       }
-    } catch (error) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
