@@ -54,8 +54,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   bool _cancelAudioByGesture = false;
   bool _showRecordedAudioPreview = false;
   bool _isRecordingVideo = false;
-  Duration _videoDuration = Duration.zero;
-  Timer? _videoTimer;
 
 
   CollectionReference<Map<String, dynamic>> get _messagesRef {
@@ -102,7 +100,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   void dispose() {
     _recordingTimer?.cancel();
-    _videoTimer?.cancel();
     _audioRecorder.dispose();
     _controller.dispose();
     _scrollController.dispose();
@@ -808,7 +805,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       );
     } finally {
       if (mounted) setState(() => _isRecordingVideo = false);
-      _videoTimer?.cancel();
     }
   }
 
