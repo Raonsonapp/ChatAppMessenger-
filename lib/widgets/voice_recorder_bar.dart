@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/services.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
@@ -43,8 +43,6 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
   bool _paused = false;
   bool _locked = false;
   bool _dragCancel = false;
-  double _dragX = 0;
-  double _dragY = 0;
   bool _isSending = false;
 
   @override
@@ -155,13 +153,11 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
 
   void _onDragUpdate(DragUpdateDetails details) {
     if (_starting || _isSending) return;
-    _dragX += details.delta.dx;
-    _dragY += details.delta.dy;
-    if (_dragY < -72 && !_locked) {
+    if (details.delta.dy < -2 && details.localPosition.dy < 0 && !_locked) {
       HapticFeedback.selectionClick();
       setState(() => _locked = true);
     }
-    if (_dragX < -85 && !_dragCancel) {
+    if (details.delta.dx < -2 && details.localPosition.dx < -85 && !_dragCancel) {
       HapticFeedback.selectionClick();
       setState(() => _dragCancel = true);
     }
@@ -175,7 +171,6 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
     // If the finger was released after sliding up, keep the recorder locked;
     // otherwise send the voice message, matching the WhatsApp hold gesture.
     if (!_locked) await _send();
-    if (mounted) setState(() { _dragX = 0; _dragY = 0; });
   }
 
   @override
