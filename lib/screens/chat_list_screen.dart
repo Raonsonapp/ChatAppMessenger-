@@ -282,10 +282,72 @@ class _ChatListScreenState extends State<ChatListScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        _quickActionLauncher(),
+        const SizedBox(height: 10),
         _quickToolsShortcut(),
         const SizedBox(height: 10),
         fab,
       ],
+    );
+  }
+
+  /// Quick actions launcher placed above ChatAI and the primary plus button.
+  /// This is deliberately separate from the header overflow menu.
+  Widget _quickActionLauncher() {
+    return PopupMenuButton<String>(
+      tooltip: 'Амали зуд',
+      onSelected: (value) {
+        switch (value) {
+          case 'notes': _openNotes(); break;
+          case 'bot': Navigator.push(context, MaterialPageRoute(builder: (_) => const BotStudioScreen())); break;
+          case 'group': _openNewGroup(); break;
+          case 'broadcast': _openNewBroadcast(); break;
+          case 'community': _openCreateCommunity(); break;
+          case 'channel': _openCreateChannel(); break;
+          case 'status': _openCreateStatus(); break;
+          case 'linked': _openLinkedDevices(); break;
+          case 'settings': _openSettings(); break;
+        }
+      },
+      color: AppColors.surface,
+      elevation: 12,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: AppColors.glassBorder),
+      ),
+      itemBuilder: (_) => [
+        _headerAction('notes', LucideIcons.notebook_pen, 'Заметка'),
+        _headerAction('bot', LucideIcons.bot, 'Бот / Telegram'),
+        const PopupMenuDivider(),
+        _headerAction('group', LucideIcons.users, 'Гурӯҳи нав'),
+        _headerAction('broadcast', Icons.campaign_outlined, 'Паёми умумӣ'),
+        _headerAction('community', LucideIcons.users_round, 'Ҷамъияти нав'),
+        _headerAction('channel', LucideIcons.hash, 'Канали нав'),
+        _headerAction('status', LucideIcons.circle_plus, 'Статуси нав'),
+        _headerAction('linked', Icons.devices_other_outlined, 'Дастгоҳҳои пайвастшуда'),
+        const PopupMenuDivider(),
+        _headerAction('settings', LucideIcons.settings, 'Танзимот'),
+      ],
+      child: Semantics(
+        button: true,
+        label: 'Амали зуд',
+        child: Material(
+          color: AppColors.surface.withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(22),
+          child: Container(
+            width: 54,
+            height: 44,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.glassBorder, width: 1.2),
+              boxShadow: [
+                BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.10), blurRadius: 12),
+              ],
+            ),
+            child: Icon(LucideIcons.chevrons_up, color: AppColors.neonCyan, size: 25),
+          ),
+        ),
+      ),
     );
   }
 
