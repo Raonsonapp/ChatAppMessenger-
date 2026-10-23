@@ -270,4 +270,5 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
         ],
       ),
     );
-  }}
+  }
+}
