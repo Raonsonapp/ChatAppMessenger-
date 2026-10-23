@@ -152,25 +152,42 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
-    if (_starting || _isSending) return;
-    if (details.delta.dy < -2 && details.localPosition.dy < 0 && !_locked) {
+    if (_starting || _isSending || _paused) return;
+
+    // Horizontal and vertical gestures are interpreted independently. The
+    // accumulated values represent actual travel from the initial pointer.
+    _dragX += details.delta.dx;
+    _dragY += details.delta.dy;
+
+    if (_dragY <= -72 && !_locked) {
       HapticFeedback.selectionClick();
       setState(() => _locked = true);
     }
-    if (details.delta.dx < -2 && details.localPosition.dx < -85 && !_dragCancel) {
+    if (_dragX <= -90 && !_dragCancel) {
       HapticFeedback.selectionClick();
       setState(() => _dragCancel = true);
     }
   }
 
   Future<void> _onDragEnd(DragEndDetails details) async {
+    if (_starting || _isSending) return;
     if (_dragCancel) {
       await _cancel();
       return;
     }
-    // If the finger was released after sliding up, keep the recorder locked;
-    // otherwise send the voice message, matching the WhatsApp hold gesture.
-    if (!_locked) await _send();
+    if (!_locked) {
+      await _send();
+      return;
+    }
+    if (mounted) setState(() {
+      _dragX = 0;
+      _dragY = 0;
+    });
+  }
+
+  Future<void> _finishLockedRecording() async {
+    if (!_locked || _starting || _isSending) return;
+    await _send();
   }
 
   @override
@@ -253,7 +270,7 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
               icon: Icon(_paused ? LucideIcons.play : LucideIcons.pause, color: AppColors.textPrimary)),
             IconButton.filled(
               tooltip: 'Фиристодан',
-              onPressed: _starting || _isSending ? null : _send,
+              onPressed: _starting || _isSending ? null : _finishLockedRecording,
               style: IconButton.styleFrom(backgroundColor: AppColors.neonCyan, foregroundColor: AppColors.background),
               icon: const Icon(LucideIcons.send),
             ),
