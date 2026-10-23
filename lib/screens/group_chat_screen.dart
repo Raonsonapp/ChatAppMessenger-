@@ -1048,6 +1048,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     icon: Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
                   ),
                   IconButton(
+                    tooltip: 'Акс гиред',
                     onPressed: _isUploading
                         ? null
                         : () async {
@@ -1055,6 +1056,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             if (file != null) _sendImageMessage(file);
                           },
                     icon: Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
+                  ),
+                  IconButton(
+                    tooltip: 'Видео сабт кунед',
+                    onPressed: _isUploading
+                        ? null
+                        : () async {
+                            final file = await MediaService.recordVideo();
+                            if (file != null) await _sendVideoMessage(file);
+                          },
+                    icon: Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
                   ),
                 ],
               ),
