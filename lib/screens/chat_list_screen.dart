@@ -299,15 +299,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       onSelected: (value) {
         switch (value) {
           case 'notes': _openNotes(); break;
-          case 'add_contact': _openNewChatSheet(); break;
           case 'bot': Navigator.push(context, MaterialPageRoute(builder: (_) => const BotStudioScreen())); break;
-          case 'group': _openNewGroup(); break;
-          case 'broadcast': _openNewBroadcast(); break;
-          case 'community': _openCreateCommunity(); break;
-          case 'channel': _openCreateChannel(); break;
-          case 'status': _openCreateStatus(); break;
-          case 'linked': _openLinkedDevices(); break;
-          case 'settings': _openSettings(); break;
         }
       },
       color: AppColors.surface,
@@ -318,17 +310,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
       itemBuilder: (_) => [
         _headerAction('notes', LucideIcons.notebook_pen, 'Заметка'),
-        _headerAction('add_contact', LucideIcons.user_round_plus, 'Добавить контакт'),
-        _headerAction('bot', LucideIcons.bot, 'Бот / Telegram'),
-        const PopupMenuDivider(),
-        _headerAction('group', LucideIcons.users, 'Гурӯҳи нав'),
-        _headerAction('broadcast', Icons.campaign_outlined, 'Паёми умумӣ'),
-        _headerAction('community', LucideIcons.users_round, 'Ҷамъияти нав'),
-        _headerAction('channel', LucideIcons.hash, 'Канали нав'),
-        _headerAction('status', LucideIcons.circle_plus, 'Статуси нав'),
-        _headerAction('linked', Icons.devices_other_outlined, 'Дастгоҳҳои пайвастшуда'),
-        const PopupMenuDivider(),
-        _headerAction('settings', LucideIcons.settings, 'Танзимот'),
+        _headerAction('bot', LucideIcons.bot, 'Бот сохтан'),
       ],
       child: Semantics(
         button: true,
