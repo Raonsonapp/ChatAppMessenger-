@@ -154,7 +154,7 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
-    if (_starting || _isSending || _paused) return;
+    if (_starting || _isSending) return;
 
     // Horizontal and vertical gestures are interpreted independently. The
     // accumulated values represent actual travel from the initial pointer.
@@ -212,9 +212,10 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
       );
     }
     return GestureDetector(
-      onHorizontalDragUpdate: _locked ? null : _onDragUpdate,
+      // Allow left-swipe cancel even after the recording has been locked.
+      onHorizontalDragUpdate: _onDragUpdate,
       onVerticalDragUpdate: _locked ? null : _onDragUpdate,
-      onHorizontalDragEnd: _locked ? null : _onDragEnd,
+      onHorizontalDragEnd: _onDragEnd,
       onVerticalDragEnd: _locked ? null : _onDragEnd,
       child: Row(
         children: [
