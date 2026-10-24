@@ -43,6 +43,8 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
   bool _paused = false;
   bool _locked = false;
   bool _dragCancel = false;
+  double _dragX = 0;
+  double _dragY = 0;
   bool _isSending = false;
 
   @override
