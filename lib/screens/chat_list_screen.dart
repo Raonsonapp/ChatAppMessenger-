@@ -282,31 +282,55 @@ class _ChatListScreenState extends State<ChatListScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _notesShortcut(),
-        const SizedBox(height: 8),
+        _quickActionLauncher(),
+        const SizedBox(height: 10),
         _quickToolsShortcut(),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         fab,
       ],
     );
   }
 
-  /// AI remains a standalone first-class shortcut; bot creation stays in the plus menu.
-  Widget _notesShortcut() {
-    return GestureDetector(
-      onTap: _openNotes,
-      child: Container(
-        width: 46,
-        height: 46,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.callGreen.withValues(alpha: 0.65), width: 1.2),
-          boxShadow: [
-            BoxShadow(color: AppColors.callGreen.withValues(alpha: 0.16), blurRadius: 12),
-          ],
+  /// Quick actions launcher placed above ChatAI and the primary plus button.
+  /// This is deliberately separate from the header overflow menu.
+  Widget _quickActionLauncher() {
+    return PopupMenuButton<String>(
+      tooltip: 'Амали зуд',
+      onSelected: (value) {
+        switch (value) {
+          case 'notes': _openNotes(); break;
+          case 'bot': Navigator.push(context, MaterialPageRoute(builder: (_) => const BotStudioScreen())); break;
+        }
+      },
+      color: AppColors.surface,
+      elevation: 12,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: AppColors.glassBorder),
+      ),
+      itemBuilder: (_) => [
+        _headerAction('notes', LucideIcons.notebook_pen, 'Заметка'),
+        _headerAction('bot', LucideIcons.bot, 'Бот сохтан'),
+      ],
+      child: Semantics(
+        button: true,
+        label: 'Амали зуд',
+        child: Material(
+          color: AppColors.surface.withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(22),
+          child: Container(
+            width: 54,
+            height: 44,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.glassBorder, width: 1.2),
+              boxShadow: [
+                BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.10), blurRadius: 12),
+              ],
+            ),
+            child: Icon(LucideIcons.chevrons_up, color: AppColors.neonCyan, size: 25),
+          ),
         ),
-        child: Icon(LucideIcons.notebook_pen, color: AppColors.callGreen, size: 22),
       ),
     );
   }
@@ -421,61 +445,80 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Widget _buildAppBar() {
     final title = _tabTitle;
+    final compact = MediaQuery.sizeOf(context).width < 370;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 14, 14, 8),
+      padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          GestureDetector(
-            onTap: _openProfileSheet,
-            child: Row(
-              children: [
-                if (title == null) ...[
-                  const AppLogo(size: 30),
-                  const SizedBox(width: 10),
-                  ShaderMask(
-                    shaderCallback: (bounds) => AppColors.neonGradient.createShader(bounds),
-                    child: const Text(
-                      'ChatApp',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 22, letterSpacing: 0.2),
+          Expanded(
+            child: GestureDetector(
+              onTap: _openProfileSheet,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  if (title == null) ...[
+                    const AppLogo(size: 34),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => AppColors.neonGradient.createShader(bounds),
+                        child: const Text(
+                          'ChatApp',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 23, letterSpacing: 0.1),
+                        ),
+                      ),
                     ),
-                  ),
-                ] else
-                  Text(
-                    title,
-                    style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 22, letterSpacing: 0.2),
-                  ),
-              ],
+                  ] else
+                    Flexible(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 22, letterSpacing: 0.1),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_currentIndex == 0) ...[
-                _iconButton(LucideIcons.camera, onTap: _openCameraStatus),
-                const SizedBox(width: 6),
-              ],
-              if (_currentIndex != 0 && _currentIndex != 2) ...[
-                _iconButton(LucideIcons.search, onTap: _openSearch),
-                const SizedBox(width: 6),
-              ],
-              SizedBox(width: 44, height: 44, child: _buildHeaderPlusButton()),
-              const SizedBox(width: 2),
-              _iconButton(LucideIcons.ellipsis_vertical, onTap: _openMainMenu),
-            ],
-          ),
+          const SizedBox(width: 4),
+          if (_currentIndex == 0 && !compact) ...[
+            _iconButton(LucideIcons.camera, onTap: _openCameraStatus),
+            const SizedBox(width: 6),
+          ],
+          if (_currentIndex != 0 && _currentIndex != 2) ...[
+            _iconButton(LucideIcons.search, onTap: _openSearch),
+            const SizedBox(width: 6),
+          ],
+          if (!compact) ...[
+            _iconButton(LucideIcons.phone_call, onTap: _openNewCallSheet),
+            const SizedBox(width: 6),
+          ],
+          SizedBox(width: 44, height: 44, child: _buildHeaderPlusButton()),
+          const SizedBox(width: 2),
+          _iconButton(LucideIcons.ellipsis_vertical, onTap: _openMainMenu),
         ],
       ),
     );
   }
 
   Widget _iconButton(IconData icon, {required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: GlassContainer(
-        borderRadius: 14,
-        padding: const EdgeInsets.all(9),
-        child: Icon(icon, color: AppColors.textPrimary, size: 19),
+    return Semantics(
+      button: true,
+      child: Material(
+        color: AppColors.surface.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(icon, color: AppColors.textPrimary, size: 19),
+          ),
+        ),
       ),
     );
   }

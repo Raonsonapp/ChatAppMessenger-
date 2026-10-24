@@ -205,7 +205,9 @@ async function generateChatReply({
       // One safe model fallback helps when a stale model override is the only
       // issue. Do not retry quota/auth errors, and never expose provider details.
       const wasExplicitModel = Boolean(String(env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || '').trim());
-      if (safeCode === 'provider-model-unavailable' && wasExplicitModel && model !== 'gemini-2.5-flash') {
+      if ((safeCode === 'provider-model-unavailable' || safeCode === 'provider-request-failed') &&
+          wasExplicitModel && model !== 'gemini-2.5-flash' && response.status !== 429 &&
+          response.status !== 401 && response.status !== 403) {
         const fallbackUrl = new URL(
           'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
         );
