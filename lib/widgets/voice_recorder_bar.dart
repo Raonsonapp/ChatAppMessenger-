@@ -161,13 +161,27 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
     _dragX += details.delta.dx;
     _dragY += details.delta.dy;
 
-    if (_dragY <= -72 && !_locked) {
+    if (_locked) {
+      // After locking, horizontal movement remains dedicated to cancellation.
+      if (_dragX <= -90 && !_dragCancel) {
+        HapticFeedback.selectionClick();
+        setState(() => _dragCancel = true);
+      } else if (_dragX > -55 && _dragCancel) {
+        setState(() => _dragCancel = false);
+      }
+      return;
+    }
+
+    if (_dragY <= -72) {
       HapticFeedback.selectionClick();
       setState(() => _locked = true);
+      return;
     }
     if (_dragX <= -90 && !_dragCancel) {
       HapticFeedback.selectionClick();
       setState(() => _dragCancel = true);
+    } else if (_dragX > -55 && _dragCancel) {
+      setState(() => _dragCancel = false);
     }
   }
 
