@@ -299,6 +299,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       onSelected: (value) {
         switch (value) {
           case 'notes': _openNotes(); break;
+          case 'add_contact': _openNewChatSheet(); break;
           case 'bot': Navigator.push(context, MaterialPageRoute(builder: (_) => const BotStudioScreen())); break;
           case 'group': _openNewGroup(); break;
           case 'broadcast': _openNewBroadcast(); break;
@@ -317,6 +318,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
       itemBuilder: (_) => [
         _headerAction('notes', LucideIcons.notebook_pen, 'Заметка'),
+        _headerAction('add_contact', LucideIcons.user_round_plus, 'Добавить контакт'),
         _headerAction('bot', LucideIcons.bot, 'Бот / Telegram'),
         const PopupMenuDivider(),
         _headerAction('group', LucideIcons.users, 'Гурӯҳи нав'),
