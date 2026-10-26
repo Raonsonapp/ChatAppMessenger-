@@ -17,9 +17,10 @@ const SYSTEM_INSTRUCTION = [
 
 function modelFor(provider, env) {
   if (provider === 'gemini') {
-    // Use the known default if an old/stale model override was copied into
-    // hosting configuration. Explicit overrides remain supported when valid.
-    return String(env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+    // Prefer the stable default when hosting has an empty/whitespace override.
+    // A stale explicit override is retried against this default below.
+    const configured = String(env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || '').trim();
+    return configured || 'gemini-2.5-flash';
   }
   if (provider === 'openai') return String(env.OPENAI_MODEL || 'gpt-5-mini').trim();
   if (provider === 'grok') return String(env.XAI_MODEL || 'grok-4.7').trim();
