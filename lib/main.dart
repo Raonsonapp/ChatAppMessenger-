@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:app_links/app_links.dart';
 
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
@@ -19,8 +18,6 @@ import 'l10n/locale_controller.dart';
 import 'screens/auth_gate.dart';
 import 'screens/marketplace/listing_detail_screen.dart';
 import 'models/listing.dart';
-import 'models/listing.dart';
-import 'screens/marketplace/listing_detail_screen.dart';
 import 'services/notification_service.dart';
 import 'theme/chat_theme_controller.dart';
 import 'services/media_settings_controller.dart';
@@ -59,56 +56,8 @@ void main() async {
   await _safely(NotificationService.initialize);
 
   runApp(const ChatApp());
-  _listenForMarketplaceLinks();
 }
 
-
-final AppLinks _appLinks = AppLinks();
-bool _handlingMarketplaceLink = false;
-
-void _listenForMarketplaceLinks() {
-  _appLinks.uriLinkStream.listen(
-    (uri) => _openMarketplaceLink(uri),
-    onError: (Object error) => debugPrint('Хатои пайванди ChatApp: $error'),
-  );
-  _appLinks.getInitialLink().then((uri) {
-    if (uri != null) _openMarketplaceLink(uri);
-  }).catchError((Object error) {
-    debugPrint('Хатои пайванди аввалини ChatApp: $error');
-  });
-}
-
-Future<void> _openMarketplaceLink(Uri uri) async {
-  if (uri.scheme != 'chatapp' ||
-      uri.host != 'marketplace' ||
-      uri.pathSegments.length != 2 ||
-      uri.pathSegments.first != 'listing' ||
-      _handlingMarketplaceLink) {
-    return;
-  }
-
-  final listingId = uri.pathSegments[1];
-  if (listingId.isEmpty) return;
-  _handlingMarketplaceLink = true;
-  try {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('listings')
-        .doc(listingId)
-        .get();
-    if (!snapshot.exists || snapshot.data() == null) return;
-    final listing = Listing.fromDoc(snapshot);
-    if (!listing.active) return;
-    final navigator = navigatorKey.currentState;
-    if (navigator == null) return;
-    navigator.push(MaterialPageRoute(
-      builder: (_) => ListingDetailScreen(listing: listing),
-    ));
-  } catch (error) {
-    debugPrint('Кушодани эълон ноком шуд: $error');
-  } finally {
-    _handlingMarketplaceLink = false;
-  }
-}
 
 /// Қадами оғозро иҷро мекунад ва намегузорад, ки хатои он барномаро
 /// кушода нашуда монад.
