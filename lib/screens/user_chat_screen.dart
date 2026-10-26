@@ -1604,7 +1604,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
               decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
               child: _isUploading
                   ? Center(child: UploadIndicator(color: AppColors.background))
-                  : const Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
+                  : Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
             ),
           ),
         ],
