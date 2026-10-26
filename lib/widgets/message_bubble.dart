@@ -807,13 +807,13 @@ class MessageBubble extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(14),
                                 child: NetImage(
                                   url: message.mediaUrl!,
-                                  width: 260,
+                                  width: MediaQuery.sizeOf(context).width * 0.72,
                                   fit: BoxFit.contain,
-                                  memCacheWidth: 780,
+                                  memCacheWidth: 1100,
                                   respectAutoDownload: true,
                                   loading: Container(
-                                    width: 260,
-                                    height: 220,
+                                    width: MediaQuery.sizeOf(context).width * 0.72,
+                                    height: 240,
                                     alignment: Alignment.center,
                                     child: CircularProgressIndicator(
                                       color: AppColors.neonEmerald,
@@ -821,8 +821,8 @@ class MessageBubble extends StatelessWidget {
                                     ),
                                   ),
                                   error: Container(
-                                    width: 260,
-                                    height: 120,
+                                    width: MediaQuery.sizeOf(context).width * 0.72,
+                                    height: 140,
                                     alignment: Alignment.center,
                                     child: Icon(
                                       LucideIcons.triangle_alert,
