@@ -790,24 +790,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
   }
 
-  Future<void> _startVideoCapture() async {
-    if (_isRecordingVideo || _isUploading) return;
-    try {
-      // image_picker opens the native camera UI and only returns after the
-      // user stops or cancels recording. Avoid showing a fake live timer here.
-      final file = await MediaService.recordVideo();
-      if (file == null || !mounted) return;
-      await _sendImageMessage(file, mediaType: 'video');
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Камераи видео кушода нашуд. Иҷозати камераро санҷед.')),
-      );
-    } finally {
-      if (mounted) setState(() => _isRecordingVideo = false);
-    }
-  }
-
   String _formatRecordTime(Duration value) {
     final total = value.inSeconds;
     return '${(total ~/ 60).toString().padLeft(2, '0')}:${(total % 60).toString().padLeft(2, '0')}';
