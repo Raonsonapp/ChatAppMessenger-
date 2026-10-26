@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,6 +16,8 @@ import 'theme/accessibility_controller.dart';
 import 'services/draft_store.dart';
 import 'l10n/locale_controller.dart';
 import 'screens/auth_gate.dart';
+import 'models/listing.dart';
+import 'screens/marketplace/listing_detail_screen.dart';
 import 'services/notification_service.dart';
 import 'theme/chat_theme_controller.dart';
 import 'services/media_settings_controller.dart';
@@ -72,6 +77,9 @@ class ChatApp extends StatefulWidget {
 }
 
 class _ChatAppState extends State<ChatApp> {
+  final AppLinks _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSubscription;
+
   /// Ҳангоми ҳар тағйири мавзӯъ/забон/андоза зиёд мешавад ва ҳамаи экранҳоро
   /// ба аз нав сохта шудан водор мекунад (ниг. AppScope).
   int _version = 0;
@@ -91,11 +99,42 @@ class _ChatAppState extends State<ChatApp> {
   void initState() {
     super.initState();
     _settings.addListener(_onSettingsChanged);
+    _linkSubscription = _appLinks.uriLinkStream.listen(
+      _handleIncomingLink,
+      onError: (Object error) => debugPrint('Хатои пайванди воридотӣ: $error'),
+    );
+    _appLinks.getInitialLink().then((uri) {
+      if (uri != null) _handleIncomingLink(uri);
+    }).catchError((Object error) {
+      debugPrint('Хатои пайванди аввалия: $error');
+    });
+  }
+
+  Future<void> _handleIncomingLink(Uri uri) async {
+    if (uri.scheme != 'chatapp' || uri.host != 'marketplace') return;
+    final segments = uri.pathSegments;
+    if (segments.length < 2 || segments[0] != 'listing') return;
+    final id = segments[1].trim();
+    if (id.isEmpty) return;
+    try {
+      final doc = await FirebaseFirestore.instance.collection('listings').doc(id).get();
+      if (!doc.exists || doc.data() == null) return;
+      final listing = Listing.fromDoc(doc);
+      if (!listing.active || listing.title.isEmpty) return;
+      final navigator = navigatorKey.currentState;
+      if (navigator == null) return;
+      navigator.push(MaterialPageRoute<void>(
+        builder: (_) => ListingDetailScreen(listing: listing),
+      ));
+    } catch (error) {
+      debugPrint('Кушодани эълони муштарак ноком шуд: $error');
+    }
   }
 
   @override
   void dispose() {
     _settings.removeListener(_onSettingsChanged);
+    _linkSubscription?.cancel();
     super.dispose();
   }
 
