@@ -1057,26 +1057,20 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           },
                     icon: Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
                   ),
-                  IconButton(
-                    tooltip: 'Видео сабт кунед',
-                    onPressed: _isUploading
-                        ? null
-                        : () async {
-                            final file = await MediaService.recordVideo();
-                            if (file != null) await _sendVideoMessage(file);
-                          },
-                    icon: Icon(LucideIcons.video, color: AppColors.textSecondary, size: 20),
-                  ),
                 ],
               ),
             ),
           ),
           const SizedBox(width: 8),
-          // Майдон холӣ — микрофон, матн ҳаст — фиристодан.
+          const SizedBox(width: 4),
+          IconButton(
+            tooltip: 'Сабти овоз',
+            onPressed: _isUploading ? null : () => setState(() => _recording = true),
+            icon: Icon(LucideIcons.mic, color: AppColors.textSecondary, size: 22),
+          ),
+          const SizedBox(width: 4),
           GestureDetector(
-            onTap: _isUploading
-                ? null
-                : (_hasText ? _handleSend : () => setState(() => _recording = true)),
+            onTap: _isUploading || !_hasText ? null : _handleSend,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 160),
               width: 44,
@@ -1084,17 +1078,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
               child: _isUploading
                   ? Center(child: UploadIndicator(color: AppColors.background))
-                  : AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 160),
-                      transitionBuilder: (child, animation) =>
-                          ScaleTransition(scale: animation, child: child),
-                      child: Icon(
-                        _hasText ? LucideIcons.arrow_up : LucideIcons.mic,
-                        key: ValueKey(_hasText),
-                        color: AppColors.background,
-                        size: 19,
-                      ),
-                    ),
+                  : const Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
             ),
           ),
         ],
