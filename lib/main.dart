@@ -22,7 +22,6 @@ import 'models/listing.dart';
 import 'models/listing.dart';
 import 'screens/marketplace/listing_detail_screen.dart';
 import 'services/notification_service.dart';
-import 'services/listing_service.dart';
 import 'theme/chat_theme_controller.dart';
 import 'services/media_settings_controller.dart';
 
