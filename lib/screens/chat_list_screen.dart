@@ -282,9 +282,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _quickActionLauncher(),
-        const SizedBox(height: 10),
         _quickToolsShortcut(),
+        const SizedBox(height: 10),
+        _quickActionLauncher(),
         const SizedBox(height: 10),
         fab,
       ],
