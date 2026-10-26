@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
@@ -84,6 +85,19 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     }
   }
 
+  Future<void> _shareListing() async {
+    final link = 'chatapp://marketplace/listing/${Uri.encodeComponent(_listing.id)}';
+    final price = _listing.price == null
+        ? 'Нарх: мувофиқа'
+        : 'Нарх: ${ListingCard.formatPrice(_listing.price!)}';
+    final text = '${_listing.title}\n$price\n'
+        '${_listing.description.trim()}\n\n'
+        'Дар ChatApp бинед: $link';
+    await SharePlus.instance.share(
+      ShareParams(text: text, subject: _listing.title),
+    );
+  }
+
   Future<void> _takeDown() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -146,6 +160,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           fontSize: 18,
                         ),
                       ),
+                    ),
+                    IconButton(
+                      onPressed: _shareListing,
+                      icon: Icon(LucideIcons.share_2, color: AppColors.textPrimary, size: 19),
+                      tooltip: 'Мубодилаи эълон',
                     ),
                     if (_isMine)
                       IconButton(
