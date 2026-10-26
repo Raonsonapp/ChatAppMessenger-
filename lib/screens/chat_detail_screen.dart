@@ -934,6 +934,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
+                      onChanged: (_) => setState(() {}),
                       style: TextStyle(color: AppColors.textPrimary),
                       maxLines: 4,
                       minLines: 1,
@@ -950,58 +951,49 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     onPressed: _isUploading ? null : _openAttachmentSheet,
                     icon: Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
                   ),
-                  IconButton(
-                    tooltip: 'Сабти видео',
-                    onPressed: _isUploading ? null : _startVideoCapture,
-                    icon: Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
-                  ),
+
                 ],
               ),
             ),
           ),
           const SizedBox(width: 6),
-          if (_controller.text.trim().isEmpty)
-            GestureDetector(
-              onLongPressStart: (_) => _startAudioRecording(),
-              onLongPressMoveUpdate: (details) {
-                if (!_isRecordingAudio) return;
-                if (details.offsetFromOrigin.dy < -90 && !_isLockedAudio) {
-                  setState(() => _isLockedAudio = true);
-                }
-                if (details.offsetFromOrigin.dx < -100) {
-                  setState(() => _cancelAudioByGesture = true);
-                }
-              },
-              onLongPressEnd: (details) {
-                if (!_isRecordingAudio || _isLockedAudio) return;
-                if (_cancelAudioByGesture) {
-                  _cancelAudioRecording();
-                } else {
-                  _finishAudioRecordingForPreview();
-                }
-              },
-              child: GestureDetector(
-                onTap: _startAudioRecording,
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.neonCyan),
-                  child: Icon(LucideIcons.mic, color: AppColors.background, size: 26),
-                ),
-              ),
-            )
-          else
-            GestureDetector(
-              onTap: _isUploading ? null : _handleSend,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-                child: _isUploading
-                    ? Center(child: UploadIndicator(color: AppColors.background))
-                    : Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
-              ),
+          GestureDetector(
+            onLongPressStart: (_) => _startAudioRecording(),
+            onLongPressMoveUpdate: (details) {
+              if (!_isRecordingAudio) return;
+              if (details.offsetFromOrigin.dy < -90 && !_isLockedAudio) {
+                setState(() => _isLockedAudio = true);
+              }
+              if (details.offsetFromOrigin.dx < -100) {
+                setState(() => _cancelAudioByGesture = true);
+              }
+            },
+            onLongPressEnd: (_) {
+              if (!_isRecordingAudio || _isLockedAudio) return;
+              if (_cancelAudioByGesture) {
+                _cancelAudioRecording();
+              } else {
+                _finishAudioRecordingForPreview();
+              }
+            },
+            child: IconButton(
+              tooltip: 'Сабти овоз',
+              onPressed: _isUploading ? null : _startAudioRecording,
+              icon: Icon(LucideIcons.mic, color: AppColors.textSecondary, size: 22),
             ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: _isUploading || _controller.text.trim().isEmpty ? null : _handleSend,
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
+              child: _isUploading
+                  ? Center(child: UploadIndicator(color: AppColors.background))
+                  : Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
+            ),
+          ),
         ],
       ),
     );
