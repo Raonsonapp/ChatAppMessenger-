@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
@@ -98,6 +99,20 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     );
   }
 
+  Future<void> _shareListing() async {
+    final price = _listing.price == null
+        ? 'Нарх: бо фурӯшанда мувофиқа кунед'
+        : 'Нарх: ${ListingCard.formatPrice(_listing.price!)}';
+    final link = 'chatapp://marketplace/listing/${_listing.id}';
+    final message = '${_listing.title}\n$price\n'
+        '${_listing.description.trim().isEmpty ? '' : '${_listing.description.trim()}\n'}'
+        'Дар ChatApp бинед: $link';
+    await SharePlus.instance.share(ShareParams(
+      text: message,
+      subject: _listing.title,
+    ));
+  }
+
   Future<void> _takeDown() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -165,6 +180,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       onPressed: _shareListing,
                       icon: Icon(LucideIcons.share_2, color: AppColors.textPrimary, size: 19),
                       tooltip: 'Мубодилаи эълон',
+                    ),
+                    IconButton(
+                      onPressed: _shareListing,
+                      icon: Icon(LucideIcons.share_2, color: AppColors.textPrimary, size: 19),
+                      tooltip: 'Маҳсулотро фиристодан',
                     ),
                     if (_isMine)
                       IconButton(
