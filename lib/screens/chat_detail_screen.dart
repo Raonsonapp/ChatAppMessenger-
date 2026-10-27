@@ -53,7 +53,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   bool _isLockedAudio = false;
   bool _cancelAudioByGesture = false;
   bool _showRecordedAudioPreview = false;
-  bool _isRecordingVideo = false;
 
 
   CollectionReference<Map<String, dynamic>> get _messagesRef {
