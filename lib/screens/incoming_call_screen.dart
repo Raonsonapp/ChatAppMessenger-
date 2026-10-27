@@ -13,6 +13,7 @@ import '../widgets/user_avatar.dart';
 import '../theme/app_scope.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/ringtone_service.dart';
+import '../services/notification_prefs.dart';
 
 /// Экрани занги воридотӣ — намоён мешавад вақте ки корбари дигар занг
 /// мезанад (тавассути IncomingCallListener). Қабул → CallScreen (ба ҳамон
@@ -62,21 +63,16 @@ class _IncomingCallScreenState extends State<IncomingCallScreen> {
   }
 
   Future<void> _startRinging() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    var withSound = true;
-    var withVibration = true;
-    if (uid != null) {
-      try {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-        final settings = doc.data()?['settings'] as Map<String, dynamic>?;
-        withSound = (settings?['callSound'] ?? true) == true;
-        withVibration = (settings?['vibration'] ?? true) == true;
-      } catch (_) {}
-    }
+    // Read the same device-local settings shown in Settings > Notifications.
+    // This keeps the incoming-call ringtone consistent with the user's choice.
+    final values = await Future.wait([
+      NotificationPrefs.read('callSound'),
+      NotificationPrefs.read('callVibration'),
+    ]);
     if (!mounted) return;
     await RingtoneService.instance.start(
-      withSound: withSound,
-      withVibration: withVibration,
+      withSound: values[0],
+      withVibration: values[1],
     );
   }
 
