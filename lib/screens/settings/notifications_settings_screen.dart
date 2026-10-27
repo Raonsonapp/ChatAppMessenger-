@@ -25,6 +25,8 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   bool _sound = true;
   bool _vibration = true;
   bool _showPreview = true;
+  bool _callSound = true;
+  bool _callVibration = true;
   bool _isLoading = true;
   String? _callRingtonePath;
 
@@ -42,11 +44,15 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
       NotificationPrefs.read('notificationSound'),
       NotificationPrefs.read('notificationVibration'),
       NotificationPrefs.read('notificationPreview'),
+      NotificationPrefs.read('callSound'),
+      NotificationPrefs.read('callVibration'),
     ]);
     _messageNotifications = values[0];
     _sound = values[1];
     _vibration = values[2];
     _showPreview = values[3];
+    _callSound = values[4];
+    _callVibration = values[5];
     final prefs = await SharedPreferences.getInstance();
     _callRingtonePath = prefs.getString('call_ringtone_path');
     if (!mounted) return;
@@ -174,6 +180,16 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                 _switchRow(tr('k173'), _showPreview, (v) {
                                   setState(() => _showPreview = v);
                                   _update('notificationPreview', v);
+                                }),
+                                Divider(color: AppColors.glassBorder, height: 1),
+                                _switchRow('Садои занги воридотӣ', _callSound, (v) {
+                                  setState(() => _callSound = v);
+                                  _update('callSound', v);
+                                }),
+                                Divider(color: AppColors.glassBorder, height: 1),
+                                _switchRow('Ларзиши занги воридотӣ', _callVibration, (v) {
+                                  setState(() => _callVibration = v);
+                                  _update('callVibration', v);
                                 }, showDivider: false),
                               ],
                             ),
