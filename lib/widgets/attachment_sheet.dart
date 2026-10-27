@@ -25,6 +25,7 @@ class AttachmentSheet extends StatelessWidget {
 
   /// Банақшагирии занг ҳамчун «чорабинӣ».
   final VoidCallback? onEventTap;
+  final VoidCallback? onQuickReplyTap;
   const AttachmentSheet({
     super.key,
     required this.onImagePicked,
@@ -36,6 +37,7 @@ class AttachmentSheet extends StatelessWidget {
     this.onLocationTap,
     this.onPollTap,
     this.onEventTap,
+    this.onQuickReplyTap,
   });
 
   Future<void> _pickGallery(BuildContext context) async {
@@ -129,6 +131,16 @@ class AttachmentSheet extends StatelessWidget {
                     color: const Color(0xFF60A5FA),
                     label: tr('k244'),
                     onTap: () => _pickDocument(context),
+                  ),
+                if (onQuickReplyTap != null)
+                  _item(
+                    icon: LucideIcons.zap,
+                    color: const Color(0xFFFFB52E),
+                    label: 'Ҷавоби зуд',
+                    onTap: () {
+                      Navigator.pop(context);
+                      onQuickReplyTap!();
+                    },
                   ),
                 if (onContactTap != null)
                   _item(
