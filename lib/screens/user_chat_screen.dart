@@ -371,7 +371,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
   }
 
   Future<void> _checkQuickReplyShortcut(String value) async {
-    final match = RegExp(r'(?:^|\\s)/([a-zA-Z0-9_+-]*)
+    final match = RegExp(r'(?:^|\s)/([a-zA-Z0-9_+-]*)
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
