@@ -142,7 +142,7 @@ class _QuickReplySheetState extends State<QuickReplySheet> {
                             style: TextStyle(color: AppColors.textSecondary)),
                         onTap: () => widget.manageMode ? _edit(reply) : widget.onSelected(reply.message),
                         trailing: widget.manageMode
-                            ? IconButton(onPressed: () => _delete(reply), icon: Icon(LucideIcons.trash_2, color: Colors.redAccent))
+                            ? IconButton(onPressed: () => _delete(reply), icon: Icon(LucideIcons.trash, color: Colors.redAccent))
                             : Icon(LucideIcons.corner_down_left, color: AppColors.textSecondary),
                       );
                     },
