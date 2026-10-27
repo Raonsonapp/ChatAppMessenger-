@@ -56,15 +56,29 @@ class RingtoneService {
   static const _assetPath = 'sounds/ringtone.wav';
   static const _customPathKey = 'call_ringtone_path';
 
-  /// Uses a ringtone selected by the user, falling back to ChatApp's bundled tone.
+  /// Internal ChatApp tones. More tones can be added when assets are bundled.
+  static const Map<String, String> builtInTones = {
+    'chatapp': 'Оҳанги ChatApp',
+    'classic': 'Оҳанги классикӣ',
+  };
+  static const _toneKey = 'call_ringtone_tone';
+
+  static String assetForTone(String tone) =>
+      tone == 'classic' ? 'sounds/ringtone.wav' : _assetPath;
+
+  /// Play the user's local custom tone first; otherwise use their chosen
+  /// bundled ChatApp tone. All preferences stay on the device.
   static Future<void> playConfigured(AudioPlayer player) async {
     final prefs = await SharedPreferences.getInstance();
     final customPath = prefs.getString(_customPathKey);
+    final tone = prefs.getString(_toneKey) ?? 'chatapp';
     final hasCustomFile = customPath != null && File(customPath).existsSync();
     await player.setReleaseMode(ReleaseMode.loop);
     await player.setVolume(1);
     await player.play(
-      hasCustomFile ? DeviceFileSource(customPath) : AssetSource(_assetPath),
+      hasCustomFile
+          ? DeviceFileSource(customPath)
+          : AssetSource(assetForTone(builtInTones.containsKey(tone) ? tone : 'chatapp')),
     );
   }
 
