@@ -266,10 +266,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => QuickReplySheet(
+      builder: (sheetContext) => QuickReplySheet(
         manageMode: manageMode,
         onSelected: (message) {
-          Navigator.of(context).pop();
+          Navigator.of(sheetContext).pop();
           _controller.text = message;
           _controller.selection = TextSelection.collapsed(offset: message.length);
           if (mounted) setState(() => _hasText = message.trim().isNotEmpty);
@@ -293,6 +293,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         onLocationTap: _sendLocationMessage,
         onPollTap: _sendPoll,
         onEventTap: _openScheduleCall,
+        onQuickReplyTap: _openQuickReplies,
       ),
     );
   }
