@@ -358,10 +358,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => QuickReplySheet(
+      builder: (sheetContext) => QuickReplySheet(
         manageMode: manageMode,
         onSelected: (message) {
-          Navigator.of(context).pop();
+          Navigator.of(sheetContext).pop();
           _controller.text = message;
           _controller.selection = TextSelection.collapsed(offset: message.length);
           if (mounted) setState(() => _hasText = message.trim().isNotEmpty);
@@ -385,6 +385,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
         onPollTap: _sendPoll,
         onEventTap: _openScheduleCall,
         onStickerTap: _openStickerPicker,
+        onQuickReplyTap: _openQuickReplies,
       ),
     );
   }
