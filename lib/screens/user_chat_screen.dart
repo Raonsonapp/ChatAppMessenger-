@@ -2913,4 +2913,3 @@ class _UserChatScreenState extends State<UserChatScreen> {
       ),
     );
   }
-}
