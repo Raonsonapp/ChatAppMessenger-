@@ -149,10 +149,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => QuickReplySheet(
+      builder: (sheetContext) => QuickReplySheet(
         manageMode: manageMode,
         onSelected: (message) {
-          Navigator.of(context).pop();
+          Navigator.of(sheetContext).pop();
           _controller.text = message;
           _controller.selection = TextSelection.collapsed(offset: message.length);
           if (mounted) setState(() => _hasText = message.trim().isNotEmpty);
@@ -173,6 +173,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         onImagePicked: _sendImageMessage,
         onGifPicked: (file) => _sendImageMessage(file, mediaType: 'gif'),
         onStickerTap: _openStickerPicker,
+        onQuickReplyTap: _openQuickReplies,
       ),
     );
   }
