@@ -11,7 +11,6 @@ import 'group_call_screen.dart';
 import '../l10n/l10n.dart';
 import '../widgets/user_avatar.dart';
 import '../theme/app_scope.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../services/ringtone_service.dart';
 import '../services/notification_prefs.dart';
 
