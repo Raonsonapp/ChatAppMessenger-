@@ -275,8 +275,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       4 => NeonFab(icon: LucideIcons.phone_call, onPressed: _openNewCallSheet),
       _ => null,
     };
-    if (fab == null) return null;
-    if (_currentIndex != 0) return fab;
+    if (fab == null || _currentIndex != 0) return fab;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -284,54 +283,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
       children: [
         _quickToolsShortcut(),
         const SizedBox(height: 10),
-        _quickActionLauncher(),
-        const SizedBox(height: 10),
         fab,
       ],
-    );
-  }
-
-  /// Quick actions launcher placed above ChatAI and the primary plus button.
-  /// This is deliberately separate from the header overflow menu.
-  Widget _quickActionLauncher() {
-    return PopupMenuButton<String>(
-      tooltip: 'Амали зуд',
-      onSelected: (value) {
-        switch (value) {
-          case 'notes': _openNotes(); break;
-          case 'bot': Navigator.push(context, MaterialPageRoute(builder: (_) => const BotStudioScreen())); break;
-        }
-      },
-      color: AppColors.surface,
-      elevation: 12,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: AppColors.glassBorder),
-      ),
-      itemBuilder: (_) => [
-        _headerAction('notes', LucideIcons.notebook_pen, 'Заметка'),
-        _headerAction('bot', LucideIcons.bot, 'Бот сохтан'),
-      ],
-      child: Semantics(
-        button: true,
-        label: 'Амали зуд',
-        child: Material(
-          color: AppColors.surface.withValues(alpha: 0.96),
-          borderRadius: BorderRadius.circular(22),
-          child: Container(
-            width: 54,
-            height: 44,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AppColors.glassBorder, width: 1.2),
-              boxShadow: [
-                BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.10), blurRadius: 12),
-              ],
-            ),
-            child: Icon(LucideIcons.chevrons_up, color: AppColors.neonCyan, size: 25),
-          ),
-        ),
-      ),
     );
   }
 
@@ -484,7 +437,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
           ),
           const SizedBox(width: 4),
-          if (_currentIndex == 0 && !compact) ...[
+          if (_currentIndex == 0) ...[
             _iconButton(LucideIcons.camera, onTap: _openCameraStatus),
             const SizedBox(width: 6),
           ],
@@ -492,12 +445,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
             _iconButton(LucideIcons.search, onTap: _openSearch),
             const SizedBox(width: 6),
           ],
-          if (!compact) ...[
-            _iconButton(LucideIcons.phone_call, onTap: _openNewCallSheet),
-            const SizedBox(width: 6),
-          ],
-          SizedBox(width: 44, height: 44, child: _buildHeaderPlusButton()),
-          const SizedBox(width: 2),
           _iconButton(LucideIcons.ellipsis_vertical, onTap: _openMainMenu),
         ],
       ),
