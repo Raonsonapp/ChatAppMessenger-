@@ -172,6 +172,175 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   /// Менюи зуди "+" — танзимоти зудро аз 3-нуқта ҷудо нигоҳ медорад.
+  /// Сатри «Ҳамаро ҷустуҷӯ кунед» — чатҳо, гурӯҳҳо ва эълонҳои Бозор.
+  Widget _buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: GestureDetector(
+        onTap: _openSearch,
+        behavior: HitTestBehavior.opaque,
+        child: GlassContainer(
+          borderRadius: 16,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Icon(LucideIcons.search, color: AppColors.textSecondary, size: 18),
+              const SizedBox(width: 10),
+              Text(tr('k557'), style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<void> _menuItem(IconData icon, String label, VoidCallback onTap) {
+    return PopupMenuItem<void>(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.textPrimary),
+          const SizedBox(width: 14),
+          Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  /// Тугмаи асосӣ ва — дар ҷадвали чатҳо — гузаргоҳи ChatApp AI дар болои он.
+  ///
+  /// AI пештар ҳамчун чати мустаҳкамшуда дар болои рӯйхат мешишт ва ҳар рӯз
+  /// ҷои як сӯҳбати воқеиро мегирифт. Ҳоло он гузаргоҳи ҷамъушуда аст.
+  Widget? _buildFab() {
+    final fab = switch (_currentIndex) {
+      0 => NeonFab(onPressed: _openNewChatSheet),
+      1 => NeonFab(icon: LucideIcons.camera, onPressed: _openCreateStatus),
+      2 => NeonFab(onPressed: _openCreateListing),
+      3 => NeonFab(onPressed: _openCreateCommunity),
+      4 => NeonFab(icon: LucideIcons.phone_call, onPressed: _openNewCallSheet),
+      _ => null,
+    };
+    if (fab == null || _currentIndex != 0) return fab;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _quickToolsShortcut(),
+        const SizedBox(height: 10),
+        fab,
+      ],
+    );
+  }
+
+  /// Standalone ChatAI button: it is intentionally not hidden under overflow/ellipsis.
+  Widget _quickToolsShortcut() {
+    return Semantics(
+      button: true,
+      label: 'ChatAI',
+      child: Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: _openAi,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: 54,
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.neonCyan.withValues(alpha: 0.72), width: 1.2),
+              boxShadow: [
+                BoxShadow(color: AppColors.neonCyan.withValues(alpha: 0.16), blurRadius: 12),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(LucideIcons.zap, color: AppColors.neonCyan, size: 18),
+                const SizedBox(height: 1),
+                Text('ChatAI', style: TextStyle(color: AppColors.neonCyan, fontSize: 9, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openNotes() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const NotesScreen()));
+  }
+
+  void _openAi() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ChatDetailScreen(conversation: AppChats.aiAssistant)),
+    );
+  }
+
+  /// Эълони нав аз ҳамон навъе ки дар Бозор интихоб шудааст.
+  void _openCreateListing() {
+    final kind = _marketplaceKey.currentState?.kind ?? ListingKind.product;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => CreateListingScreen(kind: kind)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    AppScope.watch(context);
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      floatingActionButton: _buildFab(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: _buildBottomNav(),
+      body: NeonBackdrop(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              _buildAppBar(),
+              // Сатри ҷустуҷӯ танҳо дар он ҷадвалҳое ки чизе барои ҷустуҷӯ
+              // доранд. Дар «Статус» ва «Зангҳо» он танҳо ҷой мегирифт.
+              if (_currentIndex == 0 || _currentIndex == 2) _buildSearchField(),
+              const ConnectionBanner(),
+              Expanded(
+                child: IndexedStack(
+                  index: _currentIndex,
+                  children: [
+                    const ChatsTab(),
+                    const StatusTab(),
+                    MarketplaceTab(key: _marketplaceKey),
+                    const CommunitiesTab(),
+                    const CallsTab(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Дар таби "Чатҳо" бренди "ChatApp" нишон дода мешавад; дар дигар
+  /// табҳо — номи ҳамон таб (мисли WhatsApp, ки сарлавҳа вобаста ба
+  /// экрани фаъол иваз мешавад).
+  String? get _tabTitle {
+    switch (_currentIndex) {
+      case 1:
+        return tr('k045');
+      case 2:
+        return tr('k556');
+      case 3:
+        return tr('k046');
+      case 4:
+        return tr('k047');
+      default:
+        return null;
+    }
+  }
+
   Widget _buildAppBar() {
     final title = _tabTitle;
     return Padding(
