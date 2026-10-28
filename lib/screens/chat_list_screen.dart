@@ -172,6 +172,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   /// Менюи зуди "+" — танзимоти зудро аз 3-нуқта ҷудо нигоҳ медорад.
+  PopupMenuItem<String> _headerAction(String value, IconData icon, String label) {
+    return PopupMenuItem<String>(
+      value: value,
+      height: 48,
+      child: Row(
+        children: [
+          SizedBox(width: 28, child: Icon(icon, size: 19, color: AppColors.neonCyan)),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 14))),
+        ],
+      ),
+    );
+  }
+
   /// Сатри «Ҳамаро ҷустуҷӯ кунед» — чатҳо, гурӯҳҳо ва эълонҳои Бозор.
   Widget _buildSearchField() {
     return Padding(
@@ -220,7 +234,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
       4 => NeonFab(icon: LucideIcons.phone_call, onPressed: _openNewCallSheet),
       _ => null,
     };
-    if (fab == null || _currentIndex != 0) return fab;
+    if (fab == null) return null;
+    if (_currentIndex != 0) return fab;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -228,11 +243,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
       children: [
         _quickToolsShortcut(),
         const SizedBox(height: 10),
+        _quickActionLauncher(),
+        const SizedBox(height: 10),
         fab,
       ],
     );
   }
 
+  /// Quick actions launcher placed above ChatAI and the primary plus button.
+  /// This is deliberately separate from the header overflow menu.
   /// Standalone ChatAI button: it is intentionally not hidden under overflow/ellipsis.
   Widget _quickToolsShortcut() {
     return Semantics(
@@ -381,7 +400,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
           ),
           const SizedBox(width: 4),
-          if (_currentIndex == 0) ...[
+          if (_currentIndex == 0 && !compact) ...[
             _iconButton(LucideIcons.camera, onTap: _openCameraStatus),
             const SizedBox(width: 6),
           ],
@@ -389,6 +408,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
             _iconButton(LucideIcons.search, onTap: _openSearch),
             const SizedBox(width: 6),
           ],
+          if (!compact) ...[
+            _iconButton(LucideIcons.phone_call, onTap: _openNewCallSheet),
+            const SizedBox(width: 6),
+          ],
+          SizedBox(width: 44, height: 44, child: _buildHeaderPlusButton()),
+          const SizedBox(width: 2),
           _iconButton(LucideIcons.ellipsis_vertical, onTap: _openMainMenu),
         ],
       ),
