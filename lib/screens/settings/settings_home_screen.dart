@@ -364,9 +364,9 @@ class SettingsHomeScreen extends StatelessWidget {
                           context: context,
                           isScrollControlled: true,
                           backgroundColor: Colors.transparent,
-                          builder: (_) => const QuickReplySheet(
+                          builder: (_) => QuickReplySheet(
                             manageMode: true,
-                            onSelected: _ignoreQuickReplySelection,
+                            onSelected: (_) {},
                           ),
                         ),
                       ),
