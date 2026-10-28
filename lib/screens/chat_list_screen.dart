@@ -172,6 +172,47 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   /// Менюи зуди "+" — танзимоти зудро аз 3-нуқта ҷудо нигоҳ медорад.
+  Widget _buildHeaderPlusButton() {
+    return PopupMenuButton<String>(
+      tooltip: 'Амали нав',
+      icon: Icon(LucideIcons.plus, color: AppColors.textPrimary, size: 22),
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: AppColors.glassBorder),
+      ),
+      onSelected: (value) {
+        switch (value) {
+          case 'new_chat': _openNewChatSheet(); break;
+          case 'ai': _openAi(); break;
+          case 'telegram': Navigator.push(context, MaterialPageRoute(builder: (_) => const BotStudioScreen())); break;
+          case 'group': _openNewGroup(); break;
+          case 'broadcast': _openNewBroadcast(); break;
+          case 'linked': _openLinkedDevices(); break;
+          case 'community': _openCreateCommunity(); break;
+          case 'channel': _openCreateChannel(); break;
+          case 'status': _openCreateStatus(); break;
+          case 'call': _openNewCallSheet(); break;
+          case 'settings': _openSettings(); break;
+        }
+      },
+      itemBuilder: (_) => [
+        _headerAction('new_chat', LucideIcons.message_circle, 'Чати нав'),
+        _headerAction('telegram', LucideIcons.bot, 'Ботҳо / Telegram'),
+        const PopupMenuDivider(),
+        _headerAction('group', LucideIcons.users, 'Гурӯҳи нав'),
+        _headerAction('broadcast', Icons.campaign_outlined, 'Паёми умумӣ'),
+        _headerAction('linked', Icons.devices_other_outlined, 'Дастгоҳҳои пайвастшуда'),
+        _headerAction('community', LucideIcons.users_round, 'Ҷамъияти нав'),
+        _headerAction('channel', LucideIcons.hash, 'Канали нав'),
+        _headerAction('status', LucideIcons.circle_plus, 'Статуси нав'),
+        _headerAction('call', LucideIcons.phone_call, 'Занги нав'),
+        const PopupMenuDivider(),
+        _headerAction('settings', LucideIcons.settings, 'Танзимот'),
+      ],
+    );
+  }
+
   PopupMenuItem<String> _headerAction(String value, IconData icon, String label) {
     return PopupMenuItem<String>(
       value: value,
@@ -243,7 +284,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
       children: [
         _quickToolsShortcut(),
         const SizedBox(height: 10),
-        _quickActionLauncher(),
         const SizedBox(height: 10),
         fab,
       ],
@@ -362,6 +402,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Widget _buildAppBar() {
     final title = _tabTitle;
+    final compact = MediaQuery.sizeOf(context).width < 400;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
       child: Row(
