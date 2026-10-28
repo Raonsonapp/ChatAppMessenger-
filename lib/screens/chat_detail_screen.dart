@@ -157,7 +157,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             text: message,
             selection: TextSelection.collapsed(offset: message.length),
           );
-          if (mounted) setState(() => _hasText = message.trim().isNotEmpty);
+          if (mounted) setState(() {});
         },
       ),
     );
@@ -185,7 +185,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       text: value.substring(0, start) + reply.message,
       selection: TextSelection.collapsed(offset: start + reply.message.length),
     );
-    setState(() => _hasText = _controller.text.trim().isNotEmpty);
+    setState(() {});
   }
 
   void _openAttachmentSheet() {
