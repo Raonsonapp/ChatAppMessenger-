@@ -284,7 +284,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
       children: [
         _quickToolsShortcut(),
         const SizedBox(height: 10),
-        const SizedBox(height: 10),
         fab,
       ],
     );
