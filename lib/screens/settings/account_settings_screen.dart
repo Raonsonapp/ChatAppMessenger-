@@ -441,9 +441,15 @@ class AccountSettingsScreen extends StatelessWidget {
                     ),
                   ),
                   if (value != null)
-                    Text(
-                      value,
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    Flexible(
+                      child: Text(
+                        value,
+                        textAlign: TextAlign.end,
+                        softWrap: true,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      ),
                     ),
                   if (onTap != null) ...[
                     const SizedBox(width: 6),

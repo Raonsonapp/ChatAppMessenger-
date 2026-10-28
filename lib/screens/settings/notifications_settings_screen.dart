@@ -25,8 +25,11 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
   bool _sound = true;
   bool _vibration = true;
   bool _showPreview = true;
+  bool _callSound = true;
+  bool _callVibration = true;
   bool _isLoading = true;
   String? _callRingtonePath;
+  String _callRingtoneTone = 'chatapp';
 
   @override
   void initState() {
@@ -42,13 +45,18 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
       NotificationPrefs.read('notificationSound'),
       NotificationPrefs.read('notificationVibration'),
       NotificationPrefs.read('notificationPreview'),
+      NotificationPrefs.read('callSound'),
+      NotificationPrefs.read('callVibration'),
     ]);
     _messageNotifications = values[0];
     _sound = values[1];
     _vibration = values[2];
     _showPreview = values[3];
+    _callSound = values[4];
+    _callVibration = values[5];
     final prefs = await SharedPreferences.getInstance();
     _callRingtonePath = prefs.getString('call_ringtone_path');
+    _callRingtoneTone = prefs.getString('call_ringtone_tone') ?? 'chatapp';
     if (!mounted) return;
     setState(() => _isLoading = false);
   }
@@ -125,29 +133,48 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                           GlassContainer(
                             borderRadius: 18,
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            child: ListTile(
-                              leading: Icon(LucideIcons.music, color: AppColors.neonEmerald),
-                              title: Text('Оҳанги занг', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                              subtitle: Text(
-                                _callRingtonePath == null
-                                    ? 'Оҳанги стандартии ChatApp'
-                                    : _callRingtonePath!.split(Platform.pathSeparator).last,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: AppColors.textSecondary),
-                              ),
-                              trailing: PopupMenuButton<String>(
-                                icon: Icon(LucideIcons.ellipsis_vertical, color: AppColors.textSecondary),
-                                onSelected: (value) {
-                                  if (value == 'choose') _pickCallRingtone();
-                                  if (value == 'default') _resetCallRingtone();
-                                },
-                                itemBuilder: (_) => [
-                                  const PopupMenuItem(value: 'choose', child: Text('Интихоб аз телефон')),
-                                  if (_callRingtonePath != null)
-                                    const PopupMenuItem(value: 'default', child: Text('Оҳанги стандартӣ')),
-                                ],
-                              ),
+                            child: Column(
+                              children: [
+                                ListTile(
+                                  leading: Icon(LucideIcons.music, color: AppColors.neonEmerald),
+                                  title: Text('Оҳанги занг', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                                  subtitle: Text(
+                                    _callRingtonePath == null
+                                        ? (_callRingtoneTone == 'chatapp' ? 'Оҳанги ChatApp' : 'Оҳанги классикӣ')
+                                        : _callRingtonePath!.split(Platform.pathSeparator).last,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(color: AppColors.textSecondary),
+                                  ),
+                                  trailing: PopupMenuButton<String>(
+                                    icon: Icon(LucideIcons.ellipsis_vertical, color: AppColors.textSecondary),
+                                    onSelected: (value) async {
+                                      if (value == 'choose') {
+                                        await _pickCallRingtone();
+                                      } else if (value == 'chatapp' || value == 'classic') {
+                                        final prefs = await SharedPreferences.getInstance();
+                                        await prefs.remove('call_ringtone_path');
+                                        await prefs.setString('call_ringtone_tone', value);
+                                        if (!mounted) return;
+                                        setState(() {
+                                          _callRingtonePath = null;
+                                          _callRingtoneTone = value;
+                                        });
+                                      } else if (value == 'default') {
+                                        await _resetCallRingtone();
+                                      }
+                                    },
+                                    itemBuilder: (_) => [
+                                      const PopupMenuItem(value: 'chatapp', child: Text('ChatApp — сабзи фирмавӣ')),
+                                      const PopupMenuItem(value: 'classic', child: Text('Классикӣ')),
+                                      const PopupMenuDivider(),
+                                      const PopupMenuItem(value: 'choose', child: Text('Интихоб аз телефон')),
+                                      if (_callRingtonePath != null)
+                                        const PopupMenuItem(value: 'default', child: Text('Оҳанги стандартӣ')),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -174,6 +201,16 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
                                 _switchRow(tr('k173'), _showPreview, (v) {
                                   setState(() => _showPreview = v);
                                   _update('notificationPreview', v);
+                                }),
+                                Divider(color: AppColors.glassBorder, height: 1),
+                                _switchRow('Садои занги воридотӣ', _callSound, (v) {
+                                  setState(() => _callSound = v);
+                                  _update('callSound', v);
+                                }),
+                                Divider(color: AppColors.glassBorder, height: 1),
+                                _switchRow('Ларзиши занги воридотӣ', _callVibration, (v) {
+                                  setState(() => _callVibration = v);
+                                  _update('callVibration', v);
                                 }, showDivider: false),
                               ],
                             ),

@@ -17,9 +17,10 @@ const SYSTEM_INSTRUCTION = [
 
 function modelFor(provider, env) {
   if (provider === 'gemini') {
-    // Use the known default if an old/stale model override was copied into
-    // hosting configuration. Explicit overrides remain supported when valid.
-    return String(env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || 'gemini-2.5-flash').trim();
+    // Prefer the stable default when hosting has an empty/whitespace override.
+    // A stale explicit override is retried against this default below.
+    const configured = String(env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || '').trim();
+    return configured || 'gemini-2.5-flash';
   }
   if (provider === 'openai') return String(env.OPENAI_MODEL || 'gpt-5-mini').trim();
   if (provider === 'grok') return String(env.XAI_MODEL || 'grok-4.7').trim();
@@ -205,7 +206,9 @@ async function generateChatReply({
       // One safe model fallback helps when a stale model override is the only
       // issue. Do not retry quota/auth errors, and never expose provider details.
       const wasExplicitModel = Boolean(String(env.GEMINI_CHAT_MODEL || env.GEMINI_MODEL || '').trim());
-      if (safeCode === 'provider-model-unavailable' && wasExplicitModel && model !== 'gemini-2.5-flash') {
+      if ((safeCode === 'provider-model-unavailable' || safeCode === 'provider-request-failed') &&
+          wasExplicitModel && model !== 'gemini-2.5-flash' && response.status !== 429 &&
+          response.status !== 401 && response.status !== 403) {
         const fallbackUrl = new URL(
           'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
         );

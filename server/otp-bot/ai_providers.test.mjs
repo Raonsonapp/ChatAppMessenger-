@@ -215,3 +215,19 @@ test('extractResponseText handles Responses API and compatible chat completions'
     'part Apart B',
   );
 });
+
+test('Gemini ignores whitespace-only model overrides and uses the stable default', async () => {
+  assert.equal(modelFor('gemini', { GEMINI_CHAT_MODEL: '   ' }), 'gemini-2.5-flash');
+  let requestedUrl = '';
+  const reply = await generateChatReply({
+    provider: 'gemini',
+    messages: [{ role: 'user', text: 'Салом' }],
+    env: { GEMINI_API_KEY: 'not-real-test-key', GEMINI_CHAT_MODEL: '   ' },
+    fetchImpl: async (url) => {
+      requestedUrl = String(url);
+      return fakeResponse({ candidates: [{ content: { parts: [{ text: 'Салом!' }] } }] });
+    },
+  });
+  assert.equal(reply, 'Салом!');
+  assert.match(requestedUrl, /gemini-2\.5-flash:generateContent/);
+});

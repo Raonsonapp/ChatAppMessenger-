@@ -3,6 +3,10 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:async';
+import 'dart:io';
 
 import '../theme/app_theme.dart';
 import '../models/chat_message.dart';
@@ -14,6 +18,8 @@ import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/typing_bubble.dart';
 import '../widgets/attachment_sheet.dart';
+import '../widgets/quick_reply_sheet.dart';
+import '../services/quick_reply_service.dart';
 import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
 import '../l10n/l10n.dart';
@@ -39,6 +45,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   ChatMessage? _replyingTo;
   List<Map<String, String>> _aiProviders = const [{'id': 'gemini', 'label': 'Gemini'}];
   String _selectedAiProvider = 'gemini';
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  Timer? _recordingTimer;
+  DateTime? _recordingStartedAt;
+  String? _recordingPath;
+  Duration _recordingDuration = Duration.zero;
+  bool _isRecordingAudio = false;
+  bool _isPausedAudio = false;
+  bool _isLockedAudio = false;
+  bool _cancelAudioByGesture = false;
+  bool _showRecordedAudioPreview = false;
+
 
   CollectionReference<Map<String, dynamic>> get _messagesRef {
     final firestore = FirebaseFirestore.instance;
@@ -83,6 +100,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   void dispose() {
+    _recordingTimer?.cancel();
+    _audioRecorder.dispose();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -125,6 +144,50 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
+  void _openQuickReplies({bool manageMode = false}) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => QuickReplySheet(
+        manageMode: manageMode,
+        onSelected: (message) {
+          Navigator.of(sheetContext).pop();
+          _controller.value = TextEditingValue(
+            text: message,
+            selection: TextSelection.collapsed(offset: message.length),
+          );
+          if (mounted) setState(() {});
+        },
+      ),
+    );
+  }
+
+  Future<void> _checkQuickReplyShortcut(String value) async {
+    final match = RegExp(r'(?:^|\s)/([a-zA-Z0-9_+-]*)$').firstMatch(value);
+    if (match == null) return;
+    final key = match.group(1)!.toLowerCase();
+    if (key.isEmpty) {
+      _openQuickReplies();
+      return;
+    }
+    final replies = await QuickReplyService.load();
+    QuickReply? reply;
+    for (final item in replies) {
+      if (item.shortcut.toLowerCase() == key) {
+        reply = item;
+        break;
+      }
+    }
+    if (!mounted || reply == null) return;
+    final start = match.start + (match.group(0)!.startsWith(' ') ? 1 : 0);
+    _controller.value = TextEditingValue(
+      text: value.substring(0, start) + reply.message,
+      selection: TextSelection.collapsed(offset: start + reply.message.length),
+    );
+    setState(() {});
+  }
+
   void _openAttachmentSheet() {
     showModalBottomSheet(
       context: context,
@@ -136,6 +199,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         onImagePicked: _sendImageMessage,
         onGifPicked: (file) => _sendImageMessage(file, mediaType: 'gif'),
         onStickerTap: _openStickerPicker,
+        onQuickReplyTap: _openQuickReplies,
       ),
     );
   }
@@ -630,7 +694,252 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   /// Композитори тарзи WhatsApp: emoji (берун) — матн+замима+камера (дохили pill) — SEND (берун)
+  Future<String> _audioTempPath() async {
+    final dir = await getTemporaryDirectory();
+    return '${dir.path}/chatapp-voice-${DateTime.now().microsecondsSinceEpoch}.m4a';
+  }
+
+  Future<void> _startAudioRecording({bool locked = false}) async {
+    if (_isRecordingAudio || _isUploading) return;
+    try {
+      final allowed = await _audioRecorder.hasPermission();
+      if (!allowed) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Барои сабти овоз иҷозати микрофон лозим аст.')),
+          );
+        }
+        return;
+      }
+      final path = await _audioTempPath();
+      await _audioRecorder.start(
+        const RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 96000, sampleRate: 44100),
+        path: path,
+      );
+      if (!mounted) {
+        await _audioRecorder.cancel();
+        return;
+      }
+      setState(() {
+        _recordingPath = path;
+        _recordingStartedAt = DateTime.now();
+        _recordingDuration = Duration.zero;
+        _isRecordingAudio = true;
+        _isPausedAudio = false;
+        _isLockedAudio = locked;
+        _cancelAudioByGesture = false;
+        _showRecordedAudioPreview = false;
+      });
+      _recordingTimer?.cancel();
+      _recordingTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
+        if (!mounted || !_isRecordingAudio || _isPausedAudio || _recordingStartedAt == null) return;
+        setState(() => _recordingDuration = DateTime.now().difference(_recordingStartedAt!));
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Сабти овоз оғоз нашуд. Иҷозати микрофонро санҷед.')),
+      );
+    }
+  }
+
+  Future<void> _pauseOrResumeAudio() async {
+    if (!_isRecordingAudio) return;
+    try {
+      if (_isPausedAudio) {
+        await _audioRecorder.resume();
+        setState(() {
+          _isPausedAudio = false;
+          _recordingStartedAt = DateTime.now().subtract(_recordingDuration);
+        });
+      } else {
+        await _audioRecorder.pause();
+        setState(() {
+          _isPausedAudio = true;
+          if (_recordingStartedAt != null) _recordingDuration = DateTime.now().difference(_recordingStartedAt!);
+        });
+      }
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Идора кардани сабти овоз муваффақ нашуд.')),
+      );
+    }
+  }
+
+  Future<void> _cancelAudioRecording() async {
+    _recordingTimer?.cancel();
+    try { await _audioRecorder.cancel(); } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _isRecordingAudio = false;
+      _isPausedAudio = false;
+      _isLockedAudio = false;
+      _recordingPath = null;
+      _showRecordedAudioPreview = false;
+      _recordingDuration = Duration.zero;
+    });
+  }
+
+  Future<void> _finishAudioRecordingForPreview() async {
+    _recordingTimer?.cancel();
+    try {
+      final path = await _audioRecorder.stop();
+      if (!mounted) return;
+      setState(() {
+        _recordingPath = path ?? _recordingPath;
+        _isRecordingAudio = false;
+        _isPausedAudio = false;
+        _isLockedAudio = false;
+        _showRecordedAudioPreview = true;
+      });
+    } catch (_) {
+      await _cancelAudioRecording();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Сабти овоз нигоҳ дошта нашуд. Боз кӯшиш кунед.')),
+      );
+    }
+  }
+
+  Future<void> _uploadAndSendAudio() async {
+    final path = _recordingPath;
+    if (path == null || !File(path).existsSync()) return;
+    _recordingTimer?.cancel();
+    try {
+      final duration = _recordingDuration;
+      final url = await MediaService.uploadFile(File(path), 'voice-${DateTime.now().millisecondsSinceEpoch}.m4a', 'chats/${widget.conversation.id}');
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) throw StateError('auth-required');
+      await _messagesRef.add({
+        'text': '',
+        'senderId': uid,
+        'isAI': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'mediaUrl': url,
+        'mediaType': 'audio',
+        'durationMs': duration.inMilliseconds,
+      });
+      if (!mounted) return;
+      setState(() {
+        _isRecordingAudio = false;
+        _isPausedAudio = false;
+        _isLockedAudio = false;
+        _recordingPath = null;
+        _showRecordedAudioPreview = false;
+        _recordingDuration = Duration.zero;
+      });
+      _scrollToBottom();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Овози сабтшуда фиристода нашуд. Интернет ва иҷозати боркуниро санҷед.')),
+      );
+    }
+  }
+
+  String _formatRecordTime(Duration value) {
+    final total = value.inSeconds;
+    return '${(total ~/ 60).toString().padLeft(2, '0')}:${(total % 60).toString().padLeft(2, '0')}';
+  }
+
+  Widget _recordingAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return Expanded(
+      child: Material(
+        color: color ?? AppColors.surface,
+        borderRadius: BorderRadius.circular(28),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(28),
+          child: SizedBox(
+            height: 54,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 20, color: AppColors.textPrimary),
+                const SizedBox(width: 8),
+                Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600))),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecordingPreview() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: AppColors.glassBorder),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(width: 10, height: 10, decoration: BoxDecoration(color: _isPausedAudio ? AppColors.textSecondary : const Color(0xFFFF5263), shape: BoxShape.circle)),
+                const SizedBox(width: 10),
+                Text(_formatRecordTime(_recordingDuration), style: TextStyle(color: AppColors.textPrimary, fontSize: 23, fontWeight: FontWeight.w600, fontFeatures: const [FontFeature.tabularFigures()])),
+                const Spacer(),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(18, (i) => Container(
+                    width: 3,
+                    height: 8 + ((i * 7 + _recordingDuration.inMilliseconds ~/ 100) % 21).toDouble(),
+                    margin: const EdgeInsets.symmetric(horizontal: 1),
+                    decoration: BoxDecoration(color: AppColors.neonCyan.withValues(alpha: 0.45 + (i % 3) * 0.15), borderRadius: BorderRadius.circular(3)),
+                  )),
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  tooltip: _isPausedAudio ? 'Давом додан' : 'Таваққуф',
+                  onPressed: _pauseOrResumeAudio,
+                  icon: Icon(_isPausedAudio ? LucideIcons.play : LucideIcons.pause, color: AppColors.textPrimary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                IconButton.filledTonal(
+                  tooltip: 'Нест кардани сабт',
+                  onPressed: _cancelAudioRecording,
+                  style: IconButton.styleFrom(backgroundColor: const Color(0xFF51232D), foregroundColor: const Color(0xFFFF6878)),
+                  icon: const Icon(Icons.delete_outline_rounded),
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: _recordingAction(
+                  icon: LucideIcons.mic,
+                  label: _isPausedAudio ? 'Сабт таваққуф аст' : 'Сабт шуда истодааст',
+                  onTap: _pauseOrResumeAudio,
+                )),
+                const SizedBox(width: 10),
+                IconButton.filled(
+                  tooltip: 'Фиристодани овоз',
+                  onPressed: _isUploading ? null : _uploadAndSendAudio,
+                  style: IconButton.styleFrom(backgroundColor: AppColors.neonCyan, foregroundColor: AppColors.background, fixedSize: const Size(54,54)),
+                  icon: _isUploading ? const SizedBox(width: 18,height:18,child:CircularProgressIndicator(strokeWidth:2)) : const Icon(LucideIcons.send),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildInputBar() {
+    if (_isRecordingAudio || _showRecordedAudioPreview) {
+      return _buildRecordingPreview();
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 14),
       child: Row(
@@ -653,6 +962,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
+                      onChanged: (value) { setState(() {}); _checkQuickReplyShortcut(value); },
                       style: TextStyle(color: AppColors.textPrimary),
                       maxLines: 4,
                       minLines: 1,
@@ -666,25 +976,48 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Ҷавобҳои зуд',
+                    onPressed: _openQuickReplies,
+                    icon: Icon(LucideIcons.zap, color: AppColors.neonEmerald, size: 20),
+                  ),
+                  IconButton(
                     onPressed: _isUploading ? null : _openAttachmentSheet,
                     icon: Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
                   ),
-                  IconButton(
-                    onPressed: _isUploading
-                        ? null
-                        : () async {
-                            final file = await MediaService.pickFromCamera();
-                            if (file != null) _sendImageMessage(file);
-                          },
-                    icon: Icon(LucideIcons.camera, color: AppColors.textSecondary, size: 20),
-                  ),
+
                 ],
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           GestureDetector(
-            onTap: _isUploading ? null : _handleSend,
+            onLongPressStart: (_) => _startAudioRecording(),
+            onLongPressMoveUpdate: (details) {
+              if (!_isRecordingAudio) return;
+              if (details.offsetFromOrigin.dy < -90 && !_isLockedAudio) {
+                setState(() => _isLockedAudio = true);
+              }
+              if (details.offsetFromOrigin.dx < -100) {
+                setState(() => _cancelAudioByGesture = true);
+              }
+            },
+            onLongPressEnd: (_) {
+              if (!_isRecordingAudio || _isLockedAudio) return;
+              if (_cancelAudioByGesture) {
+                _cancelAudioRecording();
+              } else {
+                _finishAudioRecordingForPreview();
+              }
+            },
+            child: IconButton(
+              tooltip: 'Сабти овоз',
+              onPressed: _isUploading ? null : _startAudioRecording,
+              icon: Icon(LucideIcons.mic, color: AppColors.textSecondary, size: 22),
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: _isUploading || _controller.text.trim().isEmpty ? null : _handleSend,
             child: Container(
               width: 44,
               height: 44,

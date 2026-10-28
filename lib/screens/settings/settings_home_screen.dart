@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_container.dart';
+import '../../widgets/quick_reply_sheet.dart';
 import '../../widgets/neon_backdrop.dart';
 import '../../widgets/user_avatar.dart';
 import '../edit_profile_screen.dart';
@@ -351,6 +352,21 @@ class SettingsHomeScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const ChatsSettingsScreen(),
+                          ),
+                        ),
+                      ),
+                      _row(
+                        context,
+                        icon: LucideIcons.zap,
+                        label: 'Ҷавобҳои зуд',
+                        description: 'Шаблонҳои ҷавоб ва миёнабурҳои /',
+                        onTap: () => showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => QuickReplySheet(
+                            manageMode: true,
+                            onSelected: (_) {},
                           ),
                         ),
                       ),

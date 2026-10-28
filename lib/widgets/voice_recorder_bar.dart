@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
@@ -39,6 +40,12 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
   String? _path;
   bool _starting = true;
   String? _error;
+  bool _paused = false;
+  bool _locked = false;
+  bool _dragCancel = false;
+  double _dragX = 0;
+  double _dragY = 0;
+  bool _isSending = false;
 
   @override
   void initState() {
@@ -95,21 +102,108 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
   }
 
   Future<void> _send() async {
+    if (_starting || _isSending) return;
+    _isSending = true;
     _timer?.cancel();
     _amplitudeTimer?.cancel();
-    final path = await _recorder.stop();
-    if (path == null) {
-      widget.onCancel();
+    try {
+      final path = await _recorder.stop();
+      if (path == null) {
+        widget.onCancel();
+        return;
+      }
+      final file = File(path);
+      if (!await file.exists() || _elapsed.inMilliseconds < 500) {
+        await file.delete().catchError((_) => file);
+        widget.onCancel();
+        return;
+      }
+      widget.onRecorded(file, _elapsed, Waveform.compress(_samples));
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Сабти овоз нигоҳ дошта нашуд. Боз кӯшиш кунед.');
+    } finally {
+      _isSending = false;
+    }
+  }
+
+  Future<void> _togglePause() async {
+    if (_starting || _isSending) return;
+    try {
+      if (_paused) {
+        await _recorder.resume();
+        if (!mounted) return;
+        setState(() => _paused = false);
+        _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (mounted && !_paused) setState(() => _elapsed += const Duration(seconds: 1));
+        });
+        _amplitudeTimer = Timer.periodic(const Duration(milliseconds: 100), (_) async {
+          try {
+            final amp = await _recorder.getAmplitude();
+            _samples.add(Waveform.normalize(amp.current));
+          } catch (_) {}
+        });
+      } else {
+        await _recorder.pause();
+        _timer?.cancel();
+        _amplitudeTimer?.cancel();
+        if (mounted) setState(() => _paused = true);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Таваққуфи сабт дастгирӣ намешавад.');
+    }
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    if (_starting || _isSending) return;
+
+    // Horizontal and vertical gestures are interpreted independently. The
+    // accumulated values represent actual travel from the initial pointer.
+    _dragX += details.delta.dx;
+    _dragY += details.delta.dy;
+
+    if (_locked) {
+      // After locking, horizontal movement remains dedicated to cancellation.
+      if (_dragX <= -90 && !_dragCancel) {
+        HapticFeedback.selectionClick();
+        setState(() => _dragCancel = true);
+      } else if (_dragX > -55 && _dragCancel) {
+        setState(() => _dragCancel = false);
+      }
       return;
     }
-    final file = File(path);
-    if (!await file.exists() || _elapsed.inMilliseconds < 500) {
-      // Пахши тасодуфӣ — чизе намефиристем.
-      await file.delete().catchError((_) => file);
-      widget.onCancel();
+
+    if (_dragY <= -72) {
+      HapticFeedback.selectionClick();
+      setState(() => _locked = true);
       return;
     }
-    widget.onRecorded(file, _elapsed, Waveform.compress(_samples));
+    if (_dragX <= -90 && !_dragCancel) {
+      HapticFeedback.selectionClick();
+      setState(() => _dragCancel = true);
+    } else if (_dragX > -55 && _dragCancel) {
+      setState(() => _dragCancel = false);
+    }
+  }
+
+  Future<void> _onDragEnd(DragEndDetails details) async {
+    if (_starting || _isSending) return;
+    if (_dragCancel) {
+      await _cancel();
+      return;
+    }
+    if (!_locked) {
+      await _send();
+      return;
+    }
+    if (mounted) setState(() {
+      _dragX = 0;
+      _dragY = 0;
+    });
+  }
+
+  Future<void> _finishLockedRecording() async {
+    if (!_locked || _starting || _isSending) return;
+    await _send();
   }
 
   @override
@@ -126,48 +220,84 @@ class _VoiceRecorderBarState extends State<VoiceRecorderBar> {
     if (_error != null) {
       return Row(
         children: [
-          Expanded(
-            child: Text(_error!, style: TextStyle(color: Colors.redAccent, fontSize: 13)),
-          ),
-          IconButton(
-            onPressed: widget.onCancel,
-            icon: Icon(LucideIcons.x, color: AppColors.textSecondary, size: 20),
-          ),
+          Expanded(child: Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13))),
+          IconButton(onPressed: widget.onCancel, icon: Icon(LucideIcons.x, color: AppColors.textSecondary, size: 20)),
         ],
       );
     }
-
-    return Row(
-      children: [
-        IconButton(
-          onPressed: _starting ? null : _cancel,
-          icon: Icon(LucideIcons.trash, color: Colors.redAccent, size: 20),
-        ),
-        Container(
-          width: 9,
-          height: 9,
-          decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          MediaService.formatDuration(_elapsed),
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
-            fontFeatures: const [FontFeature.tabularFigures()],
+    return GestureDetector(
+      // Allow left-swipe cancel even after the recording has been locked.
+      onHorizontalDragUpdate: _onDragUpdate,
+      onVerticalDragUpdate: _locked ? null : _onDragUpdate,
+      onHorizontalDragEnd: _onDragEnd,
+      onVerticalDragEnd: _locked ? null : _onDragEnd,
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: 'Нест кардани сабт',
+            onPressed: _starting ? null : _cancel,
+            icon: const Icon(LucideIcons.trash, color: Colors.redAccent, size: 20),
           ),
-        ),
-        const Spacer(),
-        GestureDetector(
-          onTap: _starting ? null : _send,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
-            child: Icon(LucideIcons.send, color: AppColors.background, size: 20),
+          Container(
+            width: 9, height: 9,
+            decoration: BoxDecoration(color: _paused ? AppColors.textSecondary : Colors.redAccent, shape: BoxShape.circle),
           ),
-        ),
-      ],
+          const SizedBox(width: 8),
+          Text(MediaService.formatDuration(_elapsed),
+            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontFeatures: const [FontFeature.tabularFigures()])),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(_locked ? LucideIcons.lock : LucideIcons.mic, size: 15, color: AppColors.neonCyan),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text(
+                      _locked ? 'Сабт қулф шуд' : _dragCancel ? 'Барои бекор кардан раҳо кунед' : '↑ Қулф кунед   ← Бекор кунед',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: _dragCancel ? Colors.redAccent : AppColors.textSecondary, fontSize: 11),
+                    )),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  height: 20,
+                  child: Row(
+                    children: List.generate(22, (i) {
+                      final v = _samples.isEmpty ? 0.25 : _samples[_samples.length * i ~/ 22].clamp(0.08, 1.0);
+                      return Expanded(child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 1),
+                        height: 5 + v * 15,
+                        decoration: BoxDecoration(
+                          color: _paused ? AppColors.textSecondary : AppColors.neonCyan.withValues(alpha: 0.45 + v * 0.5),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ));
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_locked) ...[
+            IconButton(tooltip: _paused ? 'Давом додан' : 'Таваққуф', onPressed: _togglePause,
+              icon: Icon(_paused ? LucideIcons.play : LucideIcons.pause, color: AppColors.textPrimary)),
+            IconButton.filled(
+              tooltip: 'Фиристодан',
+              onPressed: _starting || _isSending ? null : _finishLockedRecording,
+              style: IconButton.styleFrom(backgroundColor: AppColors.neonCyan, foregroundColor: AppColors.background),
+              icon: const Icon(LucideIcons.send),
+            ),
+          ] else
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Icon(LucideIcons.chevrons_up, color: _dragCancel ? Colors.redAccent : AppColors.neonCyan, size: 23),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -15,6 +15,8 @@ import '../widgets/glass_container.dart';
 import '../widgets/neon_backdrop.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/attachment_sheet.dart';
+import '../widgets/quick_reply_sheet.dart';
+import '../services/quick_reply_service.dart';
 import '../widgets/voice_recorder_bar.dart';
 import '../widgets/emoji_picker_sheet.dart';
 import '../widgets/sticker_picker_sheet.dart';
@@ -259,6 +261,50 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
+  void _openQuickReplies({bool manageMode = false}) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => QuickReplySheet(
+        manageMode: manageMode,
+        onSelected: (message) {
+          Navigator.of(sheetContext).pop();
+          _controller.value = TextEditingValue(
+            text: message,
+            selection: TextSelection.collapsed(offset: message.length),
+          );
+          if (mounted) setState(() => _hasText = message.trim().isNotEmpty);
+        },
+      ),
+    );
+  }
+
+  Future<void> _checkQuickReplyShortcut(String value) async {
+    final match = RegExp(r'(?:^|\s)/([a-zA-Z0-9_+-]*)$').firstMatch(value);
+    if (match == null) return;
+    final key = match.group(1)!.toLowerCase();
+    if (key.isEmpty) {
+      _openQuickReplies();
+      return;
+    }
+    final replies = await QuickReplyService.load();
+    QuickReply? reply;
+    for (final item in replies) {
+      if (item.shortcut.toLowerCase() == key) {
+        reply = item;
+        break;
+      }
+    }
+    if (!mounted || reply == null) return;
+    final start = match.start + (match.group(0)!.startsWith(' ') ? 1 : 0);
+    _controller.value = TextEditingValue(
+      text: value.substring(0, start) + reply.message,
+      selection: TextSelection.collapsed(offset: start + reply.message.length),
+    );
+    setState(() => _hasText = _controller.text.trim().isNotEmpty);
+  }
+
   void _openAttachmentSheet() {
     showModalBottomSheet(
       context: context,
@@ -273,6 +319,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         onLocationTap: _sendLocationMessage,
         onPollTap: _sendPoll,
         onEventTap: _openScheduleCall,
+        onQuickReplyTap: _openQuickReplies,
       ),
     );
   }
@@ -501,6 +548,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   /// Ҳангоми навиштани `@` рӯйхати аъзоён кушода мешавад — мисли WhatsApp.
   void _onInputChanged(String value) {
+    _checkQuickReplyShortcut(value);
     final hasText = value.trim().isNotEmpty;
     if (hasText != _hasText) setState(() => _hasText = hasText);
     if (!value.endsWith('@')) return;
@@ -1044,10 +1092,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Ҷавобҳои зуд',
+                    onPressed: _openQuickReplies,
+                    icon: Icon(LucideIcons.zap, color: AppColors.neonEmerald, size: 20),
+                  ),
+                  IconButton(
                     onPressed: _isUploading ? null : _openAttachmentSheet,
                     icon: Icon(LucideIcons.paperclip, color: AppColors.textSecondary, size: 20),
                   ),
                   IconButton(
+                    tooltip: 'Акс гиред',
                     onPressed: _isUploading
                         ? null
                         : () async {
@@ -1061,11 +1115,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          // Майдон холӣ — микрофон, матн ҳаст — фиристодан.
+          const SizedBox(width: 4),
+          IconButton(
+            tooltip: 'Сабти овоз',
+            onPressed: _isUploading ? null : () => setState(() => _recording = true),
+            icon: Icon(LucideIcons.mic, color: AppColors.textSecondary, size: 22),
+          ),
+          const SizedBox(width: 4),
           GestureDetector(
-            onTap: _isUploading
-                ? null
-                : (_hasText ? _handleSend : () => setState(() => _recording = true)),
+            onTap: _isUploading || !_hasText ? null : _handleSend,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 160),
               width: 44,
@@ -1073,17 +1131,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               decoration: BoxDecoration(shape: BoxShape.circle, gradient: AppColors.neonGradient),
               child: _isUploading
                   ? Center(child: UploadIndicator(color: AppColors.background))
-                  : AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 160),
-                      transitionBuilder: (child, animation) =>
-                          ScaleTransition(scale: animation, child: child),
-                      child: Icon(
-                        _hasText ? LucideIcons.arrow_up : LucideIcons.mic,
-                        key: ValueKey(_hasText),
-                        color: AppColors.background,
-                        size: 19,
-                      ),
-                    ),
+                  : Icon(LucideIcons.arrow_up, color: AppColors.background, size: 19),
             ),
           ),
         ],
