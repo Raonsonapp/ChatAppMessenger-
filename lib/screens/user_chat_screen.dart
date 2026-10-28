@@ -255,7 +255,27 @@ class _UserChatScreenState extends State<UserChatScreen> {
     _typingTimer = Timer(const Duration(seconds: 4), () => _setTyping(false));
   }
 
-  /// Ҳангоми кушодани чат ҳисоби нохондашудаи ман сифр мешавад.
+  void _openQuickReplies({bool manageMode = false}) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => QuickReplySheet(
+        manageMode: manageMode,
+        onSelected: (message) {
+          Navigator.of(sheetContext).pop();
+          _controller.value = TextEditingValue(
+            text: message,
+            selection: TextSelection.collapsed(offset: message.length),
+          );
+          if (mounted) setState(() => _hasText = message.trim().isNotEmpty);
+        },
+      ),
+    );
+  }
+
+  Future<void> _checkQuickReplyShortcut(String value) async {
+    final match = RegExp(r'(?:^|\s)/([a-zA-Z0-9_+-]*)
   Future<void> _clearMyUnread(String currentUid) async {
     // Бе ин тафтиш ҳар навсозии рӯйхати паёмҳо як навиштани нав ба Firestore
     // мешуд, ҳол он ки ҳисоб аллакай сифр аст.
@@ -353,25 +373,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
     );
   }
 
-  void _openQuickReplies({bool manageMode = false}) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => QuickReplySheet(
-        manageMode: manageMode,
-        onSelected: (message) {
-          Navigator.of(sheetContext).pop();
-          _controller.text = message;
-          _controller.selection = TextSelection.collapsed(offset: message.length);
-          if (mounted) setState(() => _hasText = message.trim().isNotEmpty);
-        },
-      ),
-    );
-  }
-
-  Future<void> _checkQuickReplyShortcut(String value) async {
-    final match = RegExp(r'(?:^|\s)/([a-zA-Z0-9_+-]*)
+  void _openAttachmentSheet() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1640,16 +1642,125 @@ class _UserChatScreenState extends State<UserChatScreen> {
   }
 }
 ).firstMatch(value);
-    if (match == null || match.group(1)!.isEmpty) return;
+    if (match == null) return;
     final key = match.group(1)!.toLowerCase();
+    if (key.isEmpty) {
+      _openQuickReplies();
+      return;
+    }
     final replies = await QuickReplyService.load();
-    final reply = replies.where((item) => item.shortcut.toLowerCase() == key).firstOrNull;
+    QuickReply? reply;
+    for (final item in replies) {
+      if (item.shortcut.toLowerCase() == key) {
+        reply = item;
+        break;
+      }
+    }
     if (!mounted || reply == null) return;
+    final start = match.start + (match.group(0)!.startsWith(' ') ? 1 : 0);
     _controller.value = TextEditingValue(
-      text: value.substring(0, match.start) + reply.message,
-      selection: TextSelection.collapsed(offset: value.substring(0, match.start).length + reply.message.length),
+      text: value.substring(0, start) + reply.message,
+      selection: TextSelection.collapsed(offset: start + reply.message.length),
     );
     setState(() => _hasText = _controller.text.trim().isNotEmpty);
+  }
+
+  /// Ҳангоми кушодани чат ҳисоби нохондашудаи ман сифр мешавад.
+  Future<void> _clearMyUnread(String currentUid) async {
+    // Бе ин тафтиш ҳар навсозии рӯйхати паёмҳо як навиштани нав ба Firestore
+    // мешуд, ҳол он ки ҳисоб аллакай сифр аст.
+    if (_myUnread == 0) return;
+    _myUnread = 0;
+    await _conversationRef.set({
+      'unread': {currentUid: 0},
+    }, SetOptions(merge: true)).catchError((_) {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Матни нофиристода барқарор мешавад — мисли WhatsApp.
+    // Матни омода аз берун (масалан аз эълони Бозор) танҳо вақте гузошта
+    // мешавад, ки нависандаи корбар холӣ бошад — набояд навиштаи нотамоми ӯ
+    // нест шавад.
+    final draft = draftStore.read(widget.conversationId);
+    final initial = widget.initialText?.trim();
+    if (draft != null && draft.isNotEmpty) {
+      _controller.text = draft;
+      _hasText = true;
+    } else if (initial != null && initial.isNotEmpty) {
+      _controller.text = initial;
+      _hasText = true;
+    }
+    _convoSub = _conversationRef.snapshots().listen((snap) {
+      final data = snap.data();
+      final value = (data?['disappearIn'] as num?)?.toInt() ?? 0;
+      final pinned = (data?['pinnedText'] as String?) ?? '';
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      final unread = (data?['unread'] as Map<String, dynamic>?)?[uid];
+      _myUnread = (unread as num?)?.toInt() ?? 0;
+      if (!mounted) return;
+
+      // Равзана то ҳама паёмҳои нохонда васеъ мешавад — вагарна қайди
+      // «хонда шуд» ба паёмҳои кӯҳнатар намерасад. Ҳадди боло гузошта шудааст,
+      // то ҳисоби бемаънии калон барномаро вазнин накунад.
+      if (!_grewForUnread && _myUnread + 50 > _messageLimit) {
+        _grewForUnread = true;
+        setState(() {
+          _messageLimit = (_myUnread + 50).clamp(_initialMessageLimit, _searchMessageLimit);
+        });
+      }
+
+      if (value != _disappearIn || pinned != _pinnedText) {
+        setState(() {
+          _disappearIn = value;
+          _pinnedText = pinned;
+        });
+      }
+    }, onError: (_) {});
+  }
+
+  @override
+  void dispose() {
+    draftStore.write(widget.conversationId, _controller.text);
+    _convoSub?.cancel();
+    _typingTimer?.cancel();
+    _typingExpiryTimer?.cancel();
+    _setTyping(false);
+    _controller.dispose();
+    _searchController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent + 120,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _openEmojiPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => EmojiPickerSheet(
+        onEmojiSelected: (emoji) {
+          final text = _controller.text;
+          final selection = _controller.selection;
+          final start = selection.start >= 0 ? selection.start : text.length;
+          final end = selection.end >= 0 ? selection.end : text.length;
+          final newText = text.replaceRange(start, end, emoji);
+          _controller.text = newText;
+          _controller.selection = TextSelection.collapsed(offset: start + emoji.length);
+        },
+      ),
+    );
   }
 
   void _openAttachmentSheet() {
